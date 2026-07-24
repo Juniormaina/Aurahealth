@@ -27,10 +27,14 @@ import {
 
 // Configuration from firebase-applet-config.json
 const firebaseConfig = {
-  projectId: "fine-scheduler-3t3g1",
-  authDomain: "fine-scheduler-3t3g1.firebaseapp.com",
-  firestoreDatabaseId: "ai-studio-aurahealthdailyw-dba03373-0875-43ec-bb60-7fa3fc89dff3",
-  storageBucket: "fine-scheduler-3t3g1.firebasestorage.app",
+  // Configuration from firebase-applet-config.json
+const firebaseConfig = {
+projectId: "fine-scheduler-3t3g1",
+  appId: "1:345048568587:web:ba1e7a2156a9358f31480e",
+  apiKey: "AIzaSyDfKBPKhZROmG-zcRammPR5JihSr_1jGrs",
+authDomain: "fine-scheduler-3t3g1.firebaseapp.com",
+firestoreDatabaseId: "ai-studio-aurahealthdailyw-dba03373-0875-43ec-bb60-7fa3fc89dff3",
+storageBucket: "fine-scheduler-3t3g1.firebasestorage.app",
   messagingSenderId: "345048568587",
 };
 
