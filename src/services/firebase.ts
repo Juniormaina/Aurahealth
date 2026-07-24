@@ -27,9 +27,7 @@ import {
 
 // Configuration from firebase-applet-config.json
 const firebaseConfig = {
-  // Configuration from firebase-applet-config.json
-const firebaseConfig = {
-projectId: "fine-scheduler-3t3g1",
+  projectId: "fine-scheduler-3t3g1",
   appId: "1:345048568587:web:ba1e7a2156a9358f31480e",
   apiKey: "AIzaSyDfKBPKhZROmG-zcRammPR5JihSr_1jGrs",
 authDomain: "fine-scheduler-3t3g1.firebaseapp.com",
