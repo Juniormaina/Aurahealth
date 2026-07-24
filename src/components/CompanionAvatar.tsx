@@ -72,8 +72,11 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
               Mood: {companion.mood}
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Verified Digital Companion #{companion.tokenId}
+          <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+            <span className="bg-emerald-500/10 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">
+              Health Pass ID #{companion.tokenId}
+            </span>
+            <span>• Verifiable Wellness Companion</span>
           </p>
         </div>
 
@@ -267,6 +270,44 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
                 >
                   Spin Wheel
                 </button>
+              </div>
+
+              {/* Health Pass Digital Identity Badge */}
+              <div className="bg-gradient-to-r from-emerald-950/60 via-slate-950 to-teal-950/60 p-3.5 rounded-xl border border-emerald-500/30 flex items-center justify-between text-xs shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold text-base">
+                    🪪
+                  </div>
+                  <div>
+                    <div className="font-black text-white flex items-center gap-2">
+                      <span>Verified Health Pass</span>
+                      <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.2 rounded-full font-extrabold border border-emerald-500/30">
+                        Level {companion.level} Active
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 mt-0.5">
+                      Frictionless Digital Health Pass • {companion.streakDays}-Day Unbroken Adherence
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gentle Push Notification Reminder Status */}
+              <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-white flex items-center gap-1.5">
+                      <span>Streak Retention Alert Active</span>
+                      <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-1.5 py-0.2 rounded font-mono">
+                        {companion.streakDays}d Streak
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400">Evening Nudge: 08:30 PM prior to midnight reset</p>
+                  </div>
+                </div>
               </div>
             </div>
           )}

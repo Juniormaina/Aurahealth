@@ -1,0 +1,440 @@
+import React, { useState } from 'react';
+import {
+  Sparkles,
+  CheckCircle2,
+  Circle,
+  Egg,
+  Droplets,
+  HeartPulse,
+  Award,
+  ArrowRight,
+  HelpCircle,
+  Zap,
+  Gift,
+  ShieldCheck,
+  ChevronRight,
+  Compass,
+  Star,
+  Info,
+  X
+} from 'lucide-react';
+import confetti from 'canvas-confetti';
+
+export interface OnboardingMission {
+  id: string;
+  title: string;
+  description: string;
+  xpReward: number;
+  cowriesReward: number;
+  completed: boolean;
+  actionText: string;
+  actionType: 'awaken' | 'hydrate' | 'checkin' | 'explore_grants';
+  icon: any;
+  accentColor: string;
+}
+
+interface OnboardingTutorialProps {
+  userName: string;
+  onOpenCheckin: () => void;
+  onNavigateTab: (tab: string) => void;
+  onMissionCompleted: (xp: number, cowries: number, missionId: string) => void;
+  streakDays: number;
+}
+
+export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
+  userName,
+  onOpenCheckin,
+  onNavigateTab,
+  onMissionCompleted,
+  streakDays,
+}) => {
+  const [showGuideModal, setShowGuideModal] = useState(false);
+  const [currentModalStep, setCurrentModalStep] = useState(0);
+
+  const [missions, setMissions] = useState<OnboardingMission[]>([
+    {
+      id: 'm1',
+      title: 'Mission 1: Awaken Astra’s Egg',
+      description: 'Interact with Astra for the first time to instill vitality into her cosmic shell.',
+      xpReward: 50,
+      cowriesReward: 30,
+      completed: false,
+      actionText: 'Greet & Awaken Egg',
+      actionType: 'awaken',
+      icon: Egg,
+      accentColor: 'from-amber-500 to-rose-500',
+    },
+    {
+      id: 'm2',
+      title: 'Mission 2: Log Initial Hydration',
+      description: 'Record your first 8 oz glass of water to build your daily hydration streak.',
+      xpReward: 50,
+      cowriesReward: 30,
+      completed: false,
+      actionText: 'Log Hydration (+8 oz)',
+      actionType: 'hydrate',
+      icon: Droplets,
+      accentColor: 'from-cyan-500 to-blue-600',
+    },
+    {
+      id: 'm3',
+      title: 'Mission 3: Submit AI Health Check-In',
+      description: 'Record daily vitals, sleep, and medication to receive AI health attestation.',
+      xpReward: 120,
+      cowriesReward: 80,
+      completed: false,
+      actionText: 'Start Vitals Check-In',
+      actionType: 'checkin',
+      icon: HeartPulse,
+      accentColor: 'from-emerald-500 to-teal-600',
+    },
+    {
+      id: 'm4',
+      title: 'Mission 4: Explore Sponsor Care Grants',
+      description: 'Discover how daily adherence unlocks real community health grant pools.',
+      xpReward: 50,
+      cowriesReward: 30,
+      completed: false,
+      actionText: 'View Grant Pools',
+      actionType: 'explore_grants',
+      icon: ShieldCheck,
+      accentColor: 'from-purple-500 to-indigo-600',
+    },
+  ]);
+
+  const [grandRewardClaimed, setGrandRewardClaimed] = useState(false);
+
+  const completedCount = missions.filter((m) => m.completed).length;
+  const totalCount = missions.length;
+  const progressPercent = Math.round((completedCount / totalCount) * 100);
+
+  const handleExecuteMission = (mission: OnboardingMission) => {
+    if (mission.completed) return;
+
+    if (mission.actionType === 'awaken') {
+      // Complete awakening immediately with celebratory feedback
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ['#fbbf24', '#f59e0b', '#ec4899'],
+      });
+      markMissionComplete(mission.id, mission.xpReward, mission.cowriesReward);
+    } else if (mission.actionType === 'hydrate') {
+      confetti({
+        particleCount: 40,
+        spread: 50,
+        origin: { y: 0.6 },
+        colors: ['#38bdf8', '#0284c7'],
+      });
+      markMissionComplete(mission.id, mission.xpReward, mission.cowriesReward);
+    } else if (mission.actionType === 'checkin') {
+      markMissionComplete(mission.id, mission.xpReward, mission.cowriesReward);
+      onOpenCheckin();
+    } else if (mission.actionType === 'explore_grants') {
+      markMissionComplete(mission.id, mission.xpReward, mission.cowriesReward);
+      onNavigateTab('sponsors');
+    }
+  };
+
+  const markMissionComplete = (id: string, xp: number, cowries: number) => {
+    setMissions((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, completed: true } : m))
+    );
+    onMissionCompleted(xp, cowries, id);
+  };
+
+  const handleClaimGrandReward = () => {
+    if (grandRewardClaimed || completedCount < totalCount) return;
+    setGrandRewardClaimed(true);
+    confetti({
+      particleCount: 120,
+      spread: 90,
+      origin: { y: 0.5 },
+      colors: ['#10b981', '#38bdf8', '#f59e0b', '#ec4899', '#8b5cf6'],
+    });
+    onMissionCompleted(150, 100, 'grand_onboarding_completion');
+  };
+
+  const tutorialSteps = [
+    {
+      title: 'Welcome to AuraHealth Companion!',
+      icon: '✨',
+      subtitle: 'Your journey from Zero Baseline to Health Mastery',
+      description:
+        'AuraHealth turns your real-day health adherence—hydration, medication, sleep, and physical activity—into a gamified companion experience that rewards you with Cowries 🐚 and levels up Astra!',
+    },
+    {
+      title: 'Step 1: Hatch & Nurture Astra',
+      icon: '🥚',
+      subtitle: 'From Dormant Egg to Luminary Guardian',
+      description:
+        'Astra starts as a cosmic Egg. Every daily check-in generates XP and vitality, hatching Astra into a Hatchling and beyond while keeping your health streak alive.',
+    },
+    {
+      title: 'Step 2: Earn Cowries 🐚 & Unlocks',
+      icon: '🐚',
+      subtitle: 'Verifiable Health Rewards',
+      description:
+        'Completing daily health habit milestones awards Cowries 🐚. Spend them in the Spin Wheel lootbox to unlock cosmetic halos, streak shields, and bonus multipliers.',
+    },
+    {
+      title: 'Step 3: Sponsor Care Grant Impact',
+      icon: '🏥',
+      subtitle: 'Community Wellness Power',
+      description:
+        'Your verified adherence logs contribute toward real-world community healthcare pools, bringing sponsored medical care and nutrition grants to sub-Saharan initiatives.',
+    },
+  ];
+
+  return (
+    <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/60 rounded-2xl border border-indigo-500/30 p-6 shadow-2xl relative overflow-hidden backdrop-blur-md">
+      {/* Background Subtle Glows */}
+      <div className="absolute -top-10 -right-10 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Top Banner Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5 border-b border-slate-800">
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="bg-gradient-to-r from-amber-400 to-rose-500 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
+              <Star className="w-3 h-3 fill-slate-950" /> First-Day Mission
+            </span>
+            <span className="text-xs font-bold text-slate-400">
+              Guided Onboarding Tutorial
+            </span>
+          </div>
+          <h3 className="text-xl font-black text-white flex items-center gap-2">
+            <span>Welcome, {userName || 'Health Explorer'}!</span>
+            <span className="text-2xl">🌱</span>
+          </h3>
+          <p className="text-xs text-slate-300 mt-1 max-w-xl">
+            Complete your 4 First-Day Missions below to awaken Astra, earn your first <strong>+210 Cowries 🐚</strong>, and establish your 1-day habit streak!
+          </p>
+        </div>
+
+        {/* Buttons: Launch Walkthrough Modal */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => {
+              setCurrentModalStep(0);
+              setShowGuideModal(true);
+            }}
+            className="bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold text-xs px-3.5 py-2 rounded-xl border border-indigo-500/30 transition-all flex items-center gap-1.5 hover:scale-105"
+          >
+            <HelpCircle className="w-4 h-4 text-indigo-400" />
+            <span>How It Works Guide</span>
+          </button>
+
+          {/* Overall Mission Progress Badge */}
+          <div className="bg-slate-950/90 p-2.5 px-3.5 rounded-xl border border-slate-800 flex items-center gap-3">
+            <div className="text-right">
+              <div className="text-[10px] uppercase font-bold text-slate-400">Tutorial Progress</div>
+              <div className="text-xs font-black text-emerald-400">
+                {completedCount} / {totalCount} Done ({progressPercent}%)
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center font-black text-xs text-white">
+              {progressPercent}%
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Missions Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {missions.map((mission, idx) => {
+          const IconComp = mission.icon;
+          return (
+            <div
+              key={mission.id}
+              className={`p-4 rounded-xl border transition-all relative flex flex-col justify-between ${
+                mission.completed
+                  ? 'bg-slate-950/80 border-emerald-500/40 shadow-sm'
+                  : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+              }`}
+            >
+              {/* Mission Header */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div
+                    className={`p-2.5 rounded-xl bg-gradient-to-tr ${mission.accentColor} text-white shadow-md`}
+                  >
+                    <IconComp className="w-5 h-5" />
+                  </div>
+
+                  {mission.completed ? (
+                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Completed
+                    </span>
+                  ) : (
+                    <span className="bg-slate-900 text-slate-400 text-[10px] font-mono px-2 py-0.5 rounded-full border border-slate-800">
+                      Step {idx + 1}
+                    </span>
+                  )}
+                </div>
+
+                <h4 className="text-xs font-black text-white mb-1 leading-snug">
+                  {mission.title}
+                </h4>
+                <p className="text-[11px] text-slate-400 leading-relaxed mb-3">
+                  {mission.description}
+                </p>
+              </div>
+
+              {/* Reward Callout & Action */}
+              <div className="pt-3 border-t border-slate-900/80 space-y-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400">Reward:</span>
+                  <span className="font-bold text-amber-300 flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-amber-400" /> +{mission.xpReward} XP • +{mission.cowriesReward} 🐚
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => handleExecuteMission(mission)}
+                  disabled={mission.completed}
+                  className={`w-full text-xs font-bold py-2 px-3 rounded-lg border transition-all flex items-center justify-center gap-1.5 ${
+                    mission.completed
+                      ? 'bg-emerald-950/30 text-emerald-400 border-emerald-500/20 cursor-default'
+                      : `bg-gradient-to-r ${mission.accentColor} text-slate-950 hover:opacity-95 shadow-md hover:scale-[1.02] active:scale-[0.98]`
+                  }`}
+                >
+                  {mission.completed ? (
+                    <>
+                      <span>Mission Claimed ✓</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{mission.actionText}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Grand Onboarding Completion Reward Banner */}
+      <div className="bg-slate-950/90 rounded-xl border border-slate-800 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-400 to-rose-500 flex items-center justify-center text-slate-950 font-black shrink-0 shadow-lg">
+            <Gift className="w-6 h-6 text-slate-950" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h4 className="text-xs font-black text-white">
+                First-Day Mastery Grand Welcome Pack
+              </h4>
+              <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/30">
+                +150 XP • +100 🐚 • Pioneer Badge
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Complete all 4 First-Day Missions to unlock your Pioneer Badge and hatch Astra into a active Hatchling!
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleClaimGrandReward}
+          disabled={completedCount < totalCount || grandRewardClaimed}
+          className={`px-5 py-2.5 rounded-xl font-black text-xs transition-all shadow-md flex items-center gap-2 shrink-0 ${
+            grandRewardClaimed
+              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+              : completedCount < totalCount
+              ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+              : 'bg-gradient-to-r from-emerald-400 to-amber-400 hover:from-emerald-500 hover:to-amber-500 text-slate-950 hover:scale-105 active:scale-95'
+          }`}
+        >
+          {grandRewardClaimed ? (
+            <span>Grand Welcome Pack Claimed ✓</span>
+          ) : completedCount < totalCount ? (
+            <span>Complete All 4 Missions ({completedCount}/4)</span>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 text-slate-950" />
+              <span>Claim Grand Welcome Pack</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Guided Walkthrough Modal Overlay */}
+      {showGuideModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+            <button
+              onClick={() => setShowGuideModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Modal Content Step */}
+            <div className="text-center mb-6 pt-2">
+              <div className="text-5xl mb-3">{tutorialSteps[currentModalStep].icon}</div>
+              <span className="bg-indigo-500/20 text-indigo-300 text-[10px] font-bold px-3 py-1 rounded-full border border-indigo-500/30 uppercase tracking-wider">
+                Step {currentModalStep + 1} of {tutorialSteps.length}
+              </span>
+              <h3 className="text-xl font-black text-white mt-3">
+                {tutorialSteps[currentModalStep].title}
+              </h3>
+              <p className="text-xs font-bold text-amber-400 mt-1">
+                {tutorialSteps[currentModalStep].subtitle}
+              </p>
+              <p className="text-xs text-slate-300 mt-3 leading-relaxed">
+                {tutorialSteps[currentModalStep].description}
+              </p>
+            </div>
+
+            {/* Step Indicators */}
+            <div className="flex justify-center items-center gap-2 mb-6">
+              {tutorialSteps.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-2 rounded-full transition-all ${
+                    i === currentModalStep
+                      ? 'w-8 bg-emerald-400'
+                      : 'w-2 bg-slate-700'
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+              <button
+                onClick={() => setCurrentModalStep((prev) => Math.max(0, prev - 1))}
+                disabled={currentModalStep === 0}
+                className="text-xs font-bold text-slate-400 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Back
+              </button>
+
+              {currentModalStep < tutorialSteps.length - 1 ? (
+                <button
+                  onClick={() => setCurrentModalStep((prev) => prev + 1)}
+                  className="bg-gradient-to-r from-indigo-500 to-rose-500 hover:from-indigo-600 hover:to-rose-600 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-1.5"
+                >
+                  <span>Next Step</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowGuideModal(false)}
+                  className="bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5"
+                >
+                  <span>Start First Mission!</span>
+                  <Sparkles className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

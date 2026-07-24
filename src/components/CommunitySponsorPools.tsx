@@ -2,18 +2,29 @@ import React, { useState } from 'react';
 import { SponsorPool } from '../types';
 import { Coins, ShieldCheck, CheckCircle2, ArrowUpRight, PlusCircle, Building2, Sparkles, Loader2 } from 'lucide-react';
 import { createAvalancheTxRecord } from '../services/avalanche';
+import { CommunityLeaderboard } from './CommunityLeaderboard';
 import confetti from 'canvas-confetti';
 
 interface CommunitySponsorPoolsProps {
   pools: SponsorPool[];
   onClaimReward: (poolId: string) => void;
   onAddSponsorPool: (newPool: SponsorPool) => void;
+  userStreak?: number;
+  userName?: string;
+  userCowries?: number;
+  onOpenCheckin?: () => void;
+  onShowToast?: (msg: string) => void;
 }
 
 export const CommunitySponsorPools: React.FC<CommunitySponsorPoolsProps> = ({
   pools,
   onClaimReward,
   onAddSponsorPool,
+  userStreak = 1,
+  userName = 'Health Pioneer',
+  userCowries = 0,
+  onOpenCheckin = () => {},
+  onShowToast,
 }) => {
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [sponsorName, setSponsorName] = useState('');
@@ -171,6 +182,15 @@ export const CommunitySponsorPools: React.FC<CommunitySponsorPoolsProps> = ({
           })}
         </div>
       </div>
+
+      {/* Team Challenges & Community Leaderboard */}
+      <CommunityLeaderboard
+        userStreak={userStreak}
+        userName={userName}
+        userCowries={userCowries}
+        onContributeCheckin={onOpenCheckin}
+        onShowToast={onShowToast}
+      />
 
       {/* Sponsor Deposit Modal */}
       {isDepositOpen && (

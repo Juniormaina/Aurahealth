@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
-import { X, Sparkles, CheckCircle2, ShieldCheck, Camera, Loader2, Heart, Droplets, Moon, Pill, Activity, Smile } from 'lucide-react';
+import { X, Sparkles, CheckCircle2, ShieldCheck, Camera, Loader2, Heart, Droplets, Moon, Pill, Activity, Smile, Watch, RefreshCw, Smartphone, Zap } from 'lucide-react';
 import { HealthCheckIn } from '../types';
 import { computeKeccakProof, createAvalancheTxRecord } from '../services/avalanche';
+import { WearablesSyncModal, SyncedBiometrics } from './WearablesSyncModal';
+import { useHealthData, HealthSource } from '../services/healthDataService';
 import confetti from 'canvas-confetti';
 
 interface HealthCheckinModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (newCheckIn: HealthCheckIn) => void;
+  onShowToast?: (msg: string) => void;
 }
 
 export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
+  onShowToast,
 }) => {
   const [waterOz, setWaterOz] = useState<number>(64);
   const [sleepHours, setSleepHours] = useState<number>(7.5);
@@ -24,8 +28,18 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [aiStatus, setAiStatus] = useState<string>('');
+  const [isWearablesModalOpen, setIsWearablesModalOpen] = useState<boolean>(false);
+  const [isWearablesSynced, setIsWearablesSynced] = useState<boolean>(false);
 
   if (!isOpen) return null;
+
+  const handleApplyWearablesData = (data: SyncedBiometrics) => {
+    setWaterOz(data.waterOz);
+    setSleepHours(data.sleepHours);
+    setActivityMinutes(data.activityMinutes);
+    setIsWearablesSynced(true);
+    setNotes(`[Verified Wearable Sync: ${data.verificationSource}] ${data.stepsCount} steps, ${data.heartRateBpm} bpm, ${data.spo2Percent}% SpO2.`);
+  };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -138,6 +152,39 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Wearables / Google Fit Auto-Sync Banner */}
+          <div className="bg-gradient-to-r from-cyan-950/80 via-slate-900 to-indigo-950/80 p-3.5 rounded-xl border border-cyan-500/30 flex items-center justify-between gap-3 shadow-md">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-300">
+                <Watch className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-black text-white flex items-center gap-1.5">
+                  <span>Wearables & Health API Sync</span>
+                  {isWearablesSynced && (
+                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.2 rounded-full font-bold">
+                      Synced ✓
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  {isWearablesSynced
+                    ? 'Biometrics auto-filled from connected smartwatch sensor telemetry'
+                    : 'Auto-fill water, sleep, & activity from Google Fit / Apple Health'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsWearablesModalOpen(true)}
+              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs px-3 py-2 rounded-lg transition-all shadow-sm flex items-center gap-1 shrink-0 hover:scale-105 active:scale-95"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>{isWearablesSynced ? 'Re-Sync' : 'Sync Wearable'}</span>
+            </button>
+          </div>
+
           {/* Hydration Slider */}
           <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
             <div className="flex justify-between items-center mb-2">
@@ -299,11 +346,19 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
               </>
             ) : (
               <>
-                <Sparkles className="w-5 h-5" /> Submit & Record Adherence Proof (+120 🐚)
+                <Sparkles className="w-5 h-5" /> Submit & Stamp Digital Health Pass (+120 🐚)
               </>
             )}
           </button>
         </form>
+
+        {/* Wearables Sync Integration Modal */}
+        <WearablesSyncModal
+          isOpen={isWearablesModalOpen}
+          onClose={() => setIsWearablesModalOpen(false)}
+          onSyncData={handleApplyWearablesData}
+          onShowToast={onShowToast}
+        />
       </div>
     </div>
   );

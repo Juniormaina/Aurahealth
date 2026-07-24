@@ -18,6 +18,24 @@ export const INITIAL_COMPANION: HealthCompanion = {
   equippedCosmetics: ['Golden Halo Badge', 'Aether Aura'],
 };
 
+export const FRESH_USER_COMPANION: HealthCompanion = {
+  tokenId: 1001,
+  name: 'Astra',
+  stage: 'Egg',
+  level: 1,
+  xp: 0,
+  xpToNextLevel: 500,
+  health: 100,
+  vitality: 100,
+  harmony: 100,
+  mood: 'joyful',
+  streakDays: 0,
+  totalCheckIns: 0,
+  imageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=500&auto=format&fit=crop&q=80',
+  element: 'Aether',
+  equippedCosmetics: [],
+};
+
 export const EVOLUTION_STAGES_INFO = [
   { stage: 'Egg', minLevel: 1, desc: 'Dormant cosmic egg incubating health energy', icon: '🥚' },
   { stage: 'Hatchling', minLevel: 2, desc: 'Playful spirit waking up with daily hydration & sleep logs', icon: '🐣' },

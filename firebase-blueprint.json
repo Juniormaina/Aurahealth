@@ -1,0 +1,90 @@
+{
+  "collections": [
+    {
+      "name": "users",
+      "description": "User profiles authenticated via Google Auth",
+      "documents": [
+        {
+          "id": "sample_user",
+          "data": {
+            "email": "user@example.com",
+            "displayName": "Aura Health Member",
+            "photoURL": "",
+            "cowriesBalance": 450,
+            "totalXp": 1250,
+            "createdAt": "2026-07-24T11:00:00Z"
+          }
+        }
+      ]
+    },
+    {
+      "name": "companion",
+      "description": "User companion pet Astra status",
+      "documents": [
+        {
+          "id": "sample_companion",
+          "data": {
+            "uid": "sample_user",
+            "name": "Astra",
+            "level": 3,
+            "stage": "Spark",
+            "health": 92,
+            "vitality": 88,
+            "happiness": 95,
+            "xp": 420,
+            "streakDays": 5,
+            "equippedCosmetics": ["Aura Crown", "Glowing Sigil"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "sponsorPools",
+      "description": "Community health sponsor grant pools",
+      "documents": [
+        {
+          "id": "pool_1",
+          "data": {
+            "title": "Pediatric Vaccine Adherence Fund",
+            "sponsor": "Sub-Saharan Health Initiative",
+            "amount": 25.0,
+            "currency": "Care Grant",
+            "targetParticipants": 100,
+            "currentParticipants": 78,
+            "progress": 78,
+            "isCompleted": false,
+            "createdAt": "2026-07-20T10:00:00Z"
+          }
+        },
+        {
+          "id": "pool_2",
+          "data": {
+            "title": "Maternal Nutrition & Iron Supplement Grant",
+            "sponsor": "Global Wellness Foundation",
+            "amount": 50.0,
+            "currency": "Care Grant",
+            "targetParticipants": 200,
+            "currentParticipants": 142,
+            "progress": 71,
+            "isCompleted": false,
+            "createdAt": "2026-07-21T10:00:00Z"
+          }
+        },
+        {
+          "id": "pool_3",
+          "data": {
+            "title": "Clean Water & Hydration Drive",
+            "sponsor": "AquaLife NGO Network",
+            "amount": 35.0,
+            "currency": "Care Grant",
+            "targetParticipants": 150,
+            "currentParticipants": 150,
+            "progress": 100,
+            "isCompleted": true,
+            "createdAt": "2026-07-15T10:00:00Z"
+          }
+        }
+      ]
+    }
+  ]
+}

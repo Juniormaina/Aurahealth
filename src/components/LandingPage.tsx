@@ -14,17 +14,40 @@ import {
   Globe,
   Lock,
   ChevronRight,
-  Gift
+  Gift,
+  LogOut,
+  Award,
+  Watch,
+  Flame,
+  ArrowUpRight,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 interface LandingPageProps {
   onGoogleSignIn: (userEmail: string, userName: string) => void;
+  onRealGoogleSignIn: () => void;
   onStartDemo: () => void;
+  isLoggingIn?: boolean;
+  userAccount?: { name: string; email: string; isGoogle: boolean; uid?: string; photoURL?: string } | null;
+  isDemoMode?: boolean;
+  onEnterDashboard?: () => void;
+  onSignOut?: () => void;
+  theme?: 'midnight' | 'morning';
+  onToggleTheme?: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onGoogleSignIn,
+  onRealGoogleSignIn,
   onStartDemo,
+  isLoggingIn = false,
+  userAccount,
+  isDemoMode,
+  onEnterDashboard,
+  onSignOut,
+  theme = 'morning',
+  onToggleTheme,
 }) => {
   const [showGoogleModal, setShowGoogleModal] = useState(false);
   const [customEmail, setCustomEmail] = useState('');
@@ -49,62 +72,235 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <AuraLogo size="md" />
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={onStartDemo}
-              className="text-xs font-semibold text-slate-300 hover:text-white px-3.5 py-2 rounded-lg hover:bg-slate-800 transition-colors hidden sm:flex items-center gap-1.5"
-            >
-              <Play className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-              Quick Demo
-            </button>
-            <button
-              onClick={() => setShowGoogleModal(true)}
-              className="bg-white text-slate-950 hover:bg-slate-100 text-xs font-extrabold px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
-              </svg>
-              Sign In
-            </button>
+            {/* Theme Toggle Button */}
+            {onToggleTheme && (
+              <button
+                onClick={onToggleTheme}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-extrabold transition-all ${
+                  theme === 'morning'
+                    ? 'bg-amber-100 text-amber-950 border-amber-300 hover:bg-amber-200 shadow-sm'
+                    : 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
+                }`}
+                title="Switch Theme"
+              >
+                {theme === 'morning' ? (
+                  <>
+                    <Sun className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
+                    <span className="hidden sm:inline">Light</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-3.5 h-3.5 text-indigo-300 fill-indigo-300/30" />
+                    <span className="hidden sm:inline">Dark</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {(userAccount || isDemoMode) && onEnterDashboard ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onEnterDashboard}
+                  className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black text-xs px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-1.5"
+                >
+                  <span>Enter Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                {onSignOut && (
+                  <button
+                    onClick={onSignOut}
+                    className="bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-200 border border-slate-700 px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                    <span className="hidden sm:inline">Sign Out</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={onStartDemo}
+                  className="text-xs font-semibold text-slate-300 hover:text-white px-3.5 py-2 rounded-lg hover:bg-slate-800 transition-colors hidden sm:flex items-center gap-1.5"
+                >
+                  <Play className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  Quick Demo
+                </button>
+                <button
+                  onClick={onRealGoogleSignIn}
+                  disabled={isLoggingIn}
+                  className="bg-white text-slate-950 hover:bg-slate-100 text-xs font-extrabold px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    />
+                  </svg>
+                  {isLoggingIn ? 'Connecting...' : 'Sign In with Google'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
 
       {/* Main Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-16 flex-1 flex flex-col justify-center">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-14 flex-1 flex flex-col justify-center">
+        {/* Active User Session Banner */}
+        {(userAccount || isDemoMode) && onEnterDashboard && (
+          <div className="max-w-3xl mx-auto w-full mb-8 bg-gradient-to-r from-emerald-950/80 via-slate-900 to-indigo-950/80 p-4 rounded-2xl border border-emerald-500/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center justify-center font-bold text-lg shrink-0">
+                👤
+              </div>
+              <div>
+                <div className="text-xs font-black text-white flex items-center gap-2">
+                  <span>Welcome back, {userAccount?.name || 'Guided Demo Explorer'}!</span>
+                  <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.2 rounded-full font-bold">
+                    Active Session
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  Your daily companion Astra is ready for health check-ins and rewards.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={onEnterDashboard}
+                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 hover:scale-105 active:scale-95"
+              >
+                <span>Enter Dashboard</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+              {onSignOut && (
+                <button
+                  onClick={onSignOut}
+                  className="bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-200 border border-slate-700 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Sign Out</span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Top Highlight Badge */}
         <div className="flex justify-center mb-6">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-emerald-500/10 border border-slate-700/80 rounded-full px-4 py-1.5 text-xs text-slate-300">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Frictionless Non-Crypto Experience • No Wallets or Gas Needed</span>
+            <span>Daily Wellness • Evolving Companion • Real Rewards</span>
           </div>
         </div>
 
-        {/* Headline */}
-        <div className="text-center max-w-3xl mx-auto mb-10 space-y-4">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
-            Daily Wellness Habit Rewards,{' '}
-            <span className="bg-gradient-to-r from-rose-400 via-amber-300 to-emerald-400 bg-clip-text text-transparent">
-              Made Effortless
-            </span>
+        {/* Core Tagline / Value Proposition Sentence */}
+        <div className="text-center max-w-4xl mx-auto mb-10 space-y-4">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
+            AuraHealth
           </h1>
-          <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto font-normal">
-            Turn simple daily check-ins into an engaging journey. Evolve your digital companion Astra, unlock community sponsor clinic vouchers, and track health adherence with zero friction.
+
+          {/* Exact Value Sentence Highlight */}
+          <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-900 border border-slate-800 shadow-2xl my-4">
+            <p className="text-lg sm:text-2xl font-black bg-gradient-to-r from-rose-300 via-amber-200 to-emerald-300 bg-clip-text text-transparent leading-snug">
+              “Track your daily wellness, evolve your digital health companion, and earn real rewards.”
+            </p>
+          </div>
+
+          <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto font-normal">
+            Turn simple daily check-ins into an engaging journey. Connect wearables, evolve your companion Astra, unlock community sponsor clinic vouchers, and track health adherence with complete ease.
           </p>
+        </div>
+
+        {/* 3-Step Interactive Value Funnel */}
+        <div className="mb-14">
+          <h2 className="text-center text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-6">
+            The AuraHealth 3-Step Value Funnel
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
+            {/* Step 1 */}
+            <div className="bg-slate-900/80 p-6 rounded-2xl border border-rose-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden group hover:border-rose-500/60 transition-all">
+              <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-rose-500/10 rounded-full blur-xl group-hover:bg-rose-500/20 transition-all" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-300 font-black text-xs flex items-center justify-center border border-rose-500/30">
+                    01
+                  </span>
+                  <Watch className="w-5 h-5 text-rose-400" />
+                </div>
+                <h3 className="text-lg font-black text-white mb-2 group-hover:text-rose-300 transition-colors">
+                  Track Your Daily Wellness
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed mb-4">
+                  Auto-sync biometrics via Google Fit or Apple Health, or quickly log water, sleep, mood, and medication adherence in under 10 seconds.
+                </p>
+              </div>
+              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Wearable hardware verified</span>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="bg-slate-900/80 p-6 rounded-2xl border border-amber-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden group hover:border-amber-500/60 transition-all">
+              <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/20 transition-all" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 font-black text-xs flex items-center justify-center border border-amber-500/30">
+                    02
+                  </span>
+                  <Heart className="w-5 h-5 text-amber-400" />
+                </div>
+                <h3 className="text-lg font-black text-white mb-2 group-hover:text-amber-300 transition-colors">
+                  Evolve Your Companion
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed mb-4">
+                  Your digital AI companion Astra reacts to your daily consistency—leveling up, expressing mood, and maintaining high vitality as you stay on track.
+                </p>
+              </div>
+              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 flex items-center gap-2">
+                <Flame className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Streak protection & companion health</span>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="bg-slate-900/80 p-6 rounded-2xl border border-emerald-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden group hover:border-emerald-500/60 transition-all">
+              <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-all" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 font-black text-xs flex items-center justify-center border border-emerald-500/30">
+                    03
+                  </span>
+                  <Award className="w-5 h-5 text-emerald-400" />
+                </div>
+                <h3 className="text-lg font-black text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                  Earn Real Rewards
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed mb-4">
+                  Collect 🐚 Cowries for daily check-ins, spin the daily Loot Wheel, and redeem real clinic vouchers, gym passes, and partner health benefit codes.
+                </p>
+              </div>
+              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 flex items-center gap-2">
+                <Gift className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Instant voucher redemptions</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* 2 Getting Started Option Cards */}
@@ -144,7 +340,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 Sign Up / Sign In with Google
               </h2>
               <p className="text-xs text-slate-300 leading-relaxed mb-6">
-                Instant 1-click access using your Google account. We automatically assign a zero-friction secure health ledger profile so you never handle wallets or recovery phrases.
+                Instant 1-click access using your Google account. We automatically assign a secure health ledger profile so you never handle wallets or recovery phrases.
               </p>
 
               <ul className="space-y-2 mb-8 text-xs text-slate-300">
@@ -163,13 +359,41 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </ul>
             </div>
 
-            <button
-              onClick={() => setShowGoogleModal(true)}
-              className="w-full bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-slate-950 font-black text-sm py-3.5 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group-hover:scale-[1.02]"
-            >
-              <span>Continue with Google</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={onRealGoogleSignIn}
+                disabled={isLoggingIn}
+                className="w-full bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-slate-950 font-black text-sm py-3.5 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group-hover:scale-[1.02]"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path
+                    fill="#000"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  />
+                  <path
+                    fill="#000"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  />
+                  <path
+                    fill="#000"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                  />
+                  <path
+                    fill="#000"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                  />
+                </svg>
+                <span>{isLoggingIn ? 'Signing in with Google...' : 'Sign In with Google Account'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => setShowGoogleModal(true)}
+                className="w-full text-[11px] text-slate-400 hover:text-slate-200 py-1 font-medium underline"
+              >
+                Or enter custom Google account email
+              </button>
+            </div>
           </div>
 
           {/* Card 2: Interactive Demo Walkthrough */}
@@ -250,7 +474,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white mb-1">Seamless Frictionless Security</h3>
+              <h3 className="text-sm font-bold text-white mb-1">Seamless Security</h3>
               <p className="text-xs text-slate-400">
                 Cryptographic adherence attestations verify daily health habits seamlessly under the hood without web3 popups or fees.
               </p>
@@ -270,8 +494,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               ✕
             </button>
 
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0">
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
@@ -292,69 +516,38 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </svg>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">Sign In with Google</h3>
-                <p className="text-xs text-slate-400">Choose an account to continue to AuraHealth</p>
+                <h3 className="text-lg font-bold text-white">Sign In with Google Account</h3>
+                <p className="text-xs text-slate-400">Enter your Google account details to authenticate</p>
               </div>
             </div>
 
-            <div className="space-y-2 mb-6">
-              {[
-                { name: 'Alex Rivera', email: 'alex.rivera@gmail.com', avatar: '🙋‍♂️' },
-                { name: 'Sarah Chen', email: 'sarah.chen@gmail.com', avatar: '👩‍⚕️' },
-              ].map((acc) => (
-                <button
-                  key={acc.email}
-                  onClick={() => handleQuickGoogleSelect(acc.email, acc.name)}
-                  className="w-full bg-slate-950 hover:bg-slate-800/80 border border-slate-800/80 hover:border-slate-700 p-3 rounded-xl flex items-center justify-between text-left transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">{acc.avatar}</span>
-                    <div>
-                      <div className="text-xs font-bold text-white">{acc.name}</div>
-                      <div className="text-[11px] text-slate-400">{acc.email}</div>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-500" />
-                </button>
-              ))}
-            </div>
-
-            <div className="relative mb-6 text-center">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-800" />
-              </div>
-              <span className="relative bg-slate-900 px-3 text-[11px] text-slate-500 font-medium">
-                or sign in with custom account
-              </span>
-            </div>
-
-            <form onSubmit={handleCustomGoogleSubmit} className="space-y-3">
+            <form onSubmit={handleCustomGoogleSubmit} className="space-y-4">
               <div>
-                <label className="text-[11px] font-bold text-slate-300 block mb-1">Your Full Name</label>
+                <label className="text-xs font-bold text-slate-300 block mb-1">Your Full Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Jordan Taylor"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-300 block mb-1">Google Email Address</label>
+                <label className="text-xs font-bold text-slate-300 block mb-1">Google Email Address</label>
                 <input
                   type="email"
                   placeholder="name@gmail.com"
                   value={customEmail}
                   onChange={(e) => setCustomEmail(e.target.value)}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 mt-2"
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs py-3 rounded-xl transition-all flex items-center justify-center gap-2 mt-2"
               >
                 <span>Complete Google Authentication</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -363,7 +556,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             <div className="mt-4 text-[10px] text-slate-500 text-center flex items-center justify-center gap-1">
               <Lock className="w-3 h-3 text-slate-400" />
-              <span>Zero-friction secure account assigned automatically upon login.</span>
+              <span>Secure account assigned automatically upon login.</span>
             </div>
           </div>
         </div>

@@ -56,9 +56,14 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
             <Cpu className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-white">Verification Engine & Smart Protocol</h2>
-            <p className="text-xs text-slate-400">
-              Solidity 0.8.20 native verification contracts for transparent health attestations
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-black text-white">Health Pass Security Ledger & Protocol</h2>
+              <span className="bg-emerald-500/20 text-emerald-300 font-bold text-[10px] px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                Secure Verification
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 mt-1">
+              Tamper-proof, zero-gas security rules guaranteeing the validity of your Digital Health Pass and reward redemptions.
             </p>
           </div>
         </div>

@@ -1,6 +1,8 @@
 import React from 'react';
 import { HealthCompanion, SoulboundBadge, EconomyStats, HealthCheckIn } from '../types';
 import { Trophy, Flame, Target, Compass, Sparkles, CheckCircle2, Award, Shield, ArrowRight, Calendar } from 'lucide-react';
+import { CommunityLeaderboard } from './CommunityLeaderboard';
+import { StreakReminderManager } from './StreakReminderManager';
 
 interface FeedbackDashboardProps {
   companion: HealthCompanion;
@@ -9,6 +11,8 @@ interface FeedbackDashboardProps {
   checkIns: HealthCheckIn[];
   onOpenCheckin: () => void;
   onOpenSponsors: () => void;
+  userName?: string;
+  onShowToast?: (msg: string) => void;
 }
 
 export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
@@ -18,6 +22,8 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
   checkIns,
   onOpenCheckin,
   onOpenSponsors,
+  userName = 'Health Pioneer',
+  onShowToast,
 }) => {
   return (
     <div className="space-y-6">
@@ -132,6 +138,24 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Retention & Notifications: Streak Reminders */}
+      <StreakReminderManager
+        currentStreak={stats.currentStreak}
+        companionName={companion.name}
+        companionHealth={companion.health}
+        onOpenCheckin={onOpenCheckin}
+        onShowToast={onShowToast}
+      />
+
+      {/* Community Features: Team Challenges & Leaderboard */}
+      <CommunityLeaderboard
+        userStreak={stats.currentStreak}
+        userName={userName}
+        userCowries={stats.cowriesBalance}
+        onContributeCheckin={onOpenCheckin}
+        onShowToast={onShowToast}
+      />
 
       {/* Badges & Achievements Grid */}
       <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl">
