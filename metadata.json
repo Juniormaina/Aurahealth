@@ -1,0 +1,6 @@
+{
+  "name": "AvaHealth Quest: Health & Community Adherence",
+  "description": "Gamified health check-in platform on Avalanche with evolving digital companion NFTs, Health Cowries economy, and sponsor reward pools.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
