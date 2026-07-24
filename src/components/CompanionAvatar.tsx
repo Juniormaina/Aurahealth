@@ -73,7 +73,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Dynamic ERC-721 Token #{companion.tokenId} on Avalanche Fuji Testnet
+            Verified Digital Companion #{companion.tokenId}
           </p>
         </div>
 
@@ -258,7 +258,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
                   <Award className="w-5 h-5 text-amber-400" />
                   <div>
                     <div className="text-xs font-bold text-white">Daily Adherence Loot Wheel</div>
-                    <div className="text-[11px] text-slate-400">Spin for AVAX tickets, Cowries & XP</div>
+                    <div className="text-[11px] text-slate-400">Spin for care passes, Cowries & XP</div>
                   </div>
                 </div>
                 <button
@@ -274,7 +274,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
           {activeTab === 'evolution' && (
             <div className="space-y-3">
               <p className="text-xs text-slate-400">
-                Astra evolves dynamically as you maintain verified health check-ins on Avalanche C-Chain.
+                Astra evolves dynamically as you maintain verified health check-ins.
               </p>
               <div className="space-y-2">
                 {EVOLUTION_STAGES_INFO.map((stg) => {
@@ -318,7 +318,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
           {activeTab === 'cosmetics' && (
             <div className="space-y-3">
               <p className="text-xs text-slate-400">
-                On-Chain cosmetic traits and Soulbound milestone badges attached to your Companion NFT.
+                Cosmetic traits and milestone badges attached to your Companion.
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {companion.equippedCosmetics.map((item, idx) => (
@@ -326,7 +326,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
                     <Sparkles className="w-4 h-4 text-amber-400" />
                     <div>
                       <div className="text-xs font-bold text-slate-200">{item}</div>
-                      <div className="text-[10px] text-emerald-400">ERC-1155 Trait</div>
+                      <div className="text-[10px] text-emerald-400">Verified Trait</div>
                     </div>
                   </div>
                 ))}

@@ -67,7 +67,7 @@ export const CommunitySponsorPools: React.FC<CommunitySponsorPoolsProps> = ({
             </div>
             <div>
               <h2 className="text-2xl font-black text-white">5-Layer Sustainable Economy</h2>
-              <p className="text-xs text-slate-400">Jiwe IO x Avalanche Hybrid Model: Sponsor-backed value loop</p>
+              <p className="text-xs text-slate-400">Sponsor-backed community value loop</p>
             </div>
           </div>
 
@@ -75,7 +75,7 @@ export const CommunitySponsorPools: React.FC<CommunitySponsorPoolsProps> = ({
             onClick={() => setIsDepositOpen(true)}
             className="bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
           >
-            <PlusCircle className="w-4 h-4" /> Deposit Sponsor AVAX Pool
+            <PlusCircle className="w-4 h-4" /> Deposit Sponsor Grant Pool
           </button>
         </div>
 
@@ -84,9 +84,9 @@ export const CommunitySponsorPools: React.FC<CommunitySponsorPoolsProps> = ({
           {[
             { step: '1', title: 'Progression', desc: 'XP, streaks & health logs', icon: '📈' },
             { step: '2', title: 'Utility Currency', desc: 'Health Cowries (Off-Chain)', icon: '🐚' },
-            { step: '3', title: 'Sponsor Pool', desc: 'External AVAX grant funds', icon: '🏦' },
-            { step: '4', title: 'Ownable Assets', desc: 'Dynamic NFTs & SBT badges', icon: '💎' },
-            { step: '5', title: 'Claimable Value', desc: 'AVAX payouts & vouchers', icon: '🔺' },
+            { step: '3', title: 'Sponsor Pool', desc: 'External grant funding', icon: '🏦' },
+            { step: '4', title: 'Digital Assets', desc: 'Dynamic Avatars & Badges', icon: '💎' },
+            { step: '5', title: 'Claimable Value', desc: 'Clinic payouts & vouchers', icon: '✨' },
           ].map((l) => (
             <div key={l.step} className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-xs">
               <div className="flex items-center justify-between mb-1">
@@ -178,7 +178,7 @@ export const CommunitySponsorPools: React.FC<CommunitySponsorPoolsProps> = ({
           <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
             <h3 className="text-xl font-black text-white mb-2">Fund a Sponsor Health Pool</h3>
             <p className="text-xs text-slate-400 mb-4">
-              Deposit AVAX as a clinic, NGO, or healthcare sponsor to incentivize community health adherence.
+              Deposit grant funds as a clinic, NGO, or healthcare sponsor to incentivize community health adherence.
             </p>
 
             <form onSubmit={handleCreatePool} className="space-y-4">
@@ -186,7 +186,7 @@ export const CommunitySponsorPools: React.FC<CommunitySponsorPoolsProps> = ({
                 <label className="text-xs font-bold text-slate-300 block mb-1">Sponsor Organization</label>
                 <input
                   type="text"
-                  placeholder="e.g. Red Cross Fuji Subnet Node"
+                  placeholder="e.g. Red Cross Clinic Network"
                   value={sponsorName}
                   onChange={(e) => setSponsorName(e.target.value)}
                   required
@@ -208,7 +208,7 @@ export const CommunitySponsorPools: React.FC<CommunitySponsorPoolsProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Deposit Amount (AVAX)</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">Deposit Fund Amount</label>
                   <input
                     type="number"
                     step="0.1"

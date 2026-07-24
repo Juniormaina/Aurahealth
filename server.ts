@@ -23,7 +23,7 @@ async function startServer() {
 
   // API Routes
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', network: 'Avalanche Fuji C-Chain' });
+    res.json({ status: 'ok', network: 'AuraHealth Verification Engine' });
   });
 
   // AI Health Check-in Verification & Attestation Endpoint
@@ -38,7 +38,7 @@ async function startServer() {
         try {
           const ai = getGeminiAI();
           const promptParts: any[] = [
-            `You are an AI Health Adherence Verifier for an Avalanche Web3 Health dApp.
+            `You are an AI Health Adherence Verifier for the AuraHealth Wellness App.
 Evaluate this user's health report:
 - Hydration: ${waterOz} oz
 - Sleep: ${sleepHours} hours
@@ -82,7 +82,7 @@ Response MUST be valid JSON string only.`,
           // Fallback calculation if key missing or rate-limited
           if (medicationTaken) aiAttestationScore += 5;
           if (sleepHours >= 7) aiAttestationScore += 3;
-          aiFeedback = 'Daily health log recorded on Avalanche C-Chain. Consistency verified!';
+          aiFeedback = 'Daily health log recorded cleanly. Consistency verified!';
         }
       }
 
@@ -109,7 +109,7 @@ Response MUST be valid JSON string only.`,
       }
 
       const ai = getGeminiAI();
-      const prompt = `You are Astra, a whimsical, supportive Health Companion Pet on the Avalanche Web3 dApp.
+      const prompt = `You are Astra, a whimsical, supportive Health Companion Pet on the AuraHealth Wellness App.
 Current Pet Stats:
 - Stage: ${companionState?.stage || 'Hatchling'}
 - Level: ${companionState?.level || 1}
@@ -128,7 +128,7 @@ Reply in character as Astra (2-3 short sentences). Be energetic, encouraging, an
       res.json({ reply: response.text || "Astra beams with energy! Let's keep your health streak going!" });
     } catch (err: any) {
       res.json({
-        reply: `Astra: "I'm right here with you! Every daily check-in powers up our Avalanche health journey!"`,
+        reply: `Astra: "I'm right here with you! Every daily check-in powers up our health journey!"`,
       });
     }
   });

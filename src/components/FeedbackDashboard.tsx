@@ -44,7 +44,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
               </div>
               <h3 className="text-lg font-black text-white mb-1">7-Day Adherence Milestone</h3>
               <p className="text-xs text-slate-400 mb-4">
-                Maintain 2 more daily check-ins to evolve Astra to <strong className="text-amber-300">Spark Companion</strong> and mint the <strong className="text-emerald-300">7-Day Novice Soulbound Token</strong>.
+                Maintain 2 more daily check-ins to evolve Astra to <strong className="text-amber-300">Spark Companion</strong> and unlock the <strong className="text-emerald-300">7-Day Novice Milestone Badge</strong>.
               </p>
             </div>
             <div>
@@ -86,7 +86,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
                 </div>
               </div>
               <p className="text-xs text-slate-400">
-                You are in the top <strong className="text-emerald-300">5% of community adherence</strong> on Avalanche Fuji Subnet!
+                You are in the top <strong className="text-emerald-300">5% of community adherence</strong>!
               </p>
             </div>
             <div className="mt-3">
@@ -118,7 +118,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
               </div>
               <h3 className="text-lg font-black text-white mb-1">Community Sponsor Unlock</h3>
               <p className="text-xs text-slate-400 mb-3">
-                Help unlock the <strong className="text-cyan-300">15 AVAX Vaccine Grant Pool</strong> by contributing 1 additional daily report.
+                Help unlock the <strong className="text-cyan-300">Vaccine Grant Pool</strong> by contributing 1 additional daily report.
               </p>
             </div>
             <div className="space-y-2">
@@ -133,15 +133,15 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
         </div>
       </div>
 
-      {/* Soulbound Badges & Achievements Grid */}
+      {/* Badges & Achievements Grid */}
       <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-black text-white flex items-center gap-2">
-              <Award className="w-5 h-5 text-amber-400" /> Soulbound Badges & Milestones (SBT)
+              <Award className="w-5 h-5 text-amber-400" /> Milestone Badges & Verified Proofs
             </h3>
             <p className="text-xs text-slate-400">
-              Non-transferable ERC-721 tokens minted permanently to your Avalanche wallet upon key milestones.
+              Verifiable digital badges awarded permanently upon reaching key health milestones.
             </p>
           </div>
           <span className="text-xs font-bold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">

@@ -9,9 +9,9 @@ export const JiweEconomyDiagram: React.FC = () => {
           <Layers className="w-6 h-6" />
         </div>
         <div>
-          <h2 className="text-2xl font-black text-white">Jiwe IO x Avalanche 5-Layer Economy Model</h2>
+          <h2 className="text-2xl font-black text-white">5-Layer Sustainable Circular Health Economy</h2>
           <p className="text-xs text-slate-400">
-            Sustainable circular tokenomics preventing hyperinflation through sponsor sinks & health utility
+            Sustainable ecosystem preventing hyperinflation through sponsor sinks & health utility
           </p>
         </div>
       </div>
@@ -19,7 +19,7 @@ export const JiweEconomyDiagram: React.FC = () => {
       <div className="space-y-4">
         {/* Formula Banner */}
         <div className="bg-slate-950 p-4 rounded-xl border border-rose-500/30 text-xs text-slate-300 italic">
-          <strong className="text-rose-400 not-italic font-bold">One-Sentence Economy Formula:</strong> "Players perform verified daily health check-ins because they receive XP and Health Cowries, which evolve their digital companion and unlock sponsor-backed reward pools funded by health grants."
+          <strong className="text-rose-400 not-italic font-bold">One-Sentence Economy Formula:</strong> "Users perform verified daily health check-ins because they receive XP and Health Cowries, which evolve their digital companion and unlock sponsor-backed reward pools funded by health grants."
         </div>
 
         {/* 5 Layer Cards Stack */}
@@ -27,38 +27,38 @@ export const JiweEconomyDiagram: React.FC = () => {
           {[
             {
               layer: 'Layer 1: Progression',
-              type: 'Off-Chain / Jiwe',
+              type: 'App Core',
               desc: 'XP, Streak Levels, Health Logs, Daily Check-in records & Habit tracking',
               bg: 'border-cyan-500/30 bg-cyan-950/20 text-cyan-300',
               icon: '📈',
             },
             {
               layer: 'Layer 2: Utility Currency',
-              type: 'Off-Chain / Hybrid',
+              type: 'Health Rewards',
               desc: 'Health Cowries 🐚 earned via verified logs, spent on boosts & treats',
               bg: 'border-amber-500/30 bg-amber-950/20 text-amber-300',
               icon: '🐚',
             },
             {
               layer: 'Layer 3: External Funding',
-              type: 'Premium Sponsors',
-              desc: 'Clinics, NGOs & Grants fund AVAX prize pools and clinic vouchers',
+              type: 'Sponsor Grants',
+              desc: 'Clinics, NGOs & Grants fund care pools and clinic vouchers',
               bg: 'border-rose-500/30 bg-rose-950/20 text-rose-300',
               icon: '🏦',
             },
             {
-              layer: 'Layer 4: Ownable Assets',
-              type: 'Avalanche On-Chain',
-              desc: 'Dynamic ERC-721 Health Companion NFTs & Soulbound Badges (SBT)',
+              layer: 'Layer 4: Digital Assets',
+              type: 'Verifiable Proof',
+              desc: 'Dynamic Digital Companion Avatars & Verified Health Milestone Badges',
               bg: 'border-purple-500/30 bg-purple-950/20 text-purple-300',
               icon: '💎',
             },
             {
               layer: 'Layer 5: Claimable Value',
-              type: 'On-Chain Rewards',
-              desc: 'Micro-payouts, yield pools, or claimable health clinic vouchers',
+              type: 'Care Rewards',
+              desc: 'Clinic care vouchers, health kits, or claimable wellness grants',
               bg: 'border-emerald-500/30 bg-emerald-950/20 text-emerald-300',
-              icon: '🔺',
+              icon: '✨',
             },
           ].map((item, idx) => (
             <div key={idx} className={`p-4 rounded-xl border flex flex-col justify-between ${item.bg}`}>

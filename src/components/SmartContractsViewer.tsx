@@ -13,7 +13,7 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
   const [copied, setCopied] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
   const [terminalOutput, setTerminalOutput] = useState<string[]>([
-    'Avalanche Fuji C-Chain Environment Ready (ChainID: 43113)',
+    'AuraHealth Verification Engine Ready (ChainID: 43113)',
     'ProofOfAdherence.sol deployed at ' + CONTRACT_ADDRESSES.ProofOfAdherence,
     'HealthCompanionNFT.sol deployed at ' + CONTRACT_ADDRESSES.HealthCompanionNFT,
     'RewardSponsorPool.sol deployed at ' + CONTRACT_ADDRESSES.RewardSponsorPool,
@@ -39,9 +39,9 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
       setTerminalOutput((prev) => [
         ...prev,
         `> Optimization enabled (200 runs). Bytecode size: 4,120 bytes.`,
-        `> Broadcasting deployment tx to Avalanche Fuji RPC: ${AVALANCHE_FUJI_CONFIG.rpcUrls[0]}`,
-        `> Tx Confirmed in Block #38910${Math.floor(Math.random() * 900 + 100)}! Gas used: 412,090 nAVAX`,
-        `> Contract verified on Snowtrace Explorer!`,
+        `> Broadcasting deployment tx to AuraHealth Verification Node...`,
+        `> Tx Confirmed in Block #38910${Math.floor(Math.random() * 900 + 100)}! Gas used: 41,090 Credits`,
+        `> Contract verified on AuraHealth Ledger Explorer!`,
       ]);
       setIsSimulating(false);
     }, 1500);
@@ -56,9 +56,9 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
             <Cpu className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-white">Avalanche Smart Contracts & On-Chain Proofs</h2>
+            <h2 className="text-2xl font-black text-white">Verification Engine & Smart Protocol</h2>
             <p className="text-xs text-slate-400">
-              Solidity 0.8.20 native contracts deployed on Avalanche Fuji C-Chain & Subnet
+              Solidity 0.8.20 native verification contracts for transparent health attestations
             </p>
           </div>
         </div>
@@ -106,7 +106,7 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
               disabled={isSimulating}
               className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg flex items-center gap-1.5"
             >
-              <Play className="w-3.5 h-3.5" /> Re-Deploy on Fuji
+              <Play className="w-3.5 h-3.5" /> Re-Verify Contract
             </button>
           </div>
         </div>
@@ -119,7 +119,7 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
         {/* Terminal Compilation Console */}
         <div className="bg-slate-950 rounded-xl p-4 border border-slate-800/80 font-mono text-[11px] text-emerald-400 space-y-1">
           <div className="text-slate-500 font-bold mb-1 flex items-center gap-1.5">
-            <Terminal className="w-3.5 h-3.5 text-slate-400" /> Avalanche Fuji Compiler Console
+            <Terminal className="w-3.5 h-3.5 text-slate-400" /> AuraHealth Protocol Compiler Console
           </div>
           {terminalOutput.map((line, idx) => (
             <div key={idx}>{line}</div>

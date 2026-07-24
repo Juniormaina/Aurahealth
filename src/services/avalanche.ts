@@ -3,14 +3,14 @@ import { TxRecord } from '../types';
 
 export const AVALANCHE_FUJI_CONFIG = {
   chainId: '0xa869', // 43113
-  chainName: 'Avalanche Fuji Testnet',
+  chainName: 'AuraHealth Verification Ledger',
   nativeCurrency: {
-    name: 'Avalanche',
+    name: 'Care Credits',
     symbol: 'AVAX',
     decimals: 18,
   },
   rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc'],
-  blockExplorerUrls: ['https://subnets-test.avax.network/c-chain'],
+  blockExplorerUrls: ['https://explorer.aurahealth.io'],
 };
 
 export const CONTRACT_ADDRESSES = {
@@ -32,12 +32,12 @@ export const SANDBOX_WALLET: WalletState = {
   isConnected: true,
   address: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
   shortAddress: '0x71C7...976F',
-  avaxBalance: '4.85 AVAX',
-  networkName: 'Avalanche Fuji C-Chain (43113)',
+  avaxBalance: '4.85 Care Credits',
+  networkName: 'AuraHealth Verification Ledger',
   isSandbox: true,
 };
 
-// Helper to generate realistic Avalanche Tx
+// Helper to generate realistic Verification Tx
 export function createAvalancheTxRecord(
   contractName: string,
   method: string,
@@ -60,9 +60,9 @@ export function createAvalancheTxRecord(
     method,
     status: 'Confirmed',
     gasUsed: gas.toLocaleString(),
-    nAvaxFee: (gas * 0.000000025).toFixed(5) + ' AVAX',
+    nAvaxFee: (gas * 0.000000025).toFixed(5) + ' Credits',
     eventEmitted,
-    explorersUrl: `${AVALANCHE_FUJI_CONFIG.blockExplorerUrls[0]}/tx/${hash}`,
+    explorersUrl: `#tx-${hash}`,
   };
 }
 
@@ -75,14 +75,14 @@ export async function connectWeb3Wallet(): Promise<WalletState> {
       if (accounts && accounts.length > 0) {
         const address = accounts[0];
         const balance = await provider.getBalance(address);
-        const formattedBalance = parseFloat(ethers.formatEther(balance)).toFixed(3) + ' AVAX';
+        const formattedBalance = parseFloat(ethers.formatEther(balance)).toFixed(3) + ' Care Credits';
 
         return {
           isConnected: true,
           address,
           shortAddress: `${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
           avaxBalance: formattedBalance,
-          networkName: 'Avalanche C-Chain',
+          networkName: 'AuraHealth Verification Ledger',
           isSandbox: false,
         };
       }

@@ -52,7 +52,7 @@ export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onWinPrize, 
           </div>
           <h2 className="text-3xl font-black text-white">Adherence Wheel of Health</h2>
           <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-            Spin daily after reporting health check-ins to win Health Cowries, Companion XP boosts, and Avalanche raffle tickets!
+            Spin daily after reporting health check-ins to win Health Cowries, Companion XP boosts, and wellness raffle passes!
           </p>
         </div>
 

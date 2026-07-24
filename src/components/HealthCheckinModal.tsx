@@ -72,7 +72,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
       console.warn('Backend API connection standard fallback used:', err);
     }
 
-    setAiStatus('Hashing cryptographic attestation proof on Avalanche C-Chain...');
+    setAiStatus('Hashing cryptographic attestation proof on secure ledger...');
     await new Promise((r) => setTimeout(r, 1000));
 
     const proofString = `${waterOz}-${sleepHours}-${medicationTaken}-${moodRating}-${activityMinutes}-${Date.now()}`;
@@ -132,7 +132,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
           <div>
             <h3 className="text-xl font-black text-white">Daily Health Check-In</h3>
             <p className="text-xs text-slate-400">
-              Low-friction health reporting with cryptographic proof on Avalanche
+              Low-friction health reporting with verifiable cryptographic proof
             </p>
           </div>
         </div>
@@ -295,11 +295,11 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" /> Verifying On Avalanche...
+                <Loader2 className="w-5 h-5 animate-spin" /> Verifying Attestation...
               </>
             ) : (
               <>
-                <Sparkles className="w-5 h-5" /> Submit & Mint Adherence Proof (+120 🐚)
+                <Sparkles className="w-5 h-5" /> Submit & Record Adherence Proof (+120 🐚)
               </>
             )}
           </button>

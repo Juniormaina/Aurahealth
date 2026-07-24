@@ -10,7 +10,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
   const [messages, setMessages] = useState<Array<{ sender: 'user' | 'astra'; text: string; time: string }>>([
     {
       sender: 'astra',
-      text: `Hello friend! I am Astra, your AI Health Companion on Avalanche! How are you feeling today? Ask me anything about your health routine, hydration goals, or streak rewards!`,
+      text: `Hello friend! I am Astra, your AI Health Companion! How are you feeling today? Ask me anything about your health routine, hydration goals, or streak rewards!`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -54,7 +54,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
         ...prev,
         {
           sender: 'astra',
-          text: `Astra: "Keep your momentum going! Every check-in boosts our health and unlocks sponsor rewards on Avalanche!"`,
+          text: `Astra: "Keep your momentum going! Every check-in boosts our health and unlocks sponsor rewards!"`,
           time,
         },
       ]);

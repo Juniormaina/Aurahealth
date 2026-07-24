@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Navbar } from './components/Navbar';
+import { LandingPage } from './components/LandingPage';
 import { CompanionAvatar } from './components/CompanionAvatar';
 import { FeedbackDashboard } from './components/FeedbackDashboard';
 import { CommunitySponsorPools } from './components/CommunitySponsorPools';
@@ -35,8 +36,13 @@ import {
 } from './services/avalanche';
 
 import confetti from 'canvas-confetti';
+import { Sparkles, Play, ArrowRight, Compass, ShieldCheck } from 'lucide-react';
 
 export default function App() {
+  const [isLanding, setIsLanding] = useState<boolean>(true);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
+  const [userAccount, setUserAccount] = useState<{ name: string; email: string; isGoogle: boolean } | null>(null);
+
   const [wallet, setWallet] = useState<WalletState>(SANDBOX_WALLET);
   const [activeTab, setActiveTab] = useState<string>('companion');
 
@@ -64,10 +70,34 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const handleGoogleSignIn = (email: string, name: string) => {
+    setUserAccount({ name, email, isGoogle: true });
+    setIsLanding(false);
+    setIsDemoMode(false);
+    setStats((prev) => ({ ...prev, cowriesBalance: prev.cowriesBalance + 200 }));
+    showToast(`Welcome ${name}! +200 Welcome Cowries added to your profile.`);
+    confetti({
+      particleCount: 90,
+      spread: 80,
+      origin: { y: 0.6 },
+      colors: ['#e11d48', '#38bdf8', '#10b981', '#fbbf24'],
+    });
+  };
+
+  const handleStartDemo = () => {
+    setIsLanding(false);
+    setIsDemoMode(true);
+    showToast('Guided Demo Mode active! Explore Astra Companion, Check-ins & Sponsor Grants.');
+  };
+
+  const handleBackToLanding = () => {
+    setIsLanding(true);
+  };
+
   const handleConnectWallet = async () => {
     const w = await connectWeb3Wallet();
     setWallet(w);
-    showToast(`Connected to Avalanche Wallet: ${w.shortAddress}`);
+    showToast(`Connected Health Ledger Account: ${w.shortAddress}`);
   };
 
   // Feed companion action
@@ -138,7 +168,7 @@ export default function App() {
     );
     setTxLogs((prev) => [tx, ...prev]);
 
-    showToast(`Adherence record verified on Avalanche! +${newCheckIn.cowriesEarned} 🐚 Cowries & +${newCheckIn.xpEarned} XP!`);
+    showToast(`Adherence record verified! +${newCheckIn.cowriesEarned} 🐚 Cowries & +${newCheckIn.xpEarned} XP!`);
   };
 
   // Win Spin Wheel Prize
@@ -186,6 +216,15 @@ export default function App() {
     showToast(`New Sponsor Grant Pool Created: ${newPool.title}`);
   };
 
+  if (isLanding) {
+    return (
+      <LandingPage
+        onGoogleSignIn={handleGoogleSignIn}
+        onStartDemo={handleStartDemo}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-rose-500 selection:text-white">
       {/* Top Navbar */}
@@ -196,7 +235,30 @@ export default function App() {
         setActiveTab={setActiveTab}
         onConnectWallet={handleConnectWallet}
         onOpenCheckin={() => setIsCheckinModalOpen(true)}
+        userAccount={userAccount}
+        isDemoMode={isDemoMode}
+        onBackToLanding={handleBackToLanding}
       />
+
+      {/* Guided Tour Banner when in Demo Mode */}
+      {isDemoMode && (
+        <div className="bg-gradient-to-r from-amber-950/80 via-slate-900 to-rose-950/80 border-b border-amber-500/30 py-2.5 px-4">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2 text-amber-200">
+              <Compass className="w-4 h-4 text-amber-400 shrink-0 animate-spin" style={{ animationDuration: '8s' }} />
+              <span>
+                <strong>Guided Demo Walkthrough Active:</strong> Click <strong>+ Daily Check-In</strong> above to test AI attestation, feed <strong>Astra</strong>, or explore <strong>Sponsor Pools</strong>.
+              </span>
+            </div>
+            <button
+              onClick={handleBackToLanding}
+              className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold px-3 py-1 rounded-lg border border-amber-500/40 text-[11px] whitespace-nowrap transition-colors"
+            >
+              Sign In with Google
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Notification Toast */}
       {toastMessage && (
@@ -272,16 +334,24 @@ export default function App() {
       {/* Footer */}
       <footer className="bg-slate-900 border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div>
-            <strong className="text-slate-300">AvaHealth Quest No. 05</strong> • Health & Community Adherence Platform on Avalanche
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleBackToLanding}
+              className="text-slate-400 hover:text-slate-200 underline text-xs"
+            >
+              Back to Landing
+            </button>
+            <span>•</span>
+            <strong className="text-slate-300">AuraHealth MVP</strong> • Daily Wellness & Community Health Adherence Platform
           </div>
           <div className="flex items-center gap-4 text-[11px] text-slate-400">
-            <span>Avalanche Fuji C-Chain ID: 43113</span>
+            <span>Verifiable Health Ledger</span>
             <span>•</span>
-            <span>Jiwe IO Hybrid Economy</span>
+            <span>Sustainable Reward Economy</span>
           </div>
         </div>
       </footer>
     </div>
   );
 }
+
