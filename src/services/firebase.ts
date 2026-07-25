@@ -7,6 +7,9 @@ import {
   getRedirectResult,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
   User
 } from 'firebase/auth';
 import {
@@ -30,9 +33,9 @@ const firebaseConfig = {
   projectId: "fine-scheduler-3t3g1",
   appId: "1:345048568587:web:ba1e7a2156a9358f31480e",
   apiKey: "AIzaSyDfKBPKhZROmG-zcRammPR5JihSr_1jGrs",
-authDomain: "fine-scheduler-3t3g1.firebaseapp.com",
-firestoreDatabaseId: "ai-studio-aurahealthdailyw-dba03373-0875-43ec-bb60-7fa3fc89dff3",
-storageBucket: "fine-scheduler-3t3g1.firebasestorage.app",
+  authDomain: "fine-scheduler-3t3g1.firebaseapp.com",
+  firestoreDatabaseId: "ai-studio-aurahealthdailyw-dba03373-0875-43ec-bb60-7fa3fc89dff3",
+  storageBucket: "fine-scheduler-3t3g1.firebasestorage.app",
   messagingSenderId: "345048568587",
 };
 
@@ -72,6 +75,25 @@ export async function checkRedirectResult(): Promise<User | null> {
     console.error('Error handling redirect result:', error);
     return null;
   }
+}
+
+/**
+ * Sign in with Email and Password using Firebase Auth.
+ */
+export async function signInWithEmail(email: string, pass: string): Promise<User> {
+  const result = await signInWithEmailAndPassword(auth, email, pass);
+  return result.user;
+}
+
+/**
+ * Sign up with Email and Password using Firebase Auth.
+ */
+export async function signUpWithEmail(email: string, pass: string, name?: string): Promise<User> {
+  const result = await createUserWithEmailAndPassword(auth, email, pass);
+  if (name && result.user) {
+    await updateProfile(result.user, { displayName: name });
+  }
+  return result.user;
 }
 
 export async function logoutUser(): Promise<void> {

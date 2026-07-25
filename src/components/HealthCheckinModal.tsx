@@ -30,8 +30,25 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
   const [aiStatus, setAiStatus] = useState<string>('');
   const [isWearablesModalOpen, setIsWearablesModalOpen] = useState<boolean>(false);
   const [isWearablesSynced, setIsWearablesSynced] = useState<boolean>(false);
+  const { isFetching: isHealthFetching, syncHealthData } = useHealthData();
+  const [activeHealthSource, setActiveHealthSource] = useState<HealthSource>('apple_health');
 
   if (!isOpen) return null;
+
+  const handleFetchExternalHealthData = async (source: HealthSource) => {
+    setActiveHealthSource(source);
+    const metrics = await syncHealthData(source);
+    if (metrics) {
+      setSleepHours(metrics.sleepDurationHours);
+      setWaterOz(metrics.waterOz);
+      setActivityMinutes(metrics.activeMinutes);
+      setIsWearablesSynced(true);
+      setNotes(`[Fetched via ${metrics.providerName} at ${metrics.fetchedAt}] Step Count: ${metrics.stepCount.toLocaleString()} steps | Sleep: ${metrics.sleepDurationHours} hrs | Heart Rate: ${metrics.heartRateBpm} bpm.`);
+      if (onShowToast) {
+        onShowToast(`Synced with ${metrics.providerName}! Updated steps (${metrics.stepCount.toLocaleString()}) & sleep (${metrics.sleepDurationHours} hrs).`);
+      }
+    }
+  };
 
   const handleApplyWearablesData = (data: SyncedBiometrics) => {
     setWaterOz(data.waterOz);
@@ -152,37 +169,70 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Wearables / Google Fit Auto-Sync Banner */}
-          <div className="bg-gradient-to-r from-cyan-950/80 via-slate-900 to-indigo-950/80 p-3.5 rounded-xl border border-cyan-500/30 flex items-center justify-between gap-3 shadow-md">
+          {/* Wearables & Health Data Sync Banner */}
+          <div className="bg-gradient-to-r from-cyan-950/80 via-slate-900 to-indigo-950/80 p-3.5 rounded-xl border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-300">
-                <Watch className="w-4 h-4" />
+              <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-300 shrink-0">
+                <Smartphone className="w-4 h-4 text-cyan-400" />
               </div>
               <div>
                 <div className="text-xs font-black text-white flex items-center gap-1.5">
-                  <span>Wearables & Health API Sync</span>
+                  <span>Apple Health & Google Fit Sync</span>
                   {isWearablesSynced && (
-                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.2 rounded-full font-bold">
+                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-500/30">
                       Synced ✓
                     </span>
                   )}
                 </div>
                 <p className="text-[11px] text-slate-300">
                   {isWearablesSynced
-                    ? 'Biometrics auto-filled from connected smartwatch sensor telemetry'
-                    : 'Auto-fill water, sleep, & activity from Google Fit / Apple Health'}
+                    ? 'Step count and sleep duration auto-populated from health provider'
+                    : 'Auto-fetch step count & sleep duration from health integrations'}
                 </p>
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsWearablesModalOpen(true)}
-              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs px-3 py-2 rounded-lg transition-all shadow-sm flex items-center gap-1 shrink-0 hover:scale-105 active:scale-95"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>{isWearablesSynced ? 'Re-Sync' : 'Sync Wearable'}</span>
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+              <button
+                type="button"
+                disabled={isHealthFetching}
+                onClick={() => handleFetchExternalHealthData('apple_health')}
+                className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-lg border border-slate-700 transition-all flex items-center gap-1"
+                title="Fetch daily steps & sleep from Apple Health"
+              >
+                {isHealthFetching && activeHealthSource === 'apple_health' ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                ) : (
+                  <Smartphone className="w-3.5 h-3.5 text-rose-400" />
+                )}
+                <span>Apple Health</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isHealthFetching}
+                onClick={() => handleFetchExternalHealthData('google_fit')}
+                className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-lg border border-slate-700 transition-all flex items-center gap-1"
+                title="Fetch daily steps & sleep from Google Fit"
+              >
+                {isHealthFetching && activeHealthSource === 'google_fit' ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                ) : (
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                )}
+                <span>Google Fit</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsWearablesModalOpen(true)}
+                className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-[11px] px-2.5 py-1.5 rounded-lg transition-all shadow-sm flex items-center gap-1"
+                title="Open detailed Wearable Hardware Sensor Hub"
+              >
+                <Watch className="w-3.5 h-3.5" />
+                <span>More</span>
+              </button>
+            </div>
           </div>
 
           {/* Hydration Slider */}

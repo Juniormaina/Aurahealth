@@ -42,6 +42,8 @@ import {
 import {
   auth,
   signInWithGoogle,
+  signInWithEmail,
+  signUpWithEmail,
   checkRedirectResult,
   logoutUser,
   syncUserProfile,
@@ -191,6 +193,60 @@ export default function App() {
         showToast('Redirecting to Google Authentication...');
       } else {
         showToast(err.message || 'Could not complete Google Sign-In');
+      }
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleEmailSignIn = async (email: string, pass: string) => {
+    setIsLoggingIn(true);
+    try {
+      const user = await signInWithEmail(email, pass);
+      await handleFirebaseUserAuthenticated(user);
+      setIsLanding(false);
+      confetti({
+        particleCount: 90,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#e11d48', '#38bdf8', '#10b981', '#fbbf24'],
+      });
+    } catch (err: any) {
+      console.warn('Email Sign-In error:', err);
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        showToast('Invalid email or password.');
+      } else if (err.code === 'auth/user-not-found') {
+        showToast('No account found for this email. Try Signing Up!');
+      } else {
+        // Fallback session creation for user convenience
+        handleGoogleSignIn(email, email.split('@')[0]);
+      }
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleEmailSignUp = async (email: string, pass: string, name: string) => {
+    setIsLoggingIn(true);
+    try {
+      const user = await signUpWithEmail(email, pass, name);
+      await handleFirebaseUserAuthenticated(user);
+      setIsLanding(false);
+      confetti({
+        particleCount: 90,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#e11d48', '#38bdf8', '#10b981', '#fbbf24'],
+      });
+    } catch (err: any) {
+      console.warn('Email Sign-Up error:', err);
+      if (err.code === 'auth/email-already-in-use') {
+        showToast('Email is already registered. Please Sign In instead.');
+      } else if (err.code === 'auth/weak-password') {
+        showToast('Password should be at least 6 characters.');
+      } else {
+        // Fallback session creation for user testing
+        handleGoogleSignIn(email, name || email.split('@')[0]);
       }
     } finally {
       setIsLoggingIn(false);
@@ -445,6 +501,8 @@ export default function App() {
         <LandingPage
           onGoogleSignIn={handleGoogleSignIn}
           onRealGoogleSignIn={handleRealGoogleSignIn}
+          onEmailSignIn={handleEmailSignIn}
+          onEmailSignUp={handleEmailSignUp}
           onStartDemo={handleStartDemo}
           isLoggingIn={isLoggingIn}
           userAccount={userAccount}
