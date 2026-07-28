@@ -3,21 +3,75 @@ import { TxRecord } from '../types';
 
 export const AVALANCHE_FUJI_CONFIG = {
   chainId: '0xa869', // 43113
-  chainName: 'AuraHealth Verification Ledger',
+  chainName: 'Avalanche Fuji Testnet',
   nativeCurrency: {
-    name: 'Care Credits',
+    name: 'AVAX',
     symbol: 'AVAX',
     decimals: 18,
   },
   rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc'],
-  blockExplorerUrls: ['https://explorer.aurahealth.io'],
+  blockExplorerUrls: ['https://avalanche.testnet.routescan.io'],
 };
 
+export const EXPLORER_BASE = AVALANCHE_FUJI_CONFIG.blockExplorerUrls[0];
+
+// Live, verified contracts deployed to Avalanche Fuji (see /deployments.json
+// and README.md — "On-Chain Deployment"). These are the real gamification
+// mechanics behind the app: a points ledger, badges, streaks, tiers, and a
+// budget-capped reward token.
 export const CONTRACT_ADDRESSES = {
-  ProofOfAdherence: '0x3F91a823f991129bF013098C21a9952085A651d9',
-  HealthCompanionNFT: '0x789C1a082fB2019c018240992a019e09919102A1',
-  RewardSponsorPool: '0x9911BcAfE019931089240177265920042a9B109A',
+  LoyaltyPoints: '0x337769E522647D1541Acc8F20381d9a43B75d4bD',
+  AchievementBadges: '0x159Bc84b1B693A6235d8C6EE46eC7c5AF120926e',
+  StreakTracker: '0xC926fb9344D6C0C7BC3F22549850a847cb0C0b92',
+  TierSystem: '0x52bEc6D4aA6DFA6a2A8c9ffDc15b63C68122cc46',
+  IncentiveToken: '0x4B446a6f8de7F58951c74Aaa6c98D0666f165FfE',
 };
+
+const STREAK_TRACKER_ABI = [
+  'function checkIn() external',
+  'function streakOf(address user) external view returns (uint32 current, uint32 longest, uint64 lastCheckIn)',
+];
+
+const LOYALTY_POINTS_ABI = [
+  'function pointsOf(address customer) external view returns (uint256)',
+  'function outstandingLiability() external view returns (uint256)',
+];
+
+const TIER_SYSTEM_ABI = [
+  'function tierOf(address customer) external view returns (uint8)',
+  'function tierNameOf(address customer) external view returns (string)',
+];
+
+const INCENTIVE_TOKEN_ABI = [
+  'function totalSupply() external view returns (uint256)',
+  'function totalEmitted() external view returns (uint256)',
+  'function remainingBudget() external view returns (uint256)',
+];
+
+const ACHIEVEMENT_BADGES_ABI = [
+  'function badgeCount() external view returns (uint256)',
+  'function earned(address customer, uint256 badgeId) external view returns (bool)',
+];
+
+let readProvider: ethers.JsonRpcProvider | null = null;
+function getReadProvider(): ethers.JsonRpcProvider {
+  if (!readProvider) {
+    readProvider = new ethers.JsonRpcProvider(AVALANCHE_FUJI_CONFIG.rpcUrls[0]);
+  }
+  return readProvider;
+}
+
+/** Read-only contract handles, safe to call without a connected wallet. */
+export function getReadOnlyContracts() {
+  const provider = getReadProvider();
+  return {
+    loyaltyPoints: new ethers.Contract(CONTRACT_ADDRESSES.LoyaltyPoints, LOYALTY_POINTS_ABI, provider),
+    streakTracker: new ethers.Contract(CONTRACT_ADDRESSES.StreakTracker, STREAK_TRACKER_ABI, provider),
+    tierSystem: new ethers.Contract(CONTRACT_ADDRESSES.TierSystem, TIER_SYSTEM_ABI, provider),
+    incentiveToken: new ethers.Contract(CONTRACT_ADDRESSES.IncentiveToken, INCENTIVE_TOKEN_ABI, provider),
+    achievementBadges: new ethers.Contract(CONTRACT_ADDRESSES.AchievementBadges, ACHIEVEMENT_BADGES_ABI, provider),
+  };
+}
 
 export interface WalletState {
   isConnected: boolean;
@@ -37,7 +91,9 @@ export const SANDBOX_WALLET: WalletState = {
   isSandbox: true,
 };
 
-// Helper to generate realistic Verification Tx
+// Helper to generate a simulated Verification Tx (used when no real wallet is
+// connected, or for product-economy actions like the reward wheel/sponsor
+// pools that have no on-chain counterpart among the deployed contracts).
 export function createAvalancheTxRecord(
   contractName: string,
   method: string,
@@ -47,7 +103,7 @@ export function createAvalancheTxRecord(
   const randomHex = () => Math.floor(Math.random() * 16).toString(16);
   const hash = '0x' + Array.from({ length: 64 }, randomHex).join('');
   const blockNumber = 38910000 + Math.floor(Math.random() * 500);
-  const contractAddr = CONTRACT_ADDRESSES[contractName as keyof typeof CONTRACT_ADDRESSES] || CONTRACT_ADDRESSES.ProofOfAdherence;
+  const contractAddr = CONTRACT_ADDRESSES[contractName as keyof typeof CONTRACT_ADDRESSES] || CONTRACT_ADDRESSES.LoyaltyPoints;
   const gas = Math.floor(28000 + Math.random() * 15000);
 
   return {
@@ -64,6 +120,47 @@ export function createAvalancheTxRecord(
     eventEmitted,
     explorersUrl: `#tx-${hash}`,
   };
+}
+
+/**
+ * Performs a REAL on-chain daily check-in against StreakTracker.checkIn()
+ * using the user's connected wallet. Returns null (never throws) if there is
+ * no injected wallet, the user is on the sandbox wallet, or the call reverts
+ * (e.g. "Already checked in today" — StreakTracker enforces a real 24h/48h
+ * window per address on-chain) — callers should fall back to a simulated
+ * record in that case so the product flow never blocks on-chain friction.
+ */
+export async function checkInOnChain(): Promise<TxRecord | null> {
+  if (typeof window === 'undefined' || !(window as any).ethereum) return null;
+
+  try {
+    const provider = new ethers.BrowserProvider((window as any).ethereum);
+    const network = await provider.getNetwork();
+    if (Number(network.chainId) !== 43113) return null; // not on Fuji — skip real tx
+
+    const signer = await provider.getSigner();
+    const streaks = new ethers.Contract(CONTRACT_ADDRESSES.StreakTracker, STREAK_TRACKER_ABI, signer);
+    const tx = await streaks.checkIn();
+    const receipt = await tx.wait();
+
+    return {
+      hash: receipt.hash,
+      blockNumber: receipt.blockNumber,
+      timestamp: new Date().toLocaleString(),
+      from: await signer.getAddress(),
+      to: CONTRACT_ADDRESSES.StreakTracker,
+      contractName: 'StreakTracker.sol',
+      method: 'checkIn',
+      status: 'Confirmed',
+      gasUsed: receipt.gasUsed.toString(),
+      nAvaxFee: ethers.formatEther(receipt.gasUsed * (receipt.gasPrice ?? 0n)) + ' AVAX',
+      eventEmitted: 'CheckedIn',
+      explorersUrl: `${EXPLORER_BASE}/tx/${receipt.hash}`,
+    };
+  } catch (e) {
+    console.warn('On-chain check-in unavailable, using simulated record:', e);
+    return null;
+  }
 }
 
 // Check or connect Web3 Wallet (Core Wallet or MetaMask)

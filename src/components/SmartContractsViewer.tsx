@@ -1,50 +1,67 @@
-import React, { useState } from 'react';
-import { PROOF_OF_ADHERENCE_SOL, HEALTH_COMPANION_NFT_SOL, REWARD_SPONSOR_POOL_SOL } from '../contracts/SolidityCode';
-import { CONTRACT_ADDRESSES, AVALANCHE_FUJI_CONFIG } from '../services/avalanche';
+import React, { useEffect, useState } from 'react';
+import LoyaltyPointsSource from '../contracts/LoyaltyPoints.sol?raw';
+import AchievementBadgesSource from '../contracts/AchievementBadges.sol?raw';
+import StreakTrackerSource from '../contracts/StreakTracker.sol?raw';
+import TierSystemSource from '../contracts/TierSystem.sol?raw';
+import IncentiveTokenSource from '../contracts/IncentiveToken.sol?raw';
+import { CONTRACT_ADDRESSES, AVALANCHE_FUJI_CONFIG, EXPLORER_BASE, getReadOnlyContracts } from '../services/avalanche';
 import { TxRecord } from '../types';
-import { Cpu, ExternalLink, Copy, Check, Terminal, ShieldCheck, Play, Layers } from 'lucide-react';
+import { Cpu, ExternalLink, Copy, Check, ShieldCheck, Layers, RefreshCw } from 'lucide-react';
 
 interface SmartContractsViewerProps {
   txLogs: TxRecord[];
 }
 
-export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLogs }) => {
-  const [selectedContract, setSelectedContract] = useState<'ProofOfAdherence' | 'HealthCompanionNFT' | 'RewardSponsorPool'>('ProofOfAdherence');
-  const [copied, setCopied] = useState(false);
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [terminalOutput, setTerminalOutput] = useState<string[]>([
-    'AuraHealth Verification Engine Ready (ChainID: 43113)',
-    'ProofOfAdherence.sol deployed at ' + CONTRACT_ADDRESSES.ProofOfAdherence,
-    'HealthCompanionNFT.sol deployed at ' + CONTRACT_ADDRESSES.HealthCompanionNFT,
-    'RewardSponsorPool.sol deployed at ' + CONTRACT_ADDRESSES.RewardSponsorPool,
-  ]);
+type ContractName = keyof typeof CONTRACT_ADDRESSES;
 
-  const contractCodes = {
-    ProofOfAdherence: PROOF_OF_ADHERENCE_SOL,
-    HealthCompanionNFT: HEALTH_COMPANION_NFT_SOL,
-    RewardSponsorPool: REWARD_SPONSOR_POOL_SOL,
+const CONTRACT_SOURCES: Record<ContractName, string> = {
+  LoyaltyPoints: LoyaltyPointsSource,
+  AchievementBadges: AchievementBadgesSource,
+  StreakTracker: StreakTrackerSource,
+  TierSystem: TierSystemSource,
+  IncentiveToken: IncentiveTokenSource,
+};
+
+const CONTRACT_NAMES = Object.keys(CONTRACT_ADDRESSES) as ContractName[];
+
+export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLogs }) => {
+  const [selectedContract, setSelectedContract] = useState<ContractName>('LoyaltyPoints');
+  const [copied, setCopied] = useState(false);
+  const [liveStats, setLiveStats] = useState<{ label: string; value: string }[] | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+
+  const loadLiveStats = async () => {
+    setIsLoadingStats(true);
+    try {
+      const { loyaltyPoints, achievementBadges, incentiveToken } = getReadOnlyContracts();
+      const [outstanding, badgeCount, totalSupply, remainingBudget] = await Promise.all([
+        loyaltyPoints.outstandingLiability(),
+        achievementBadges.badgeCount(),
+        incentiveToken.totalSupply(),
+        incentiveToken.remainingBudget(),
+      ]);
+      setLiveStats([
+        { label: 'LoyaltyPoints outstanding liability', value: outstanding.toString() },
+        { label: 'AchievementBadges badge types defined', value: badgeCount.toString() },
+        { label: 'IncentiveToken totalSupply (wei)', value: totalSupply.toString() },
+        { label: 'IncentiveToken remaining budget (wei)', value: remainingBudget.toString() },
+      ]);
+    } catch (e) {
+      console.warn('Live on-chain read failed:', e);
+      setLiveStats(null);
+    } finally {
+      setIsLoadingStats(false);
+    }
   };
+
+  useEffect(() => {
+    loadLiveStats();
+  }, []);
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(contractCodes[selectedContract]);
+    navigator.clipboard.writeText(CONTRACT_SOURCES[selectedContract]);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleSimulateDeploy = () => {
-    setIsSimulating(true);
-    setTerminalOutput((prev) => [...prev, `> Compiling ${selectedContract}.sol with solc 0.8.20...`]);
-
-    setTimeout(() => {
-      setTerminalOutput((prev) => [
-        ...prev,
-        `> Optimization enabled (200 runs). Bytecode size: 4,120 bytes.`,
-        `> Broadcasting deployment tx to AuraHealth Verification Node...`,
-        `> Tx Confirmed in Block #38910${Math.floor(Math.random() * 900 + 100)}! Gas used: 41,090 Credits`,
-        `> Contract verified on AuraHealth Ledger Explorer!`,
-      ]);
-      setIsSimulating(false);
-    }, 1500);
   };
 
   return (
@@ -57,33 +74,42 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-black text-white">Health Pass Security Ledger & Protocol</h2>
+              <h2 className="text-2xl font-black text-white">On-Chain Gamification Contracts</h2>
               <span className="bg-emerald-500/20 text-emerald-300 font-bold text-[10px] px-2.5 py-0.5 rounded-full border border-emerald-500/30">
-                Secure Verification
+                Live on {AVALANCHE_FUJI_CONFIG.chainName}
               </span>
             </div>
             <p className="text-xs text-slate-300 mt-1">
-              Tamper-proof, zero-gas security rules guaranteeing the validity of your Digital Health Pass and reward redemptions.
+              Deployed and verified on Avalanche Fuji testnet (chain ID 43113). Source, address, and
+              live state are all real — pulled straight from the chain, not simulated.
             </p>
           </div>
         </div>
 
         {/* Contract Address Pills */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
-          {Object.entries(CONTRACT_ADDRESSES).map(([name, addr]) => (
-            <div key={name} className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs">
-              <div className="text-[10px] text-slate-400 font-semibold">{name}.sol</div>
-              <div className="font-mono text-cyan-300 font-bold truncate mt-0.5">{addr}</div>
-            </div>
+          {CONTRACT_NAMES.map((name) => (
+            <a
+              key={name}
+              href={`${EXPLORER_BASE}/address/${CONTRACT_ADDRESSES[name]}#code`}
+              target="_blank"
+              rel="noreferrer"
+              className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs hover:border-cyan-500/50 transition-colors"
+            >
+              <div className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                {name}.sol <ExternalLink className="w-2.5 h-2.5" />
+              </div>
+              <div className="font-mono text-cyan-300 font-bold truncate mt-0.5">{CONTRACT_ADDRESSES[name]}</div>
+            </a>
           ))}
         </div>
       </div>
 
-      {/* Code Viewer & Compiler Section */}
+      {/* Code Viewer Section */}
       <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            {(['ProofOfAdherence', 'HealthCompanionNFT', 'RewardSponsorPool'] as const).map((name) => (
+          <div className="flex items-center gap-2 flex-wrap">
+            {CONTRACT_NAMES.map((name) => (
               <button
                 key={name}
                 onClick={() => setSelectedContract(name)}
@@ -106,33 +132,49 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? 'Copied' : 'Copy Code'}
             </button>
-            <button
-              onClick={handleSimulateDeploy}
-              disabled={isSimulating}
+            <a
+              href={`${EXPLORER_BASE}/address/${CONTRACT_ADDRESSES[selectedContract]}#code`}
+              target="_blank"
+              rel="noreferrer"
               className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg flex items-center gap-1.5"
             >
-              <Play className="w-3.5 h-3.5" /> Re-Verify Contract
-            </button>
+              <ExternalLink className="w-3.5 h-3.5" /> View Verified Source
+            </a>
           </div>
         </div>
 
         {/* Code Viewbox */}
         <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 font-mono text-xs text-slate-300 overflow-x-auto max-h-96 leading-relaxed">
-          <pre>{contractCodes[selectedContract]}</pre>
+          <pre>{CONTRACT_SOURCES[selectedContract]}</pre>
         </div>
 
-        {/* Terminal Compilation Console */}
+        {/* Live On-Chain Reads */}
         <div className="bg-slate-950 rounded-xl p-4 border border-slate-800/80 font-mono text-[11px] text-emerald-400 space-y-1">
-          <div className="text-slate-500 font-bold mb-1 flex items-center gap-1.5">
-            <Terminal className="w-3.5 h-3.5 text-slate-400" /> AuraHealth Protocol Compiler Console
+          <div className="text-slate-500 font-bold mb-1 flex items-center justify-between gap-1.5">
+            <span className="flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-slate-400" /> Live On-Chain Reads (Fuji RPC)
+            </span>
+            <button
+              onClick={loadLiveStats}
+              disabled={isLoadingStats}
+              className="text-slate-400 hover:text-white flex items-center gap-1"
+            >
+              <RefreshCw className={`w-3 h-3 ${isLoadingStats ? 'animate-spin' : ''}`} /> Refresh
+            </button>
           </div>
-          {terminalOutput.map((line, idx) => (
-            <div key={idx}>{line}</div>
-          ))}
+          {liveStats ? (
+            liveStats.map((s) => (
+              <div key={s.label}>
+                {s.label}: <span className="text-cyan-300">{s.value}</span>
+              </div>
+            ))
+          ) : (
+            <div className="text-slate-500">{isLoadingStats ? 'Reading from chain…' : 'Unable to reach Fuji RPC.'}</div>
+          )}
         </div>
       </div>
 
-      {/* On-Chain Transaction Logs / Snowtrace Explorer Table */}
+      {/* On-Chain Transaction Logs / Explorer Table */}
       <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl space-y-4">
         <h3 className="text-lg font-black text-white flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-emerald-400" /> On-Chain Attestation & Transaction Log
@@ -147,7 +189,7 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
                 <th className="p-3">Contract / Method</th>
                 <th className="p-3">Gas Fee</th>
                 <th className="p-3">Status</th>
-                <th className="p-3">Snowtrace Link</th>
+                <th className="p-3">Explorer Link</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">

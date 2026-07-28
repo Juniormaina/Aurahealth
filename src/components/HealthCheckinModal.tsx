@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Sparkles, CheckCircle2, ShieldCheck, Camera, Loader2, Heart, Droplets, Moon, Pill, Activity, Smile, Watch, RefreshCw, Smartphone, Zap } from 'lucide-react';
 import { HealthCheckIn } from '../types';
-import { computeKeccakProof, createAvalancheTxRecord } from '../services/avalanche';
+import { computeKeccakProof, createAvalancheTxRecord, checkInOnChain, WalletState } from '../services/avalanche';
 import { WearablesSyncModal, SyncedBiometrics } from './WearablesSyncModal';
 import { useHealthData, HealthSource } from '../services/healthDataService';
 import confetti from 'canvas-confetti';
@@ -11,6 +11,7 @@ interface HealthCheckinModalProps {
   onClose: () => void;
   onSuccess: (newCheckIn: HealthCheckIn) => void;
   onShowToast?: (msg: string) => void;
+  wallet?: WalletState;
 }
 
 export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
@@ -18,6 +19,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
   onClose,
   onSuccess,
   onShowToast,
+  wallet,
 }) => {
   const [waterOz, setWaterOz] = useState<number>(64);
   const [sleepHours, setSleepHours] = useState<number>(7.5);
@@ -103,12 +105,22 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
       console.warn('Backend API connection standard fallback used:', err);
     }
 
-    setAiStatus('Hashing cryptographic attestation proof on secure ledger...');
-    await new Promise((r) => setTimeout(r, 1000));
-
     const proofString = `${waterOz}-${sleepHours}-${medicationTaken}-${moodRating}-${activityMinutes}-${Date.now()}`;
     const proofHash = computeKeccakProof(proofString);
-    const tx = createAvalancheTxRecord('ProofOfAdherence.sol', 'recordCheckIn', `CheckInVerified(score:${aiAttestationScore})`);
+
+    let tx;
+    if (wallet && !wallet.isSandbox) {
+      setAiStatus('Broadcasting checkIn() to StreakTracker on Avalanche Fuji...');
+      tx = await checkInOnChain();
+      if (tx && onShowToast) {
+        onShowToast(`On-chain check-in confirmed — tx ${tx.hash.slice(0, 10)}…`);
+      }
+    }
+    if (!tx) {
+      setAiStatus('Hashing cryptographic attestation proof on secure ledger...');
+      await new Promise((r) => setTimeout(r, 1000));
+      tx = createAvalancheTxRecord('ProofOfAdherence.sol', 'recordCheckIn', `CheckInVerified(score:${aiAttestationScore})`);
+    }
 
     const cowriesAwarded = medicationTaken ? 120 : 80;
     const xpAwarded = 150 + Math.floor(activityMinutes * 1.5);

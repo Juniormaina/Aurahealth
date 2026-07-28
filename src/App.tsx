@@ -686,6 +686,7 @@ export default function App() {
         onClose={() => setIsCheckinModalOpen(false)}
         onSuccess={handleCheckinSuccess}
         onShowToast={showToast}
+        wallet={wallet}
       />
 
       {/* Footer */}

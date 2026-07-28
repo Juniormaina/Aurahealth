@@ -6,3 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Hardhat
+artifacts/
+cache/
+typechain-types/

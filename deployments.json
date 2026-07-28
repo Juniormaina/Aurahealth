@@ -1,0 +1,35 @@
+{
+  "network": "fuji",
+  "chainId": 43113,
+  "issuer": "0x066d4646Ce97959fa45a933065946ED5A162E686",
+  "deployedAt": "2026-07-28T18:32:06.810Z",
+  "contracts": {
+    "LoyaltyPoints": {
+      "address": "0x337769E522647D1541Acc8F20381d9a43B75d4bD",
+      "args": []
+    },
+    "AchievementBadges": {
+      "address": "0x159Bc84b1B693A6235d8C6EE46eC7c5AF120926e",
+      "args": [
+        "0x337769E522647D1541Acc8F20381d9a43B75d4bD"
+      ]
+    },
+    "StreakTracker": {
+      "address": "0xC926fb9344D6C0C7BC3F22549850a847cb0C0b92",
+      "args": []
+    },
+    "TierSystem": {
+      "address": "0x52bEc6D4aA6DFA6a2A8c9ffDc15b63C68122cc46",
+      "args": [
+        "0x337769E522647D1541Acc8F20381d9a43B75d4bD"
+      ]
+    },
+    "IncentiveToken": {
+      "address": "0x4B446a6f8de7F58951c74Aaa6c98D0666f165FfE",
+      "args": [
+        "10000000000000000000000000"
+      ]
+    }
+  },
+  "emissionCap": "10000000000000000000000000"
+}
