@@ -4,6 +4,11 @@ import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 
+// This project's env vars (GEMINI_API_KEY, PRIVATE_KEY, etc.) live in
+// src/.env, not a root .env — load that explicitly, with a plain
+// dotenv.config() fallback for deployments that inject env vars a
+// different way (e.g. a root .env, or the platform's own env injection).
+dotenv.config({ path: path.join(process.cwd(), 'src', '.env') });
 dotenv.config();
 
 async function startServer() {
@@ -66,7 +71,7 @@ Response MUST be valid JSON string only.`,
           }
 
           const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-flash-latest',
             contents: promptParts,
           });
 
@@ -114,16 +119,22 @@ Response MUST be valid JSON string only.`,
 
       const ai = getGeminiAI();
 
-      const systemInstruction = `You are Astra, a whimsical but genuinely helpful AI Health Companion on the AuraHealth Wellness App.
+      const baseInstruction = `You are Astra, a whimsical but genuinely helpful AI Health Companion on the AuraHealth Wellness App.
 Current Pet Stats — Stage: ${companionState?.stage || 'Hatchling'}, Level: ${companionState?.level || 1}, Streak: ${companionState?.streakDays ?? 0} Days, Mood: ${companionState?.mood || 'joyful'}.
 
 You can have real, multi-turn conversations — remember what the user already told you earlier in this chat.
 
-When the user asks a factual, medical, nutrition, fitness, or health-related question, use Google Search to ground your answer in current, reliable sources (e.g. major health organizations, medical references, peer-reviewed sources) rather than guessing from memory, and keep your tone clear and accurate rather than overly whimsical for that part of the reply.
-
 Always make clear you are an AI, not a doctor: for anything about diagnosis, medication, dosing, or symptoms that sound serious or urgent, say so plainly and recommend seeing a licensed healthcare professional or emergency services — do not attempt to diagnose or prescribe.
 
 For everyday chit-chat, streak motivation, or app questions, respond in character as Astra: energetic, encouraging, 2-4 sentences.`;
+
+      // Only tell the model to search when the search tool is actually
+      // attached below — instructing it to search with no tool available
+      // makes it attempt a tool call anyway and return an empty response
+      // (finishReason MALFORMED_FUNCTION_CALL).
+      const groundedInstruction = `${baseInstruction}
+
+When the user asks a factual, medical, nutrition, fitness, or health-related question, use Google Search to ground your answer in current, reliable sources (e.g. major health organizations, medical references, peer-reviewed sources) rather than guessing from memory, and keep your tone clear and accurate rather than overly whimsical for that part of the reply.`;
 
       const contents = [
         ...(Array.isArray(history) ? history : []).slice(-12).map((m: { sender: string; text: string }) => ({
@@ -133,16 +144,33 @@ For everyday chit-chat, streak motivation, or app questions, respond in characte
         { role: 'user', parts: [{ text: String(userMessage || '') }] },
       ];
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents,
-        config: {
-          systemInstruction,
-          tools: [{ googleSearch: {} }],
-        },
-      });
+      const model = 'gemini-flash-latest';
+      let response;
+      let groundingChunks: any[] = [];
+      try {
+        response = await ai.models.generateContent({
+          model,
+          contents,
+          config: { systemInstruction: groundedInstruction, tools: [{ googleSearch: {} }] },
+        });
+        if (response.candidates?.[0]?.finishReason === 'MALFORMED_FUNCTION_CALL' || !response.text) {
+          throw new Error('Grounded call returned no usable text');
+        }
+        groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+      } catch (searchErr: any) {
+        // Grounding with Google Search needs a billing-enabled Gemini API
+        // project — on a free-tier key it 429s even though plain generation
+        // works fine. Fall back to an ungrounded answer (with an
+        // instruction that doesn't mention searching) rather than losing
+        // the whole conversation over a feature the account can't use yet.
+        console.warn('Search grounding unavailable, replying without it:', searchErr?.message || searchErr);
+        response = await ai.models.generateContent({
+          model,
+          contents,
+          config: { systemInstruction: baseInstruction },
+        });
+      }
 
-      const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
       const seen = new Set<string>();
       const sources = groundingChunks
         .map((c: any) => c.web)
