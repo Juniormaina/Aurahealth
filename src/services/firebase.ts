@@ -28,21 +28,20 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 
-// Configuration from firebase-applet-config.json
+// Standalone Firebase project (not tied to AI Studio's Starter Tier, which
+// blocked adding authorized domains). Uses the default Firestore database.
 const firebaseConfig = {
-  projectId: "fine-scheduler-3t3g1",
-  appId: "1:345048568587:web:ba1e7a2156a9358f31480e",
-  apiKey: "AIzaSyDfKBPKhZROmG-zcRammPR5JihSr_1jGrs",
-  authDomain: "fine-scheduler-3t3g1.firebaseapp.com",
-  firestoreDatabaseId: "ai-studio-aurahealthdailyw-dba03373-0875-43ec-bb60-7fa3fc89dff3",
-  storageBucket: "fine-scheduler-3t3g1.firebasestorage.app",
-  messagingSenderId: "345048568587",
+  apiKey: "AIzaSyD7JptGcJbWRAt44G3GCGj0zTZ-UwpF0W0",
+  authDomain: "aura-health-f478f.firebaseapp.com",
+  projectId: "aura-health-f478f",
+  storageBucket: "aura-health-f478f.firebasestorage.app",
+  messagingSenderId: "462623100241",
+  appId: "1:462623100241:web:9c7d142b97488d1f4b5770",
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Specify custom database ID if provided in config
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || '(default)');
+export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
@@ -98,6 +97,36 @@ export async function signUpWithEmail(email: string, pass: string, name?: string
 
 export async function logoutUser(): Promise<void> {
   await firebaseSignOut(auth);
+}
+
+/**
+ * Maps a Firebase Auth error to a message safe to show the user. Configuration
+ * errors (provider disabled, domain not authorized) are project-setup issues
+ * in the Firebase Console, not something the user can fix by retrying.
+ */
+export function getAuthErrorMessage(error: any): string {
+  switch (error?.code) {
+    case 'auth/operation-not-allowed':
+      return 'Email sign-in isn\'t enabled for this app yet. Please try Google Sign-In or Guest mode, or contact support.';
+    case 'auth/unauthorized-domain':
+      return 'This domain isn\'t authorized for sign-in yet. Please try Email Sign-In or Guest mode, or contact support.';
+    case 'auth/api-key-not-valid':
+    case 'auth/invalid-api-key':
+      return 'Sign-in is temporarily misconfigured. Please try Guest mode, or contact support.';
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      return 'Invalid email or password.';
+    case 'auth/user-not-found':
+      return 'No account found for this email. Try Signing Up!';
+    case 'auth/email-already-in-use':
+      return 'Email is already registered. Please Sign In instead.';
+    case 'auth/weak-password':
+      return 'Password should be at least 6 characters.';
+    case 'auth/network-request-failed':
+      return 'Network error — check your connection and try again.';
+    default:
+      return error?.message || 'Something went wrong. Please try again.';
+  }
 }
 
 // User Profile Database Helpers

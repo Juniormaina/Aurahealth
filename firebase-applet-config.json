@@ -1,12 +1,9 @@
 {
-  "projectId": "fine-scheduler-3t3g1",
-  "appId": "1:345048568587:web:ba1e7a2156a9358f31480e",
-  "apiKey": "AIzaSyDfKBPKhZROmG-zcRammPR5JihSr_1jGrs",
-  "authDomain": "fine-scheduler-3t3g1.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-aurahealthdailyw-dba03373-0875-43ec-bb60-7fa3fc89dff3",
-  "storageBucket": "fine-scheduler-3t3g1.firebasestorage.app",
-  "messagingSenderId": "345048568587",
-  "measurementId": "",
-  "oAuthClientId": "345048568587-961edrit3lf93fohf5no94fgdcu3f30b.apps.googleusercontent.com",
-  "recaptchaSiteKey": ""
+  "projectId": "aura-health-f478f",
+  "appId": "1:462623100241:web:9c7d142b97488d1f4b5770",
+  "apiKey": "AIzaSyD7JptGcJbWRAt44G3GCGj0zTZ-UwpF0W0",
+  "authDomain": "aura-health-f478f.firebaseapp.com",
+  "storageBucket": "aura-health-f478f.firebasestorage.app",
+  "messagingSenderId": "462623100241",
+  "measurementId": "G-8QWH7RXP5T"
 }

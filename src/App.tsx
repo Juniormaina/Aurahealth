@@ -45,6 +45,7 @@ import {
   signInWithEmail,
   signUpWithEmail,
   checkRedirectResult,
+  getAuthErrorMessage,
   logoutUser,
   syncUserProfile,
   updateUserCowries,
@@ -192,7 +193,7 @@ export default function App() {
       if (err.message?.includes('Redirecting')) {
         showToast('Redirecting to Google Authentication...');
       } else {
-        showToast(err.message || 'Could not complete Google Sign-In');
+        showToast(getAuthErrorMessage(err));
       }
     } finally {
       setIsLoggingIn(false);
@@ -213,14 +214,10 @@ export default function App() {
       });
     } catch (err: any) {
       console.warn('Email Sign-In error:', err);
-      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        showToast('Invalid email or password.');
-      } else if (err.code === 'auth/user-not-found') {
-        showToast('No account found for this email. Try Signing Up!');
-      } else {
-        // Fallback session creation for user convenience
-        handleGoogleSignIn(email, email.split('@')[0]);
-      }
+      // Show the real error instead of silently creating a fake, unsaved
+      // session — that used to mask config issues (e.g. Email/Password
+      // provider disabled) as a "successful" login with no persistence.
+      showToast(getAuthErrorMessage(err));
     } finally {
       setIsLoggingIn(false);
     }
@@ -240,14 +237,7 @@ export default function App() {
       });
     } catch (err: any) {
       console.warn('Email Sign-Up error:', err);
-      if (err.code === 'auth/email-already-in-use') {
-        showToast('Email is already registered. Please Sign In instead.');
-      } else if (err.code === 'auth/weak-password') {
-        showToast('Password should be at least 6 characters.');
-      } else {
-        // Fallback session creation for user testing
-        handleGoogleSignIn(email, name || email.split('@')[0]);
-      }
+      showToast(getAuthErrorMessage(err));
     } finally {
       setIsLoggingIn(false);
     }
