@@ -98,37 +98,67 @@ Response MUST be valid JSON string only.`,
   });
 
   // AI Companion Chat & Health Coach Endpoint
+  // Real multi-turn conversation (full history sent each turn) with Google
+  // Search grounding enabled, so Astra can answer factual/medical questions
+  // from current web sources instead of only from model training data.
   app.post('/api/ai-coach', async (req, res) => {
     try {
-      const { userMessage, companionState } = req.body;
+      const { userMessage, companionState, history } = req.body;
 
       if (!process.env.GEMINI_API_KEY) {
         return res.json({
           reply: `Astra (${companionState?.stage || 'Hatchling'}): "Keep up the fantastic work! Stay hydrated and take your daily checks to help me level up!"`,
+          sources: [],
         });
       }
 
       const ai = getGeminiAI();
-      const prompt = `You are Astra, a whimsical, supportive Health Companion Pet on the AuraHealth Wellness App.
-Current Pet Stats:
-- Stage: ${companionState?.stage || 'Hatchling'}
-- Level: ${companionState?.level || 1}
-- Streak: ${companionState?.streakDays || 1} Days
-- Mood: ${companionState?.mood || 'joyful'}
 
-The user says: "${userMessage}"
+      const systemInstruction = `You are Astra, a whimsical but genuinely helpful AI Health Companion on the AuraHealth Wellness App.
+Current Pet Stats — Stage: ${companionState?.stage || 'Hatchling'}, Level: ${companionState?.level || 1}, Streak: ${companionState?.streakDays ?? 0} Days, Mood: ${companionState?.mood || 'joyful'}.
 
-Reply in character as Astra (2-3 short sentences). Be energetic, encouraging, and remind them how health habits earn Health Cowries and keep Astra healthy!`;
+You can have real, multi-turn conversations — remember what the user already told you earlier in this chat.
+
+When the user asks a factual, medical, nutrition, fitness, or health-related question, use Google Search to ground your answer in current, reliable sources (e.g. major health organizations, medical references, peer-reviewed sources) rather than guessing from memory, and keep your tone clear and accurate rather than overly whimsical for that part of the reply.
+
+Always make clear you are an AI, not a doctor: for anything about diagnosis, medication, dosing, or symptoms that sound serious or urgent, say so plainly and recommend seeing a licensed healthcare professional or emergency services — do not attempt to diagnose or prescribe.
+
+For everyday chit-chat, streak motivation, or app questions, respond in character as Astra: energetic, encouraging, 2-4 sentences.`;
+
+      const contents = [
+        ...(Array.isArray(history) ? history : []).slice(-12).map((m: { sender: string; text: string }) => ({
+          role: m.sender === 'user' ? 'user' : 'model',
+          parts: [{ text: m.text }],
+        })),
+        { role: 'user', parts: [{ text: String(userMessage || '') }] },
+      ];
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt,
+        contents,
+        config: {
+          systemInstruction,
+          tools: [{ googleSearch: {} }],
+        },
       });
 
-      res.json({ reply: response.text || "Astra beams with energy! Let's keep your health streak going!" });
+      const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+      const seen = new Set<string>();
+      const sources = groundingChunks
+        .map((c: any) => c.web)
+        .filter((w: any) => w?.uri && !seen.has(w.uri) && seen.add(w.uri))
+        .slice(0, 5)
+        .map((w: any) => ({ title: w.title || w.uri, uri: w.uri }));
+
+      res.json({
+        reply: response.text || "Astra beams with energy! Let's keep your health streak going!",
+        sources,
+      });
     } catch (err: any) {
+      console.warn('AI coach error:', err);
       res.json({
         reply: `Astra: "I'm right here with you! Every daily check-in powers up our health journey!"`,
+        sources: [],
       });
     }
   });

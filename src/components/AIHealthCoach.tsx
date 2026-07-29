@@ -1,16 +1,28 @@
 import React, { useState } from 'react';
 import { HealthCompanion } from '../types';
-import { MessageSquare, Send, Sparkles, Bot, Loader2, Heart, Flame } from 'lucide-react';
+import { MessageSquare, Send, Sparkles, Bot, Loader2, Heart, Flame, ExternalLink, Search } from 'lucide-react';
 
 interface AIHealthCoachProps {
   companion: HealthCompanion;
 }
 
+interface ChatSource {
+  title: string;
+  uri: string;
+}
+
+interface ChatMessage {
+  sender: 'user' | 'astra';
+  text: string;
+  time: string;
+  sources?: ChatSource[];
+}
+
 export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
-  const [messages, setMessages] = useState<Array<{ sender: 'user' | 'astra'; text: string; time: string }>>([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
       sender: 'astra',
-      text: `Hello friend! I am Astra, your AI Health Companion! How are you feeling today? Ask me anything about your health routine, hydration goals, or streak rewards!`,
+      text: `Hello friend! I am Astra, your AI Health Companion! I can chat about your routine, streaks and rewards, and I can also search the web for real health and medical information. I'm not a doctor though — for anything urgent or about diagnosis/medication, please see a licensed professional. What's on your mind?`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -24,6 +36,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
     const userText = inputMessage.trim();
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+    const history = messages.map((m) => ({ sender: m.sender, text: m.text }));
     setMessages((prev) => [...prev, { sender: 'user', text: userText, time }]);
     setInputMessage('');
     setIsLoading(true);
@@ -34,6 +47,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userMessage: userText,
+          history,
           companionState: {
             stage: companion.stage,
             level: companion.level,
@@ -45,7 +59,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setMessages((prev) => [...prev, { sender: 'astra', text: data.reply, time }]);
+        setMessages((prev) => [...prev, { sender: 'astra', text: data.reply, time, sources: data.sources }]);
       } else {
         throw new Error('Coach API error');
       }
@@ -80,7 +94,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
             Astra AI Health Coach <Sparkles className="w-4 h-4 text-amber-400" />
           </h3>
           <p className="text-xs text-slate-400">
-            Powered by Gemini AI • Stage: {companion.stage} (Level {companion.level})
+            Gemini AI + live web search • Not a substitute for professional medical advice • Stage: {companion.stage} (Level {companion.level})
           </p>
         </div>
       </div>
@@ -109,7 +123,29 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
                   : 'bg-slate-950 border border-slate-800 text-slate-200 rounded-tl-none'
               }`}
             >
-              <p>{m.text}</p>
+              <p className="whitespace-pre-wrap">{m.text}</p>
+
+              {m.sender === 'astra' && m.sources && m.sources.length > 0 && (
+                <div className="mt-2.5 pt-2 border-t border-slate-800 space-y-1">
+                  <div className="flex items-center gap-1 text-[9px] text-slate-500 font-bold uppercase tracking-wide">
+                    <Search className="w-2.5 h-2.5" /> Sources
+                  </div>
+                  {m.sources.map((s, sIdx) => (
+                    <a
+                      key={sIdx}
+                      href={s.uri}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 truncate"
+                      title={s.uri}
+                    >
+                      <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                      <span className="truncate">{s.title}</span>
+                    </a>
+                  ))}
+                </div>
+              )}
+
               <div
                 className={`text-[9px] mt-1 text-right font-mono ${
                   m.sender === 'user' ? 'text-rose-200' : 'text-slate-500'
@@ -124,7 +160,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
         {isLoading && (
           <div className="flex items-center gap-2 text-xs text-slate-400 italic">
             <Loader2 className="w-4 h-4 animate-spin text-rose-400" />
-            <span>Astra is crafting a response...</span>
+            <span>Astra is searching & thinking...</span>
           </div>
         )}
       </div>
@@ -135,7 +171,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
           type="text"
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
-          placeholder="Ask Astra for health tips, hydration advice, or streak motivation..."
+          placeholder="Ask Astra a medical question, or chat about your streak & routine..."
           className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-rose-500"
         />
         <button
