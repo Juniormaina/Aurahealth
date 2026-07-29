@@ -1,4 +1,4 @@
-# Aura Health
+<img src="public/aurahealth-logo.svg" alt="Aura Health" width="360" />
 
 **Live app:** [aurahealth-delta.vercel.app](https://aurahealth-delta.vercel.app/)
 

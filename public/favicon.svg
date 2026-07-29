@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="auraFaviconGradient" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f43f5e"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#auraFaviconGradient)"/>
+  <rect x="4" y="4" width="56" height="56" rx="12" fill="#020617"/>
+  <path d="M42 32 L38 32 L35 41 L29 23 L26 32 L22 32" fill="none" stroke="#fb7185" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M46 12 L49 17 L54 20 L49 23 L46 28 L43 23 L38 20 L43 17 Z" fill="#fcd34d"/>
+</svg>
