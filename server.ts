@@ -17,6 +17,32 @@ async function startServer() {
 
   app.use(express.json({ limit: '10mb' }));
 
+  // Real web search via Tavily (free tier, no billing required) — used to
+  // ground Astra's factual/medical answers instead of Gemini's native
+  // Google Search grounding tool, which needs a billing-enabled Google Cloud
+  // project. Returns [] on any failure so a search hiccup never blocks chat.
+  const tavilySearch = async (query: string): Promise<{ title: string; url: string; content: string }[]> => {
+    const apiKey = process.env.TAVILY_API_KEY;
+    if (!apiKey) return [];
+    try {
+      const res = await fetch('https://api.tavily.com/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ query, max_results: 4, search_depth: 'basic' }),
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data.results || []).map((r: any) => ({
+        title: r.title || r.url,
+        url: r.url,
+        content: (r.content || '').slice(0, 600),
+      }));
+    } catch (err) {
+      console.warn('Tavily search failed:', err);
+      return [];
+    }
+  };
+
   // Initialize Gemini AI lazily/safely
   const getGeminiAI = () => {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -102,13 +128,24 @@ Response MUST be valid JSON string only.`,
     }
   });
 
+  // App-internal chit-chat (streaks, cowries, badges, etc.) should never
+  // trigger a web search — the model already has that context from
+  // companionState/history, and searching the raw message pulls back
+  // unrelated results (e.g. "how's my streak?" surfacing Snapchat streak
+  // guides). Only search for messages that don't look like app talk.
+  const APP_CONTEXT_TERMS = /\b(streak|cowrie|cowries|xp|level|badge|companion|astra|wheel|sponsor|check-?in|cosmic|egg|hatchling|vitality|harmony|mission|quest)\b/i;
+  const shouldSearch = (text: string) => text.trim().length >= 8 && !APP_CONTEXT_TERMS.test(text);
+
   // AI Companion Chat & Health Coach Endpoint
-  // Real multi-turn conversation (full history sent each turn) with Google
-  // Search grounding enabled, so Astra can answer factual/medical questions
-  // from current web sources instead of only from model training data.
+  // Real multi-turn conversation (full history sent each turn). Factual/
+  // medical questions are grounded with a real Tavily web search — Gemini's
+  // native Google Search grounding tool needs a billing-enabled Google Cloud
+  // project, so this does the same job manually against a free search API
+  // instead: search, then feed the results in as context.
   app.post('/api/ai-coach', async (req, res) => {
     try {
       const { userMessage, companionState, history } = req.body;
+      const userText = String(userMessage || '');
 
       if (!process.env.GEMINI_API_KEY) {
         return res.json({
@@ -118,69 +155,42 @@ Response MUST be valid JSON string only.`,
       }
 
       const ai = getGeminiAI();
+      const searchResults = shouldSearch(userText) ? await tavilySearch(userText) : [];
 
       const baseInstruction = `You are Astra, a whimsical but genuinely helpful AI Health Companion on the AuraHealth Wellness App.
 Current Pet Stats — Stage: ${companionState?.stage || 'Hatchling'}, Level: ${companionState?.level || 1}, Streak: ${companionState?.streakDays ?? 0} Days, Mood: ${companionState?.mood || 'joyful'}.
 
 You can have real, multi-turn conversations — remember what the user already told you earlier in this chat.
 
+${searchResults.length > 0 ? `You've been given live web search results below for the user's latest message. Use them to ground factual/medical/health answers in current, reliable sources, and mention what you found naturally. If the results aren't actually relevant to a casual message, ignore them and just chat normally.` : ''}
+
 Always make clear you are an AI, not a doctor: for anything about diagnosis, medication, dosing, or symptoms that sound serious or urgent, say so plainly and recommend seeing a licensed healthcare professional or emergency services — do not attempt to diagnose or prescribe.
 
 For everyday chit-chat, streak motivation, or app questions, respond in character as Astra: energetic, encouraging, 2-4 sentences.`;
 
-      // Only tell the model to search when the search tool is actually
-      // attached below — instructing it to search with no tool available
-      // makes it attempt a tool call anyway and return an empty response
-      // (finishReason MALFORMED_FUNCTION_CALL).
-      const groundedInstruction = `${baseInstruction}
-
-When the user asks a factual, medical, nutrition, fitness, or health-related question, use Google Search to ground your answer in current, reliable sources (e.g. major health organizations, medical references, peer-reviewed sources) rather than guessing from memory, and keep your tone clear and accurate rather than overly whimsical for that part of the reply.`;
+      const userTurnText = searchResults.length > 0
+        ? `${userText}\n\n[Live web search results for reference — use if relevant, ignore for casual chit-chat]\n${searchResults
+            .map((r, i) => `${i + 1}. ${r.title} (${r.url})\n${r.content}`)
+            .join('\n\n')}`
+        : userText;
 
       const contents = [
         ...(Array.isArray(history) ? history : []).slice(-12).map((m: { sender: string; text: string }) => ({
           role: m.sender === 'user' ? 'user' : 'model',
           parts: [{ text: m.text }],
         })),
-        { role: 'user', parts: [{ text: String(userMessage || '') }] },
+        { role: 'user', parts: [{ text: userTurnText }] },
       ];
 
-      const model = 'gemini-flash-latest';
-      let response;
-      let groundingChunks: any[] = [];
-      try {
-        response = await ai.models.generateContent({
-          model,
-          contents,
-          config: { systemInstruction: groundedInstruction, tools: [{ googleSearch: {} }] },
-        });
-        if (response.candidates?.[0]?.finishReason === 'MALFORMED_FUNCTION_CALL' || !response.text) {
-          throw new Error('Grounded call returned no usable text');
-        }
-        groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-      } catch (searchErr: any) {
-        // Grounding with Google Search needs a billing-enabled Gemini API
-        // project — on a free-tier key it 429s even though plain generation
-        // works fine. Fall back to an ungrounded answer (with an
-        // instruction that doesn't mention searching) rather than losing
-        // the whole conversation over a feature the account can't use yet.
-        console.warn('Search grounding unavailable, replying without it:', searchErr?.message || searchErr);
-        response = await ai.models.generateContent({
-          model,
-          contents,
-          config: { systemInstruction: baseInstruction },
-        });
-      }
-
-      const seen = new Set<string>();
-      const sources = groundingChunks
-        .map((c: any) => c.web)
-        .filter((w: any) => w?.uri && !seen.has(w.uri) && seen.add(w.uri))
-        .slice(0, 5)
-        .map((w: any) => ({ title: w.title || w.uri, uri: w.uri }));
+      const response = await ai.models.generateContent({
+        model: 'gemini-flash-latest',
+        contents,
+        config: { systemInstruction: baseInstruction },
+      });
 
       res.json({
         reply: response.text || "Astra beams with energy! Let's keep your health streak going!",
-        sources,
+        sources: searchResults.map((r) => ({ title: r.title, uri: r.url })),
       });
     } catch (err: any) {
       console.warn('AI coach error:', err);
