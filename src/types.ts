@@ -72,6 +72,7 @@ export interface EconomyStats {
   avaxEarned: number;
   currentStreak: number;
   longestStreak: number;
+  lastCheckInDate: string | null;
   rank: string;
   communityContributionScore: number;
 }

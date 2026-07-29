@@ -137,6 +137,9 @@ export interface UserProfileData {
   photoURL: string;
   cowriesBalance: number;
   totalXp: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastCheckInDate: string | null;
   updatedAt?: any;
 }
 
@@ -146,7 +149,13 @@ export async function syncUserProfile(user: User): Promise<UserProfileData> {
 
   if (snap.exists()) {
     const data = snap.data() as UserProfileData;
-    return data;
+    // Backfill fields for accounts created before streak tracking existed.
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastCheckInDate: null,
+      ...data,
+    };
   } else {
     const newProfile: UserProfileData = {
       uid: user.uid,
@@ -155,6 +164,9 @@ export async function syncUserProfile(user: User): Promise<UserProfileData> {
       photoURL: user.photoURL || '',
       cowriesBalance: 0, // Starts at 0 for fresh user
       totalXp: 0, // Starts at 0 for fresh user
+      currentStreak: 0,
+      longestStreak: 0,
+      lastCheckInDate: null,
       updatedAt: serverTimestamp()
     };
     await setDoc(userRef, newProfile);
@@ -162,11 +174,21 @@ export async function syncUserProfile(user: User): Promise<UserProfileData> {
   }
 }
 
-export async function updateUserCowries(uid: string, cowriesBalance: number, totalXp: number) {
+export async function updateUserCowries(
+  uid: string,
+  cowriesBalance: number,
+  totalXp: number,
+  streak?: { currentStreak: number; longestStreak: number; lastCheckInDate: string }
+) {
   const userRef = doc(db, 'users', uid);
   await updateDoc(userRef, {
     cowriesBalance,
     totalXp,
+    ...(streak ? {
+      currentStreak: streak.currentStreak,
+      longestStreak: streak.longestStreak,
+      lastCheckInDate: streak.lastCheckInDate,
+    } : {}),
     updatedAt: serverTimestamp()
   });
 }

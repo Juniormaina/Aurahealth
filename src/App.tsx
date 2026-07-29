@@ -96,6 +96,7 @@ export default function App() {
     avaxEarned: 0.15,
     currentStreak: 5,
     longestStreak: 12,
+    lastCheckInDate: null,
     rank: 'Sentinel Initiate',
     communityContributionScore: 88,
   });
@@ -141,14 +142,22 @@ export default function App() {
       // Session starts on landing page; user clicks Enter Dashboard to proceed
       setIsDemoMode(false);
 
-      const userCowries = profile.cowriesBalance ?? 0;
-      const userXp = profile.totalXp ?? 0;
+      // Every real account starts from a clean slate — no leftover mock/demo
+      // numbers. Real progress comes only from what's saved in Firestore.
+      setStats({
+        cowriesBalance: profile.cowriesBalance ?? 0,
+        totalXp: profile.totalXp ?? 0,
+        avaxEarned: 0,
+        currentStreak: profile.currentStreak ?? 0,
+        longestStreak: profile.longestStreak ?? 0,
+        lastCheckInDate: profile.lastCheckInDate ?? null,
+        rank: 'Health Newcomer',
+        communityContributionScore: 0,
+      });
 
-      setStats((prev) => ({
-        ...prev,
-        cowriesBalance: userCowries,
-        totalXp: userXp,
-      }));
+      // Badges aren't persisted per-account yet, so start locked rather than
+      // showing the demo seed's already-unlocked ones.
+      setBadges(INITIAL_BADGES.map((b) => ({ ...b, unlockedAt: undefined, tokenId: undefined, txHash: undefined })));
 
       // Sync companion
       const firestoreComp = await getCompanionFromFirestore(user.uid);
@@ -318,25 +327,47 @@ export default function App() {
       saveHealthLogToFirestore(userAccount.uid, newCheckIn).catch(console.error);
     }
 
+    // Real day-based streak: first-ever check-in is day 1, consecutive
+    // calendar days increment it, and missing a day resets back to 1 —
+    // instead of incrementing forever regardless of actual consistency.
+    const today = new Date().toISOString().slice(0, 10);
+    let newStreak: number;
+    if (!stats.lastCheckInDate) {
+      newStreak = 1;
+    } else {
+      const diffDays = Math.round(
+        (new Date(today).getTime() - new Date(stats.lastCheckInDate).getTime()) / 86400000
+      );
+      if (diffDays <= 0) newStreak = Math.max(1, stats.currentStreak); // already checked in today
+      else if (diffDays === 1) newStreak = stats.currentStreak + 1; // consecutive day
+      else newStreak = 1; // missed a day (or more) — streak resets
+    }
+    const newLongestStreak = Math.max(stats.longestStreak, newStreak);
+
     // Update Economy stats
     setStats((prev) => {
       const newCowries = prev.cowriesBalance + newCheckIn.cowriesEarned;
       const newXp = prev.totalXp + newCheckIn.xpEarned;
       if (userAccount?.uid) {
-        updateUserCowries(userAccount.uid, newCowries, newXp).catch(console.error);
+        updateUserCowries(userAccount.uid, newCowries, newXp, {
+          currentStreak: newStreak,
+          longestStreak: newLongestStreak,
+          lastCheckInDate: today,
+        }).catch(console.error);
       }
       return {
         ...prev,
         cowriesBalance: newCowries,
         totalXp: newXp,
-        currentStreak: prev.currentStreak + 1,
+        currentStreak: newStreak,
+        longestStreak: newLongestStreak,
+        lastCheckInDate: today,
       };
     });
 
     // Update Companion
     setCompanion((prev) => {
       const updatedTotal = prev.totalCheckIns + 1;
-      const updatedStreak = prev.streakDays + 1;
       const newXp = prev.xp + newCheckIn.xpEarned;
       let newLevel = prev.level;
       let newStage = prev.stage;
@@ -351,7 +382,7 @@ export default function App() {
       const updatedCompanion = {
         ...prev,
         totalCheckIns: updatedTotal,
-        streakDays: updatedStreak,
+        streakDays: newStreak,
         xp: newXp,
         level: newLevel,
         stage: newStage,
@@ -579,9 +610,10 @@ export default function App() {
               onOpenWheel={() => setActiveTab('wheel')}
             />
             <DailyGoalTracker
+              key={new Date().toISOString().slice(0, 10)}
               onOpenCheckin={() => setIsCheckinModalOpen(true)}
               streakDays={companion.streakDays}
-              isFreshStart={userAccount !== null && stats.cowriesBalance === 0}
+              isFreshStart={!isDemoMode}
               onGoalUpdated={(xp, cowries) => {
                 setStats((prev) => {
                   const newCowries = prev.cowriesBalance + cowries;
