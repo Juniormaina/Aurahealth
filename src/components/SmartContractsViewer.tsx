@@ -6,7 +6,7 @@ import TierSystemSource from '../contracts/TierSystem.sol?raw';
 import IncentiveTokenSource from '../contracts/IncentiveToken.sol?raw';
 import { CONTRACT_ADDRESSES, AVALANCHE_FUJI_CONFIG, EXPLORER_BASE, getReadOnlyContracts } from '../services/avalanche';
 import { TxRecord } from '../types';
-import { Cpu, ExternalLink, Copy, Check, ShieldCheck, Layers, RefreshCw } from 'lucide-react';
+import { Cpu, ExternalLink, Copy, Check, ShieldCheck, Layers, RefreshCw, Archive, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SmartContractsViewerProps {
   txLogs: TxRecord[];
@@ -24,9 +24,14 @@ const CONTRACT_SOURCES: Record<ContractName, string> = {
 
 const CONTRACT_NAMES = Object.keys(CONTRACT_ADDRESSES) as ContractName[];
 
+// Logs beyond this count (txLogs is newest-first) are tucked behind the
+// "Show Archived" toggle so the table stays focused on recent activity.
+const RECENT_LOG_COUNT = 8;
+
 export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLogs }) => {
   const [selectedContract, setSelectedContract] = useState<ContractName>('LoyaltyPoints');
   const [copied, setCopied] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [liveStats, setLiveStats] = useState<{ label: string; value: string }[] | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
 
@@ -63,6 +68,36 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const recentLogs = txLogs.slice(0, RECENT_LOG_COUNT);
+  const archivedLogs = txLogs.slice(RECENT_LOG_COUNT);
+
+  const renderTxRow = (tx: TxRecord, idx: number) => (
+    <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
+      <td className="p-3 font-bold text-cyan-300 truncate max-w-[140px]">{tx.hash}</td>
+      <td className="p-3 text-slate-400">#{tx.blockNumber}</td>
+      <td className="p-3">
+        <span className="text-slate-200 font-bold">{tx.contractName}</span>
+        <div className="text-[10px] text-slate-500">{tx.method}</div>
+      </td>
+      <td className="p-3 text-emerald-400">{tx.nAvaxFee}</td>
+      <td className="p-3">
+        <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-semibold border border-emerald-500/30">
+          {tx.status}
+        </span>
+      </td>
+      <td className="p-3">
+        <a
+          href={tx.explorersUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 text-rose-400 hover:text-rose-300 font-bold"
+        >
+          Explorer <ExternalLink className="w-3 h-3" />
+        </a>
+      </td>
+    </tr>
+  );
 
   return (
     <div className="space-y-6">
@@ -176,9 +211,21 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
 
       {/* On-Chain Transaction Logs / Explorer Table */}
       <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl space-y-4">
-        <h3 className="text-lg font-black text-white flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-emerald-400" /> On-Chain Attestation & Transaction Log
-        </h3>
+        <div className="flex items-center justify-between gap-4">
+          <h3 className="text-lg font-black text-white flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-emerald-400" /> On-Chain Attestation & Transaction Log
+          </h3>
+          {archivedLogs.length > 0 && (
+            <button
+              onClick={() => setShowArchived((v) => !v)}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-700 flex items-center gap-1.5 shrink-0"
+            >
+              <Archive className="w-3.5 h-3.5" />
+              {showArchived ? 'Hide' : 'Show'} Archived ({archivedLogs.length})
+              {showArchived ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+          )}
+        </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-300">
@@ -193,35 +240,25 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
-              {txLogs.map((tx, idx) => (
-                <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="p-3 font-bold text-cyan-300 truncate max-w-[140px]">{tx.hash}</td>
-                  <td className="p-3 text-slate-400">#{tx.blockNumber}</td>
-                  <td className="p-3">
-                    <span className="text-slate-200 font-bold">{tx.contractName}</span>
-                    <div className="text-[10px] text-slate-500">{tx.method}</div>
-                  </td>
-                  <td className="p-3 text-emerald-400">{tx.nAvaxFee}</td>
-                  <td className="p-3">
-                    <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-semibold border border-emerald-500/30">
-                      {tx.status}
-                    </span>
-                  </td>
-                  <td className="p-3">
-                    <a
-                      href={tx.explorersUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-rose-400 hover:text-rose-300 font-bold"
-                    >
-                      Explorer <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </td>
-                </tr>
-              ))}
+              {recentLogs.map((tx, idx) => renderTxRow(tx, idx))}
             </tbody>
           </table>
         </div>
+
+        {showArchived && archivedLogs.length > 0 && (
+          <div className="space-y-2 pt-2 border-t border-slate-800">
+            <div className="text-[11px] text-slate-500 font-semibold flex items-center gap-1.5">
+              <Archive className="w-3 h-3" /> Archived — older than the {RECENT_LOG_COUNT} most recent entries
+            </div>
+            <div className="overflow-x-auto max-h-72 overflow-y-auto">
+              <table className="w-full text-left text-xs text-slate-400">
+                <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
+                  {archivedLogs.map((tx, idx) => renderTxRow(tx, idx))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
