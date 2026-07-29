@@ -1,5 +1,7 @@
 # Aura Health
 
+**Live app:** [aurahealth-delta.vercel.app](https://aurahealth-delta.vercel.app/)
+
 Gamified daily health check-in app with an evolving digital companion, a
 "Health Cowries" points economy, sponsor reward pools, and an AI health coach —
 backed by real, verified smart contracts on **Avalanche Fuji testnet**.
