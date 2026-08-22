@@ -70,14 +70,14 @@ export const CommunitySponsorPools: React.FC<CommunitySponsorPoolsProps> = ({
   return (
     <div className="space-y-6">
       {/* 5-Layer Economy Explainer Banner */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl relative overflow-hidden backdrop-blur-sm">
+      <div className="aura-card-gradient p-6 relative overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
-            <div className="bg-amber-500/20 text-amber-300 p-2.5 rounded-xl border border-amber-500/30">
+            <div className="bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 p-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30">
               <Coins className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-white">5-Layer Sustainable Economy</h2>
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white">5-Layer Sustainable Economy</h2>
               <p className="text-xs text-slate-400">Sponsor-backed community value loop</p>
             </div>
           </div>

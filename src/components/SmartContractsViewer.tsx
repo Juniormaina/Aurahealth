@@ -102,19 +102,19 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl relative overflow-hidden backdrop-blur-sm">
+      <div className="aura-card-gradient p-6 relative overflow-hidden">
         <div className="flex items-center gap-3 mb-2">
-          <div className="bg-cyan-500/20 text-cyan-300 p-2.5 rounded-xl border border-cyan-500/30">
+          <div className="bg-cyan-50 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-300 p-2.5 rounded-xl border border-cyan-200 dark:border-cyan-500/30">
             <Cpu className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-black text-white">On-Chain Gamification Contracts</h2>
-              <span className="bg-emerald-500/20 text-emerald-300 font-bold text-[10px] px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white">On-Chain Gamification Contracts</h2>
+              <span className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 font-bold text-[10px] px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-500/30">
                 Live on {AVALANCHE_FUJI_CONFIG.chainName}
               </span>
             </div>
-            <p className="text-xs text-slate-300 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-300 mt-1">
               Deployed and verified on Avalanche Fuji testnet (chain ID 43113). Source, address, and
               live state are all real — pulled straight from the chain, not simulated.
             </p>
@@ -129,19 +129,19 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
               href={`${EXPLORER_BASE}/address/${CONTRACT_ADDRESSES[name]}#code`}
               target="_blank"
               rel="noreferrer"
-              className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs hover:border-cyan-500/50 transition-colors"
+              className="bg-white/80 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50 text-xs hover:border-cyan-300 dark:hover:border-cyan-500/50 transition-colors"
             >
-              <div className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1">
                 {name}.sol <ExternalLink className="w-2.5 h-2.5" />
               </div>
-              <div className="font-mono text-cyan-300 font-bold truncate mt-0.5">{CONTRACT_ADDRESSES[name]}</div>
+              <div className="font-mono text-cyan-600 dark:text-cyan-300 font-bold truncate mt-0.5">{CONTRACT_ADDRESSES[name]}</div>
             </a>
           ))}
         </div>
       </div>
 
       {/* Code Viewer Section */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl space-y-4">
+      <div className="aura-card p-6 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2 flex-wrap">
             {CONTRACT_NAMES.map((name) => (
@@ -150,8 +150,8 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
                 onClick={() => setSelectedContract(name)}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors ${
                   selectedContract === name
-                    ? 'bg-rose-600 text-white shadow-md'
-                    : 'bg-slate-800 text-slate-400 hover:text-white'
+                    ? 'bg-rose-500 text-white shadow-md'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 {name}.sol
@@ -162,16 +162,16 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyCode}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-700 flex items-center gap-1.5"
+              className="btn-ghost text-xs flex items-center gap-1.5"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? 'Copied' : 'Copy Code'}
             </button>
             <a
               href={`${EXPLORER_BASE}/address/${CONTRACT_ADDRESSES[selectedContract]}#code`}
               target="_blank"
               rel="noreferrer"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg flex items-center gap-1.5"
+              className="btn-primary text-xs"
             >
               <ExternalLink className="w-3.5 h-3.5" /> View Verified Source
             </a>
@@ -179,20 +179,20 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
         </div>
 
         {/* Code Viewbox */}
-        <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 font-mono text-xs text-slate-300 overflow-x-auto max-h-96 leading-relaxed">
+        <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700 font-mono text-xs text-slate-700 dark:text-slate-300 overflow-x-auto max-h-96 leading-relaxed">
           <pre>{CONTRACT_SOURCES[selectedContract]}</pre>
         </div>
 
         {/* Live On-Chain Reads */}
-        <div className="bg-slate-950 rounded-xl p-4 border border-slate-800/80 font-mono text-[11px] text-emerald-400 space-y-1">
-          <div className="text-slate-500 font-bold mb-1 flex items-center justify-between gap-1.5">
+        <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700/80 font-mono text-[11px] text-emerald-600 dark:text-emerald-400 space-y-1">
+          <div className="text-slate-500 dark:text-slate-400 font-bold mb-1 flex items-center justify-between gap-1.5">
             <span className="flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-slate-400" /> Live On-Chain Reads (Fuji RPC)
             </span>
             <button
               onClick={loadLiveStats}
               disabled={isLoadingStats}
-              className="text-slate-400 hover:text-white flex items-center gap-1"
+              className="text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1"
             >
               <RefreshCw className={`w-3 h-3 ${isLoadingStats ? 'animate-spin' : ''}`} /> Refresh
             </button>

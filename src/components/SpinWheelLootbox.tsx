@@ -44,14 +44,14 @@ export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onWinPrize, 
   };
 
   return (
-    <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl relative overflow-hidden backdrop-blur-sm">
+    <div className="aura-card-gradient p-6 relative overflow-hidden">
       <div className="max-w-3xl mx-auto text-center space-y-6">
         <div>
-          <div className="inline-flex items-center gap-2 bg-amber-500/10 text-amber-300 text-xs font-semibold px-3 py-1 rounded-full border border-amber-500/30 mb-2">
+          <div className="inline-flex items-center gap-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 text-xs font-semibold px-3 py-1 rounded-full border border-amber-200 dark:border-amber-500/30 mb-2">
             <Gift className="w-3.5 h-3.5" /> Adherence Reward Minigame
           </div>
-          <h2 className="text-3xl font-black text-white">Adherence Wheel of Health</h2>
-          <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white">Adherence Wheel of Health</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
             Spin daily after reporting health check-ins to win Health Cowries, Companion XP boosts, and wellness raffle passes!
           </p>
         </div>

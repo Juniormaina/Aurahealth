@@ -54,7 +54,7 @@ export const AuraLogo: React.FC<AuraLogoProps> = ({
       {/* Brand Text */}
       <div className="flex flex-col justify-center">
         <div className="flex items-center gap-1.5 leading-none">
-          <span className={`font-black tracking-tight text-white group-hover:text-rose-200 transition-colors ${titleSizes[size]}`}>
+          <span className={`font-black tracking-tight text-current group-hover:text-rose-500 transition-colors ${titleSizes[size]}`}>
             Aura<span className="bg-gradient-to-r from-rose-400 via-amber-300 to-emerald-400 bg-clip-text text-transparent">Health</span>
           </span>
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />

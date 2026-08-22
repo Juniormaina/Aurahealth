@@ -31,12 +31,12 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-slate-900 border border-slate-700 p-3 rounded-xl shadow-2xl text-xs space-y-1.5 backdrop-blur-md">
-        <p className="font-extrabold text-white border-b border-slate-800 pb-1 flex items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-xl shadow-2xl text-xs space-y-1.5">
+        <p className="font-extrabold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-1 flex items-center justify-between gap-4">
           <span>{data.date} ({data.day})</span>
-          <span className="text-emerald-400 font-mono font-bold">Score: {data.score}/100</span>
+          <span className="text-emerald-500 font-mono font-bold">Score: {data.score}/100</span>
         </p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-slate-300">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-slate-600 dark:text-slate-300">
           <div className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>
             <span>Sleep: <strong>{data.sleep} hrs</strong></span>
@@ -123,7 +123,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
   return (
     <div className="space-y-6">
       {/* Routledge Framework Header */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl relative overflow-hidden backdrop-blur-sm">
+      <div className="aura-module-card-dark p-6 relative overflow-hidden backdrop-blur-sm">
         <div className="flex items-center gap-3 mb-2">
           <div className="bg-rose-500/20 text-rose-300 p-2 rounded-xl border border-rose-500/30">
             <Compass className="w-6 h-6" />
@@ -138,7 +138,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
           {/* Question 1: Where am I going? */}
-          <div className="bg-slate-950/80 p-5 rounded-2xl border border-rose-500/30 relative overflow-hidden flex flex-col justify-between">
+          <div className="aura-module-card p-5 relative overflow-hidden flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 text-rose-400 font-extrabold text-xs mb-2">
                 <Target className="w-4 h-4" /> 1. WHERE AM I GOING?
@@ -169,7 +169,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
           </div>
 
           {/* Question 2: How am I doing? */}
-          <div className="bg-slate-950/80 p-5 rounded-2xl border border-amber-500/30 relative overflow-hidden flex flex-col justify-between">
+          <div className="aura-module-card p-5 relative overflow-hidden flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 text-amber-400 font-extrabold text-xs mb-2">
                 <Trophy className="w-4 h-4" /> 2. HOW AM I DOING?
@@ -212,20 +212,20 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
           </div>
 
           {/* Question 3: Where to next? */}
-          <div className="bg-slate-950/80 p-5 rounded-2xl border border-cyan-500/30 relative overflow-hidden flex flex-col justify-between">
+          <div className="aura-module-card p-5 relative overflow-hidden flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2 text-cyan-400 font-extrabold text-xs mb-2">
+              <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400 font-extrabold text-xs mb-2">
                 <Compass className="w-4 h-4" /> 3. WHERE TO NEXT?
               </div>
-              <h3 className="text-lg font-black text-white mb-1">Community Sponsor Unlock</h3>
-              <p className="text-xs text-slate-400 mb-3">
-                Help unlock the <strong className="text-cyan-300">Vaccine Grant Pool</strong> by contributing 1 additional daily report.
+              <h3 className="text-lg font-black text-slate-900 dark:text-white mb-1">Community Sponsor Unlock</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                Help unlock the <strong className="text-cyan-600 dark:text-cyan-300">Vaccine Grant Pool</strong> by contributing 1 additional daily report.
               </p>
             </div>
             <div className="space-y-2">
               <button
                 onClick={onOpenSponsors}
-                className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs py-2 px-3 rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                className="btn-primary w-full justify-center text-xs"
               >
                 View Community Sponsor Pools <ArrowRight className="w-3.5 h-3.5" />
               </button>
@@ -235,29 +235,29 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
       </div>
 
       {/* Recharts Interactive Weekly Health Check-in Score Chart */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl relative overflow-hidden backdrop-blur-sm">
+      <div className="aura-module-card p-6 relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-400">
+              <span className="p-2 rounded-xl bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-500/30 text-rose-500">
                 <TrendingUp className="w-5 h-5" />
               </span>
-              <h3 className="text-xl font-black text-white">Weekly Health Check-In Trends</h3>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white">Weekly Health Check-In Trends</h3>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Visualizing AI attestation scores and biometrics consistency over time
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Metric Selector Buttons */}
-            <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+            <div className="flex bg-white/80 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold">
               <button
                 onClick={() => setMetricMode('score')}
                 className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${
                   metricMode === 'score'
                     ? 'bg-rose-500 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" /> Score (0-100)
@@ -267,7 +267,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
                 className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${
                   metricMode === 'sleep'
                     ? 'bg-indigo-500 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <Moon className="w-3.5 h-3.5" /> Sleep (hrs)
@@ -277,7 +277,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
                 className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${
                   metricMode === 'water'
                     ? 'bg-cyan-500 text-slate-950 shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <Droplets className="w-3.5 h-3.5" /> Water (oz)
@@ -287,7 +287,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
                 className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${
                   metricMode === 'activity'
                     ? 'bg-amber-500 text-slate-950 shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <Zap className="w-3.5 h-3.5" /> Active (m)
@@ -295,11 +295,11 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
             </div>
 
             {/* Timeframe Selector */}
-            <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-extrabold">
+            <div className="flex bg-white/80 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-extrabold">
               <button
                 onClick={() => setChartTimeframe('7d')}
                 className={`px-2.5 py-1 rounded-lg transition-all ${
-                  chartTimeframe === '7d' ? 'bg-slate-800 text-white' : 'text-slate-400'
+                  chartTimeframe === '7d' ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
                 7 Days
@@ -307,7 +307,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
               <button
                 onClick={() => setChartTimeframe('14d')}
                 className={`px-2.5 py-1 rounded-lg transition-all ${
-                  chartTimeframe === '14d' ? 'bg-slate-800 text-white' : 'text-slate-400'
+                  chartTimeframe === '14d' ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
                 14 Days
@@ -318,23 +318,23 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
 
         {/* Quick Summary Metric Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/80">
-            <div className="text-[11px] text-slate-400 font-semibold">Average Check-in Score</div>
-            <div className="text-xl font-black text-rose-400 font-mono mt-0.5">{avgScore}/100</div>
+          <div className="aura-module-card p-3.5">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Average Check-in Score</div>
+            <div className="text-xl font-black text-rose-500 font-mono mt-0.5">{avgScore}/100</div>
           </div>
-          <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/80">
-            <div className="text-[11px] text-slate-400 font-semibold">Peak Adherence Score</div>
-            <div className="text-xl font-black text-emerald-400 font-mono mt-0.5">{maxScore}/100</div>
+          <div className="aura-module-card p-3.5">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Peak Adherence Score</div>
+            <div className="text-xl font-black text-emerald-500 font-mono mt-0.5">{maxScore}/100</div>
           </div>
-          <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/80">
-            <div className="text-[11px] text-slate-400 font-semibold">Avg Sleep Duration</div>
-            <div className="text-xl font-black text-indigo-300 font-mono mt-0.5">
+          <div className="aura-module-card p-3.5">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Avg Sleep Duration</div>
+            <div className="text-xl font-black text-indigo-500 font-mono mt-0.5">
               {(chartData.reduce((a, b) => a + b.sleep, 0) / chartData.length).toFixed(1)} hrs
             </div>
           </div>
-          <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/80">
-            <div className="text-[11px] text-slate-400 font-semibold">Weekly Hydration Avg</div>
-            <div className="text-xl font-black text-cyan-400 font-mono mt-0.5">
+          <div className="aura-module-card p-3.5">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Weekly Hydration Avg</div>
+            <div className="text-xl font-black text-cyan-500 font-mono mt-0.5">
               {Math.round(chartData.reduce((a, b) => a + b.water, 0) / chartData.length)} oz
             </div>
           </div>
@@ -448,7 +448,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
       />
 
       {/* Badges & Achievements Grid */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl">
+      <div className="aura-module-card-dark p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-black text-white flex items-center gap-2">
@@ -469,10 +469,10 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
             return (
               <div
                 key={badge.id}
-                className={`p-4 rounded-xl border transition-all ${
+                className={`aura-module-card p-4 transition-all ${
                   isUnlocked
-                    ? 'bg-slate-950/80 border-amber-500/40 shadow-lg'
-                    : 'bg-slate-950/30 border-slate-900 opacity-60'
+                    ? 'border-amber-500/40'
+                    : 'border-slate-900 opacity-60'
                 }`}
               >
                 <div className="flex items-start justify-between mb-2">

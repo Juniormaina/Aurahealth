@@ -42,6 +42,7 @@ interface LandingPageProps {
   isDemoMode?: boolean;
   onEnterDashboard?: () => void;
   onSignOut?: () => void;
+  onAdminLogin?: () => void;
   theme?: 'midnight' | 'morning';
   onToggleTheme?: () => void;
 }
@@ -57,6 +58,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   isDemoMode,
   onEnterDashboard,
   onSignOut,
+  onAdminLogin,
   theme = 'morning',
   onToggleTheme,
 }) => {
@@ -115,8 +117,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-rose-500 selection:text-white">
-      {/* Top Header */}
-      <header className="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40">
+      {/* Top Header with Gradient */}
+      <header className="border-b border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <AuraLogo size="md" />
 
@@ -205,8 +207,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </header>
 
-      {/* Main Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-14 flex-1 flex flex-col justify-center">
+      {/* Main Hero Section with Gradient */}
+      <main className="hero-gradient max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-14 flex-1 flex flex-col justify-center relative">
         {/* Active User Session Banner */}
         {(userAccount || isDemoMode) && onEnterDashboard && (
           <div className="max-w-3xl mx-auto w-full mb-8 bg-gradient-to-r from-emerald-950/80 via-slate-900 to-indigo-950/80 p-4 rounded-2xl border border-emerald-500/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -282,7 +284,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
             {/* Step 1 */}
-            <div className="bg-slate-900/80 p-6 rounded-2xl border border-rose-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden group hover:border-rose-500/60 transition-all">
+            <div className="bg-gradient-to-b from-slate-900 to-slate-900/90 p-6 rounded-2xl border border-rose-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden group hover:border-rose-500/60 transition-all">
               <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-rose-500/10 rounded-full blur-xl group-hover:bg-rose-500/20 transition-all" />
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -305,7 +307,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
 
             {/* Step 2 */}
-            <div className="bg-slate-900/80 p-6 rounded-2xl border border-amber-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden group hover:border-amber-500/60 transition-all">
+            <div className="bg-gradient-to-b from-slate-900 to-slate-900/90 p-6 rounded-2xl border border-amber-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden group hover:border-amber-500/60 transition-all">
               <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/20 transition-all" />
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -328,7 +330,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
 
             {/* Step 3 */}
-            <div className="bg-slate-900/80 p-6 rounded-2xl border border-emerald-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden group hover:border-emerald-500/60 transition-all">
+            <div className="bg-gradient-to-b from-slate-900 to-slate-900/90 p-6 rounded-2xl border border-emerald-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden group hover:border-emerald-500/60 transition-all">
               <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-all" />
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -808,6 +810,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <span>Sustainable Reward Economy</span>
           </div>
         </div>
+
+        {onAdminLogin && (
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={onAdminLogin}
+              className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-rose-300 border border-slate-800 hover:border-rose-500/40 bg-slate-900/60 hover:bg-rose-950/20 px-3 py-1.5 rounded-lg transition-all"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Admin Login
+            </button>
+          </div>
+        )}
       </footer>
     </div>
   );

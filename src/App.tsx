@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
+import { Sidebar } from './components/Sidebar';
+import { GlobalSearch } from './components/GlobalSearch';
 import { LandingPage } from './components/LandingPage';
-import { CompanionAvatar } from './components/CompanionAvatar';
-import { DailyGoalTracker } from './components/DailyGoalTracker';
-import { FeedbackDashboard } from './components/FeedbackDashboard';
-import { CommunitySponsorPools } from './components/CommunitySponsorPools';
+import { DashboardHome } from './components/DashboardHome';
+import { AdminDashboard } from './components/AdminDashboard';
 import { SpinWheelLootbox } from './components/SpinWheelLootbox';
 import { RewardsHub } from './components/RewardsHub';
-import { SmartContractsViewer } from './components/SmartContractsViewer';
 import { AIHealthCoach } from './components/AIHealthCoach';
 import { HealthCheckinModal } from './components/HealthCheckinModal';
 import { JiweEconomyDiagram } from './components/JiweEconomyDiagram';
-import { OnboardingTutorial } from './components/OnboardingTutorial';
 
 import {
   INITIAL_COMPANION,
@@ -57,15 +55,19 @@ import {
 import { onAuthStateChanged, User } from 'firebase/auth';
 
 import confetti from 'canvas-confetti';
-import { Sparkles, Play, ArrowRight, Compass, ShieldCheck } from 'lucide-react';
+import { Sparkles, Play, ArrowRight, Compass, Home, Settings, Search, MessageSquare, Award } from 'lucide-react';
 
 export default function App() {
   const [isLanding, setIsLanding] = useState<boolean>(true);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [userAccount, setUserAccount] = useState<{ name: string; email: string; isGoogle: boolean; uid?: string; photoURL?: string } | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [isProMode, setIsProMode] = useState<boolean>(false);
   const [theme, setTheme] = useState<'midnight' | 'morning'>(() => (localStorage.getItem('aura_theme') as 'midnight' | 'morning') || 'morning');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [searchOpen, setSearchOpen] = useState<boolean>(false);
 
   const handleToggleTheme = () => {
     const nextTheme = theme === 'midnight' ? 'morning' : 'midnight';
@@ -79,10 +81,29 @@ export default function App() {
 
   const handleNavigateTab = (tab: string) => {
     setActiveTab(tab);
-    if (tab === 'sponsors' || tab === 'contracts' || tab === 'feedback') {
-      setIsProMode(true);
-    }
   };
+
+  const handleAdminLogin = () => {
+    setIsAdmin(true);
+    setIsLanding(false);
+  };
+
+  const handleAdminBackToLanding = () => {
+    setIsAdmin(false);
+    setIsLanding(true);
+  };
+
+  // Keyboard shortcut for search (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const [companion, setCompanion] = useState<HealthCompanion>(INITIAL_COMPANION);
   const [pools, setPools] = useState<SponsorPool[]>(INITIAL_SPONSOR_POOLS);
@@ -277,6 +298,7 @@ export default function App() {
   const handleLogout = async () => {
     await logoutUser();
     setUserAccount(null);
+    setIsAdmin(false);
     setIsLanding(true);
     showToast('Signed out of AuraHealth.');
   };
@@ -530,6 +552,7 @@ export default function App() {
           isDemoMode={isDemoMode}
           onEnterDashboard={() => setIsLanding(false)}
           onSignOut={handleLogout}
+          onAdminLogin={handleAdminLogin}
           theme={theme}
           onToggleTheme={handleToggleTheme}
         />
@@ -537,25 +560,74 @@ export default function App() {
     );
   }
 
-  return (
-    <div className={`min-h-screen flex flex-col font-sans selection:bg-rose-500 selection:text-white transition-colors duration-300 ${theme === 'morning' ? 'theme-morning bg-slate-50 text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
-      {/* Top Navbar */}
-      <Navbar
-        wallet={wallet}
+  if (isAdmin) {
+    return (
+      <AdminDashboard
+        pools={pools}
+        onClaimReward={handleClaimReward}
+        onAddSponsorPool={handleAddSponsorPool}
+        companion={companion}
         stats={stats}
-        activeTab={activeTab}
-        setActiveTab={handleNavigateTab}
-        onConnectWallet={handleConnectWallet}
+        badges={badges}
+        checkIns={checkIns}
+        txLogs={txLogs}
+        userStreak={companion.streakDays}
+        userName={userAccount?.name || 'Health Pioneer'}
+        userCowries={stats.cowriesBalance}
         onOpenCheckin={() => setIsCheckinModalOpen(true)}
-        userAccount={userAccount}
-        isDemoMode={isDemoMode}
-        onBackToLanding={handleBackToLanding}
+        onShowToast={showToast}
+        onBackToLanding={handleAdminBackToLanding}
         onSignOut={handleLogout}
-        isProMode={isProMode}
-        setIsProMode={setIsProMode}
         theme={theme}
         onToggleTheme={handleToggleTheme}
       />
+    );
+  }
+
+  return (
+    <div className={`min-h-screen flex font-sans selection:bg-rose-500 selection:text-white transition-colors duration-300 ${theme === 'morning' ? 'theme-morning bg-slate-50 text-slate-900' : 'theme-midnight bg-slate-950 text-slate-100'}`}>
+      {/* Sidebar */}
+      <Sidebar
+        activeTab={activeTab}
+        onNavigate={handleNavigateTab}
+        isProMode={isProMode}
+        onToggleProMode={() => setIsProMode(!isProMode)}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+        userAccount={userAccount}
+        onSignOut={handleLogout}
+        onOpenSearch={() => setSearchOpen(true)}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        isMobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+      />
+
+      {/* Main Content Area */}
+      <div
+        className={`
+          flex-1 flex flex-col min-h-screen transition-all duration-300
+          ${sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-[260px]'}
+        `}
+      >
+        {/* Top Navbar */}
+        <Navbar
+          wallet={wallet}
+          stats={stats}
+          activeTab={activeTab}
+          setActiveTab={handleNavigateTab}
+          onConnectWallet={handleConnectWallet}
+          onOpenCheckin={() => setIsCheckinModalOpen(true)}
+          userAccount={userAccount}
+          isDemoMode={isDemoMode}
+          onBackToLanding={handleBackToLanding}
+          onSignOut={handleLogout}
+          isProMode={isProMode}
+          setIsProMode={setIsProMode}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
+          onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
+        />
 
       {/* Guided Tour Banner when in Demo Mode */}
       {isDemoMode && (
@@ -577,6 +649,42 @@ export default function App() {
         </div>
       )}
 
+      {/* Quick-Action Toolbar */}
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 py-2 overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => handleNavigateTab('companion')}
+              className={`quick-action-toolbar-btn ${activeTab === 'companion' ? 'active' : ''}`}
+              aria-label="Dashboard"
+              title="Dashboard (⌘1)"
+            >
+              <Home className="w-4 h-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </button>
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="quick-action-toolbar-btn"
+              aria-label="Search"
+              title="Search (⌘K)"
+            >
+              <Search className="w-4 h-4" />
+              <span className="hidden sm:inline">Search</span>
+            </button>
+            <div className="h-4 w-px bg-slate-300 dark:bg-slate-700 mx-1" />
+            <button
+              onClick={() => {}}
+              className="quick-action-toolbar-btn"
+              aria-label="Settings"
+              title="Settings"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Settings</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Notification Toast */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 text-emerald-300 text-xs font-bold px-4 py-3 rounded-xl shadow-2xl animate-bounce flex items-center gap-2">
@@ -586,94 +694,53 @@ export default function App() {
       )}
 
       {/* Main Content Viewport */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24 lg:pb-6">
         {/* 5-Layer Economy Diagram Banner (Unlocked in Pro Mode) */}
         {isProMode && <JiweEconomyDiagram />}
 
-        {/* Tab 1: Companion & Log (Primary Gameplay Loop) */}
+        {/* Tab 1: Companion & Log (Primary Gameplay Loop) — Style-Guide Dashboard */}
         {activeTab === 'companion' && (
-          <div className="space-y-6">
-            {/* First-Day Mission & Guided Onboarding Tutorial */}
-            <OnboardingTutorial
-              userName={userAccount?.name || 'Health Pioneer'}
-              onOpenCheckin={() => setIsCheckinModalOpen(true)}
-              onNavigateTab={handleNavigateTab}
-              onMissionCompleted={handleMissionCompleted}
-              streakDays={companion.streakDays}
-            />
-
-            <CompanionAvatar
-              companion={companion}
-              cowriesBalance={stats.cowriesBalance}
-              onFeedCompanion={handleFeedCompanion}
-              onOpenCheckin={() => setIsCheckinModalOpen(true)}
-              onOpenWheel={() => setActiveTab('wheel')}
-            />
-            <DailyGoalTracker
-              key={new Date().toISOString().slice(0, 10)}
-              onOpenCheckin={() => setIsCheckinModalOpen(true)}
-              streakDays={companion.streakDays}
-              isFreshStart={!isDemoMode}
-              onGoalUpdated={(xp, cowries) => {
-                setStats((prev) => {
-                  const newCowries = prev.cowriesBalance + cowries;
-                  const newXp = prev.totalXp + xp;
-                  if (userAccount?.uid) {
-                    updateUserCowries(userAccount.uid, newCowries, newXp).catch(console.error);
-                  }
-                  return {
-                    ...prev,
-                    cowriesBalance: newCowries,
-                    totalXp: newXp,
-                  };
-                });
-                setCompanion((prev) => {
-                  const updated = {
-                    ...prev,
-                    xp: prev.xp + xp,
-                    health: Math.min(100, prev.health + 2),
-                    vitality: Math.min(100, prev.vitality + 3),
-                  };
-                  if (userAccount?.uid) {
-                    saveCompanionToFirestore(userAccount.uid, updated).catch(console.error);
-                  }
-                  return updated;
-                });
-                showToast(`Habit Milestone Completed! +${xp} XP & +${cowries} 🐚 earned.`);
-              }}
-            />
-          </div>
-        )}
-
-        {/* Tab 2: Feedback Surface */}
-        {activeTab === 'feedback' && (
-          <FeedbackDashboard
+          <DashboardHome
             companion={companion}
             stats={stats}
-            badges={badges}
-            checkIns={checkIns}
-            onOpenCheckin={() => setIsCheckinModalOpen(true)}
-            onOpenSponsors={() => handleNavigateTab('sponsors')}
             userName={userAccount?.name || 'Health Pioneer'}
-            onShowToast={showToast}
+            onOpenCheckin={() => setIsCheckinModalOpen(true)}
+            onNavigateTab={handleNavigateTab}
+            onMissionCompleted={handleMissionCompleted}
+            onFeedCompanion={handleFeedCompanion}
+            onOpenWheel={() => setActiveTab('wheel')}
+            isFreshStart={!isDemoMode}
+            onGoalUpdated={(xp, cowries) => {
+              setStats((prev) => {
+                const newCowries = prev.cowriesBalance + cowries;
+                const newXp = prev.totalXp + xp;
+                if (userAccount?.uid) {
+                  updateUserCowries(userAccount.uid, newCowries, newXp).catch(console.error);
+                }
+                return {
+                  ...prev,
+                  cowriesBalance: newCowries,
+                  totalXp: newXp,
+                };
+              });
+              setCompanion((prev) => {
+                const updated = {
+                  ...prev,
+                  xp: prev.xp + xp,
+                  health: Math.min(100, prev.health + 2),
+                  vitality: Math.min(100, prev.vitality + 3),
+                };
+                if (userAccount?.uid) {
+                  saveCompanionToFirestore(userAccount.uid, updated).catch(console.error);
+                }
+                return updated;
+              });
+              showToast(`Habit Milestone Completed! +${xp} XP & +${cowries} 🐚 earned.`);
+            }}
           />
         )}
 
-        {/* Tab 3: Sponsor Pools */}
-        {activeTab === 'sponsors' && (
-          <CommunitySponsorPools
-            pools={pools}
-            onClaimReward={handleClaimReward}
-            onAddSponsorPool={handleAddSponsorPool}
-            userStreak={companion.streakDays}
-            userName={userAccount?.name || 'Health Pioneer'}
-            userCowries={stats.cowriesBalance}
-            onOpenCheckin={() => setIsCheckinModalOpen(true)}
-            onShowToast={showToast}
-          />
-        )}
-
-        {/* Tab 4: Rewards Wheel & Hub */}
+        {/* Tab 2: Rewards Wheel & Hub */}
         {activeTab === 'wheel' && (
           <div className="space-y-6">
             <RewardsHub
@@ -691,12 +758,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Tab 5: Smart Contracts & On-Chain Verification */}
-        {activeTab === 'contracts' && (
-          <SmartContractsViewer txLogs={txLogs} />
-        )}
-
-        {/* Tab 6: AI Health Coach */}
+        {/* Tab 3: AI Health Coach */}
         {activeTab === 'coach' && (
           <AIHealthCoach companion={companion} />
         )}
@@ -731,6 +793,53 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="mobile-bottom-nav lg:hidden" aria-label="Mobile navigation">
+        <button
+          onClick={() => handleNavigateTab('companion')}
+          className={`mobile-bottom-nav-item ${activeTab === 'companion' ? 'active' : ''}`}
+          aria-label="Dashboard"
+        >
+          <Home className="w-5 h-5" />
+          <span>Home</span>
+        </button>
+        <button
+          onClick={() => handleNavigateTab('coach')}
+          className={`mobile-bottom-nav-item ${activeTab === 'coach' ? 'active' : ''}`}
+          aria-label="AI Coach"
+        >
+          <MessageSquare className="w-5 h-5" />
+          <span>Coach</span>
+        </button>
+        <button
+          onClick={() => handleNavigateTab('wheel')}
+          className={`mobile-bottom-nav-item ${activeTab === 'wheel' ? 'active' : ''}`}
+          aria-label="Rewards"
+        >
+          <Award className="w-5 h-5" />
+          <span>Rewards</span>
+        </button>
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="mobile-bottom-nav-item"
+          aria-label="Search"
+        >
+          <Search className="w-5 h-5" />
+          <span>Search</span>
+        </button>
+      </nav>
+
+      {/* Global Search Modal */}
+      <GlobalSearch
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onNavigate={handleNavigateTab}
+        onOpenCheckin={() => setIsCheckinModalOpen(true)}
+        activeTab={activeTab}
+        theme={theme}
+      />
+      </div>
     </div>
   );
 }

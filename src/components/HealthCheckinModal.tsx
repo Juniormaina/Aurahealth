@@ -158,23 +158,23 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-2xl p-6 shadow-2xl relative my-8">
+      <div className="aura-card-gradient w-full max-w-xl rounded-2xl p-6 shadow-2xl relative my-8">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Modal Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="bg-emerald-500/20 text-emerald-400 p-2.5 rounded-xl border border-emerald-500/30">
+          <div className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-500/30">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-white">Daily Health Check-In</h3>
-            <p className="text-xs text-slate-400">
+            <h3 className="text-xl font-black text-slate-900 dark:text-white">Daily Health Check-In</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Low-friction health reporting with verifiable cryptographic proof
             </p>
           </div>
@@ -182,21 +182,21 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Wearables & Health Data Sync Banner */}
-          <div className="bg-gradient-to-r from-cyan-950/80 via-slate-900 to-indigo-950/80 p-3.5 rounded-xl border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+          <div className="bg-gradient-to-r from-cyan-50 via-white to-indigo-50 dark:from-cyan-950/80 dark:via-slate-900 dark:to-indigo-950/80 p-3.5 rounded-xl border border-cyan-200 dark:border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-300 shrink-0">
-                <Smartphone className="w-4 h-4 text-cyan-400" />
+              <div className="p-2 rounded-lg bg-cyan-100 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-300 shrink-0">
+                <Smartphone className="w-4 h-4 text-cyan-500" />
               </div>
               <div>
-                <div className="text-xs font-black text-white flex items-center gap-1.5">
+                <div className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
                   <span>Apple Health & Google Fit Sync</span>
                   {isWearablesSynced && (
-                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-500/30">
+                    <span className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-200 dark:border-emerald-500/30">
                       Synced ✓
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-300">
+                <p className="text-[11px] text-slate-500 dark:text-slate-300">
                   {isWearablesSynced
                     ? 'Step count and sleep duration auto-populated from health provider'
                     : 'Auto-fetch step count & sleep duration from health integrations'}
@@ -209,13 +209,13 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
                 type="button"
                 disabled={isHealthFetching}
                 onClick={() => handleFetchExternalHealthData('apple_health')}
-                className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-lg border border-slate-700 transition-all flex items-center gap-1"
+                className="btn-ghost text-[11px] flex items-center gap-1"
                 title="Fetch daily steps & sleep from Apple Health"
               >
                 {isHealthFetching && activeHealthSource === 'apple_health' ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-500" />
                 ) : (
-                  <Smartphone className="w-3.5 h-3.5 text-rose-400" />
+                  <Smartphone className="w-3.5 h-3.5 text-rose-500" />
                 )}
                 <span>Apple Health</span>
               </button>
@@ -224,13 +224,13 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
                 type="button"
                 disabled={isHealthFetching}
                 onClick={() => handleFetchExternalHealthData('google_fit')}
-                className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-lg border border-slate-700 transition-all flex items-center gap-1"
+                className="btn-ghost text-[11px] flex items-center gap-1"
                 title="Fetch daily steps & sleep from Google Fit"
               >
                 {isHealthFetching && activeHealthSource === 'google_fit' ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-500" />
                 ) : (
-                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
                 )}
                 <span>Google Fit</span>
               </button>
@@ -238,7 +238,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsWearablesModalOpen(true)}
-                className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-[11px] px-2.5 py-1.5 rounded-lg transition-all shadow-sm flex items-center gap-1"
+                className="btn-primary text-[11px] flex items-center gap-1"
                 title="Open detailed Wearable Hardware Sensor Hub"
               >
                 <Watch className="w-3.5 h-3.5" />
