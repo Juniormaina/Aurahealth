@@ -157,24 +157,24 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="aura-card-gradient w-full max-w-xl rounded-2xl p-6 shadow-2xl relative my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/50 overflow-y-auto">
+      <div className="aura-card-gradient w-full max-w-xl rounded-[4px] p-6 relative my-8">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="absolute top-4 right-4 text-muted hover:text-navy p-1 rounded-[4px]"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Modal Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-500/30">
+          <div className="bg-harmony/12 text-harmony p-2.5 rounded-[4px] border border-harmony/30">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-slate-900 dark:text-white">Daily Health Check-In</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <h3 className="text-xl font-bold text-navy">Daily Health Check-In</h3>
+            <p className="text-xs text-muted leading-[1.6]">
               Low-friction health reporting with verifiable cryptographic proof
             </p>
           </div>
@@ -182,7 +182,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Wearables & Health Data Sync Banner */}
-          <div className="bg-gradient-to-r from-cyan-50 via-white to-indigo-50 dark:from-cyan-950/80 dark:via-slate-900 dark:to-indigo-950/80 p-3.5 rounded-xl border border-cyan-200 dark:border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+          <div className="astra-frame p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-lg bg-cyan-100 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-300 shrink-0">
                 <Smartphone className="w-4 h-4 text-cyan-500" />
@@ -248,9 +248,9 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
           </div>
 
           {/* Hydration Slider */}
-          <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+          <div className="astra-frame p-4">
             <div className="flex justify-between items-center mb-2">
-              <label className="text-xs font-bold text-slate-200 flex items-center gap-2">
+              <label className="text-xs font-bold text-navy flex items-center gap-2">
                 <Droplets className="w-4 h-4 text-cyan-400" /> Daily Water Intake (oz)
               </label>
               <span className="text-cyan-300 font-mono font-bold text-sm">{waterOz} oz</span>
@@ -274,9 +274,9 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
           {/* Sleep & Medication Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Sleep Slider */}
-            <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+            <div className="astra-frame p-4">
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                <label className="text-xs font-bold text-navy flex items-center gap-2">
                   <Moon className="w-4 h-4 text-indigo-400" /> Sleep Duration
                 </label>
                 <span className="text-indigo-300 font-mono font-bold text-sm">{sleepHours} hrs</span>
@@ -293,7 +293,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
             </div>
 
             {/* Medication Toggle */}
-            <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 flex flex-col justify-between">
+            <div className="astra-frame p-4 flex flex-col justify-between">
               <label className="text-xs font-bold text-slate-200 flex items-center gap-2 mb-2">
                 <Pill className="w-4 h-4 text-rose-400" /> Medication Adherence
               </label>
@@ -313,7 +313,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
           </div>
 
           {/* Mood Selector (1-5) */}
-          <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+          <div className="astra-frame p-4">
             <label className="text-xs font-bold text-slate-200 flex items-center gap-2 mb-3">
               <Smile className="w-4 h-4 text-amber-400" /> Today's Wellbeing & Mood
             </label>
@@ -343,9 +343,9 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
           </div>
 
           {/* Physical Activity Minutes */}
-          <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+          <div className="astra-frame p-4">
             <div className="flex justify-between items-center mb-2">
-              <label className="text-xs font-bold text-slate-200 flex items-center gap-2">
+              <label className="text-xs font-bold text-navy flex items-center gap-2">
                 <Activity className="w-4 h-4 text-emerald-400" /> Physical Exercise / Walking
               </label>
               <span className="text-emerald-300 font-mono font-bold text-sm">{activityMinutes} mins</span>
@@ -362,7 +362,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
           </div>
 
           {/* Optional Notes & Photo Attachment */}
-          <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-3">
+          <div className="astra-frame p-4 space-y-3">
             <label className="text-xs font-bold text-slate-200 block">
               Optional Health Notes or Prescription Verification
             </label>
@@ -370,7 +370,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="e.g., Completed morning walk, drank 2 bottles of water, took blood pressure reading..."
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-rose-500"
+            className="w-full aura-input p-3 text-xs min-h-[80px]"
               rows={2}
             />
 
@@ -400,7 +400,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white font-extrabold text-sm py-3 px-6 rounded-xl shadow-lg shadow-emerald-900/40 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full btn-primary justify-center text-sm py-3 px-6 disabled:opacity-50"
           >
             {isSubmitting ? (
               <>

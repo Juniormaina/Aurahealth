@@ -49,45 +49,45 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       >
         {/* Streak */}
         <div className="aura-module-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
-            <Flame className="w-5 h-5 text-amber-500" />
+          <div className="w-10 h-10 rounded-[4px] bg-ivory border border-line flex items-center justify-center shrink-0">
+            <Flame className="w-5 h-5 text-gold" />
           </div>
           <div>
-            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Streak</div>
-            <div className="aura-highlight-number">{stats.currentStreak}<span className="text-sm font-bold text-slate-500 ml-1">days</span></div>
+            <div className="text-[11px] font-semibold text-muted uppercase tracking-wide">Streak</div>
+            <div className="aura-highlight-number">{stats.currentStreak}<span className="text-sm font-bold text-muted ml-1">days</span></div>
           </div>
         </div>
 
         {/* Astra's Mood */}
         <div className="aura-module-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center shrink-0 text-xl">
+          <div className="w-10 h-10 rounded-[4px] bg-ivory border border-line flex items-center justify-center shrink-0 text-xl">
             {MOOD_EMOJI[companion.mood]}
           </div>
           <div>
-            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Astra's Mood</div>
-            <div className="text-base font-bold text-slate-800 capitalize leading-tight">{companion.mood}</div>
-            <div className="text-[11px] text-slate-400">{companion.stage}</div>
+            <div className="text-[11px] font-semibold text-muted uppercase tracking-wide">Astra's Mood</div>
+            <div className="text-base font-bold text-navy capitalize leading-tight">{companion.mood}</div>
+            <div className="text-[11px] text-muted">{companion.stage}</div>
           </div>
         </div>
 
         {/* Cowries Balance */}
         <div className="aura-module-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-yellow-50 border border-yellow-200 flex items-center justify-center shrink-0 text-xl">
+          <div className="w-10 h-10 rounded-[4px] bg-ivory border border-line flex items-center justify-center shrink-0 text-xl">
             🐚
           </div>
           <div>
-            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Cowries</div>
+            <div className="text-[11px] font-semibold text-muted uppercase tracking-wide">Cowries</div>
             <div className="aura-highlight-number">{stats.cowriesBalance}</div>
           </div>
         </div>
 
         {/* Total XP */}
         <div className="aura-module-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center shrink-0">
-            <Star className="w-5 h-5 text-teal-500" />
+          <div className="w-10 h-10 rounded-[4px] bg-ivory border border-line flex items-center justify-center shrink-0">
+            <Star className="w-5 h-5 text-harmony" />
           </div>
           <div>
-            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Total XP</div>
+            <div className="text-[11px] font-semibold text-muted uppercase tracking-wide">Total XP</div>
             <div className="aura-highlight-number">{stats.totalXp}</div>
           </div>
         </div>
@@ -123,27 +123,27 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         <button
           type="button"
           onClick={() => setMissionsExpanded((v) => !v)}
-          className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-slate-50 transition-colors"
+          className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-ivory transition-colors"
           aria-expanded={missionsExpanded}
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center shrink-0">
-              <Trophy className="w-5 h-5 text-teal-500" />
+            <div className="w-10 h-10 rounded-[4px] bg-ivory border border-line flex items-center justify-center shrink-0">
+              <Trophy className="w-5 h-5 text-harmony" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-800">Missions & Rewards</h3>
-              <p className="text-xs text-slate-500">
+              <h3 className="text-lg font-bold text-navy">Missions & Rewards</h3>
+              <p className="text-xs text-muted leading-[1.6]">
                 Complete first-day missions, then explore the rewards wheel & hub.
               </p>
             </div>
           </div>
           <ChevronDown
-            className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${missionsExpanded ? 'rotate-180' : ''}`}
+            className={`w-5 h-5 text-muted transition-transform duration-300 ${missionsExpanded ? 'rotate-180' : ''}`}
           />
         </button>
 
         <div className={`progressive-content ${missionsExpanded ? 'expanded' : ''}`}>
-          <div className="px-4 pb-4 pt-1 border-t border-slate-100">
+          <div className="px-4 pb-4 pt-1 border-t border-line">
             <OnboardingTutorial
               userName={userName}
               onOpenCheckin={onOpenCheckin}

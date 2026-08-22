@@ -194,47 +194,45 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
       <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Top Banner Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5 border-b border-slate-200 dark:border-slate-700/50">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5 border-b border-line">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="bg-gradient-to-r from-amber-400 to-rose-500 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
-              <Star className="w-3 h-3 fill-slate-950" /> First-Day Mission
+            <span className="bg-sunlight text-navy font-bold text-[10px] px-2.5 py-0.5 rounded-[4px] uppercase tracking-wider flex items-center gap-1">
+              <Star className="w-3 h-3 fill-navy" /> First-Day Mission
             </span>
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-bold text-muted">
               Guided Onboarding Tutorial
             </span>
           </div>
-          <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-xl font-bold text-navy flex items-center gap-2">
             <span>Welcome, {userName || 'Health Explorer'}!</span>
             <span className="text-2xl">🌱</span>
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-300 mt-1 max-w-xl">
-            Complete your 4 First-Day Missions below to awaken Astra, earn your first <strong className="text-slate-700 dark:text-slate-200">+210 Cowries 🐚</strong>, and establish your 1-day habit streak!
+          <p className="text-xs text-muted mt-1 max-w-xl leading-[1.6]">
+            Complete your 4 First-Day Missions below to awaken Astra, earn your first <strong className="text-ink">+210 Cowries 🐚</strong>, and establish your 1-day habit streak!
           </p>
         </div>
 
-        {/* Buttons: Launch Walkthrough Modal */}
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => {
               setCurrentModalStep(0);
               setShowGuideModal(true);
             }}
-            className="bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 font-bold text-xs px-3.5 py-2 rounded-xl border border-indigo-200 dark:border-indigo-500/30 transition-all flex items-center gap-1.5 hover:scale-105"
+            className="btn-ghost text-navy font-bold text-xs"
           >
-            <HelpCircle className="w-4 h-4 text-indigo-500" />
+            <HelpCircle className="w-4 h-4 text-gold" />
             <span>How It Works Guide</span>
           </button>
 
-          {/* Overall Mission Progress Badge */}
-          <div className="bg-white/80 dark:bg-slate-800/50 p-2.5 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700/50 flex items-center gap-3">
+          <div className="astra-frame p-2.5 px-3.5 flex items-center gap-3">
             <div className="text-right">
-              <div className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Tutorial Progress</div>
-              <div className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+              <div className="text-[10px] uppercase font-bold text-muted">Tutorial Progress</div>
+              <div className="text-xs font-bold text-harmony">
                 {completedCount} / {totalCount} Done ({progressPercent}%)
               </div>
             </div>
-            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 flex items-center justify-center font-black text-xs text-slate-700 dark:text-white">
+            <div className="w-10 h-10 rounded-full bg-ivory border border-line flex items-center justify-center font-bold text-xs text-navy">
               {progressPercent}%
             </div>
           </div>
@@ -250,7 +248,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
               key={mission.id}
               className={`aura-card p-4 transition-all ${
                 mission.completed
-                  ? 'border-emerald-200 dark:border-emerald-500/40'
+                  ? 'border-harmony/40'
                   : ''
               }`}
             >
@@ -258,35 +256,35 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div
-                    className={`p-2.5 rounded-xl bg-gradient-to-tr ${mission.accentColor} text-white shadow-md`}
+                    className={`p-2.5 rounded-[4px] bg-navy text-sunlight`}
                   >
                     <IconComp className="w-5 h-5" />
                   </div>
 
                   {mission.completed ? (
-                    <span className="bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Completed
+                    <span className="aura-badge aura-badge-success text-[10px]">
+                      <CheckCircle2 className="w-3 h-3" /> Completed
                     </span>
                   ) : (
-                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-mono px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                    <span className="aura-badge aura-badge-info text-[10px] font-mono">
                       Step {idx + 1}
                     </span>
                   )}
                 </div>
 
-                <h4 className="text-xs font-black text-slate-900 dark:text-white mb-1 leading-snug">
+                <h4 className="text-xs font-bold text-navy mb-1 leading-snug">
                   {mission.title}
                 </h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+                <p className="text-[11px] text-muted leading-[1.6] mb-3">
                   {mission.description}
                 </p>
               </div>
 
               {/* Reward Callout & Action */}
-              <div className="pt-3 border-t border-slate-200 dark:border-slate-700/50 space-y-2">
+              <div className="pt-3 border-t border-line space-y-2">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-500 dark:text-slate-400">Reward:</span>
-                  <span className="font-bold text-amber-600 dark:text-amber-300 flex items-center gap-1">
+                  <span className="text-muted">Reward:</span>
+                  <span className="font-bold text-gold flex items-center gap-1">
                     <Zap className="w-3 h-3 text-amber-500" /> +{mission.xpReward} XP • +{mission.cowriesReward} 🐚
                   </span>
                 </div>
@@ -296,8 +294,8 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                   disabled={mission.completed}
                   className={`w-full text-xs font-bold py-2 px-3 rounded-lg border transition-all flex items-center justify-center gap-1.5 ${
                     mission.completed
-                      ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20 cursor-default'
-                      : `bg-gradient-to-r ${mission.accentColor} text-slate-950 hover:opacity-95 shadow-md hover:scale-[1.02] active:scale-[0.98]`
+                      ? 'bg-harmony/12 text-harmony border-harmony/30 cursor-default'
+                      : 'btn-primary border-0'
                   }`}
                 >
                   {mission.completed ? (
@@ -318,22 +316,22 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
       </div>
 
       {/* Grand Onboarding Completion Reward Banner */}
-      <div className="bg-slate-950/90 rounded-xl border border-slate-800 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="trust-band rounded-[4px] p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-400 to-rose-500 flex items-center justify-center text-slate-950 font-black shrink-0 shadow-lg">
-            <Gift className="w-6 h-6 text-slate-950" />
+          <div className="w-11 h-11 rounded-[4px] bg-sunlight flex items-center justify-center text-navy font-bold shrink-0">
+            <Gift className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="text-xs font-black text-white">
+              <h4 className="text-xs font-bold text-[#FFFAF4]">
                 First-Day Mastery Grand Welcome Pack
               </h4>
-              <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/30">
+              <span className="bg-sunlight/20 text-sunlight text-[10px] font-bold px-2 py-0.5 rounded-[4px]">
                 +150 XP • +100 🐚 • Pioneer Badge
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              Complete all 4 First-Day Missions to unlock your Pioneer Badge and hatch Astra into a active Hatchling!
+            <p className="text-[11px] text-[#FFFAF4]/75 mt-0.5 leading-[1.6]">
+              Complete all 4 First-Day Missions to unlock your Pioneer Badge and hatch Astra into an active Hatchling!
             </p>
           </div>
         </div>
@@ -341,12 +339,12 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
         <button
           onClick={handleClaimGrandReward}
           disabled={completedCount < totalCount || grandRewardClaimed}
-          className={`px-5 py-2.5 rounded-xl font-black text-xs transition-all shadow-md flex items-center gap-2 shrink-0 ${
+          className={`px-5 py-2.5 rounded-[4px] font-bold text-xs flex items-center gap-2 shrink-0 ${
             grandRewardClaimed
-              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+              ? 'bg-harmony/20 text-[#FFFAF4] border border-harmony/40'
               : completedCount < totalCount
-              ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
-              : 'bg-gradient-to-r from-emerald-400 to-amber-400 hover:from-emerald-500 hover:to-amber-500 text-slate-950 hover:scale-105 active:scale-95'
+              ? 'bg-[#FFFAF4]/10 text-[#FFFAF4]/50 border border-[#FFFAF4]/20 cursor-not-allowed'
+              : 'btn-primary'
           }`}
         >
           {grandRewardClaimed ? (
@@ -364,11 +362,11 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
 
       {/* Guided Walkthrough Modal Overlay */}
       {showGuideModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 bg-navy/50 flex items-center justify-center p-4">
+          <div className="bg-peach border border-line rounded-[4px] max-w-lg w-full p-6 relative">
             <button
               onClick={() => setShowGuideModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+              className="absolute top-4 right-4 text-muted hover:text-navy p-1 rounded-[4px]"
             >
               <X className="w-5 h-5" />
             </button>
@@ -376,16 +374,16 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
             {/* Modal Content Step */}
             <div className="text-center mb-6 pt-2">
               <div className="text-5xl mb-3">{tutorialSteps[currentModalStep].icon}</div>
-              <span className="bg-indigo-500/20 text-indigo-300 text-[10px] font-bold px-3 py-1 rounded-full border border-indigo-500/30 uppercase tracking-wider">
+              <span className="bg-ivory text-navy text-[10px] font-bold px-3 py-1 rounded-[4px] border border-line uppercase tracking-wider">
                 Step {currentModalStep + 1} of {tutorialSteps.length}
               </span>
-              <h3 className="text-xl font-black text-white mt-3">
+              <h3 className="text-xl font-bold text-navy mt-3">
                 {tutorialSteps[currentModalStep].title}
               </h3>
-              <p className="text-xs font-bold text-amber-400 mt-1">
+              <p className="text-xs font-bold text-gold mt-1">
                 {tutorialSteps[currentModalStep].subtitle}
               </p>
-              <p className="text-xs text-slate-300 mt-3 leading-relaxed">
+              <p className="text-xs text-muted mt-3 leading-[1.6]">
                 {tutorialSteps[currentModalStep].description}
               </p>
             </div>
@@ -397,19 +395,19 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                   key={i}
                   className={`h-2 rounded-full transition-all ${
                     i === currentModalStep
-                      ? 'w-8 bg-emerald-400'
-                      : 'w-2 bg-slate-700'
+                      ? 'w-8 bg-sunlight'
+                      : 'w-2 bg-line'
                   }`}
                 />
               ))}
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+            <div className="flex items-center justify-between pt-4 border-t border-line">
               <button
                 onClick={() => setCurrentModalStep((prev) => Math.max(0, prev - 1))}
                 disabled={currentModalStep === 0}
-                className="text-xs font-bold text-slate-400 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                className="text-xs font-bold text-muted hover:text-navy disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Back
               </button>
@@ -417,7 +415,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
               {currentModalStep < tutorialSteps.length - 1 ? (
                 <button
                   onClick={() => setCurrentModalStep((prev) => prev + 1)}
-                  className="bg-gradient-to-r from-indigo-500 to-rose-500 hover:from-indigo-600 hover:to-rose-600 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-1.5"
+                  className="btn-primary text-xs"
                 >
                   <span>Next Step</span>
                   <ChevronRight className="w-4 h-4" />
@@ -425,7 +423,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
               ) : (
                 <button
                   onClick={() => setShowGuideModal(false)}
-                  className="bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5"
+                  className="btn-primary text-xs"
                 >
                   <span>Start First Mission!</span>
                   <Sparkles className="w-4 h-4" />

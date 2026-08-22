@@ -168,36 +168,35 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
   return (
     <div className="aura-card-gradient p-6 relative overflow-hidden space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-700/50 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-line pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 font-bold text-[10px] px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-500/30 uppercase tracking-wider flex items-center gap-1">
-              <Coins className="w-3 h-3 text-amber-500" /> Transparent Economy Guide
+            <span className="bg-peach text-gold font-bold text-[10px] px-2.5 py-0.5 rounded-[4px] border border-line uppercase tracking-wider flex items-center gap-1">
+              <Coins className="w-3 h-3" /> Transparent Economy Guide
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">Verifiable Health Value</span>
+            <span className="text-xs text-muted">Verifiable Health Value</span>
           </div>
-          <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-2xl font-bold text-navy flex items-center gap-2">
             <span>AuraHealth Rewards Hub</span>
             <span className="text-2xl">🐚</span>
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-300 mt-1 max-w-xl">
-            Understand how daily health logs generate <strong className="text-slate-700 dark:text-slate-200">Cowries 🐚 & XP</strong>, convert them into real-world clinic vouchers and mobile data, and unlock higher tier multipliers!
+          <p className="text-xs text-muted mt-1 max-w-xl leading-[1.6]">
+            Understand how daily health logs generate <strong className="text-ink">Cowries 🐚 & XP</strong>, convert them into real-world clinic vouchers and mobile data, and unlock higher tier multipliers!
           </p>
         </div>
 
-        {/* User Balance Bar */}
-        <div className="bg-white/80 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50 flex items-center gap-4 shrink-0">
+        <div className="astra-frame p-3 flex items-center gap-4 shrink-0">
           <div>
-            <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Your Balance</div>
-            <div className="text-base font-black text-amber-600 dark:text-amber-300 font-mono flex items-center gap-1">
+            <div className="text-[10px] font-bold text-muted uppercase">Your Balance</div>
+            <div className="text-base font-bold text-gold font-mono flex items-center gap-1">
               <span>{cowriesBalance} 🐚</span>
-              <span className="text-xs text-slate-400 dark:text-slate-500 font-normal">(${(cowriesBalance * 0.01).toFixed(2)})</span>
+              <span className="text-xs text-muted font-normal">(${(cowriesBalance * 0.01).toFixed(2)})</span>
             </div>
           </div>
-          <div className="h-8 w-px bg-slate-200 dark:bg-slate-700" />
+          <div className="h-8 w-px bg-line" />
           <div>
-            <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Total XP</div>
-            <div className="text-base font-black text-cyan-600 dark:text-cyan-400 font-mono">
+            <div className="text-[10px] font-bold text-muted uppercase">Total XP</div>
+            <div className="text-base font-bold text-harmony font-mono">
               {totalXp} XP
             </div>
           </div>
@@ -205,13 +204,13 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
       </div>
 
       {/* Mode Sub-Tabs */}
-      <div className="flex items-center justify-start gap-2 border-b border-slate-200 dark:border-slate-700/50 pb-3">
+      <div className="flex items-center justify-start gap-2 border-b border-line pb-3">
         <button
           onClick={() => setActiveTab('conversion')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
             activeTab === 'conversion'
-              ? 'bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 shadow-md'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-sunlight text-navy'
+              : 'text-muted hover:text-navy'
           }`}
         >
           <TrendingUp className="w-4 h-4" />
@@ -222,8 +221,8 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
           onClick={() => setActiveTab('milestones')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
             activeTab === 'milestones'
-              ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-sunlight text-navy'
+              : 'text-muted hover:text-navy'
           }`}
         >
           <Trophy className="w-4 h-4" />
@@ -234,8 +233,8 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
           onClick={() => setActiveTab('redeem')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
             activeTab === 'redeem'
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-sunlight text-navy'
+              : 'text-muted hover:text-navy'
           }`}
         >
           <Gift className="w-4 h-4" />
@@ -248,7 +247,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Interactive Calculator Slider Card */}
-            <div className="bg-slate-950/80 rounded-xl border border-slate-800 p-5 space-y-4">
+            <div className="astra-frame p-5 space-y-4">
               <h4 className="text-sm font-black text-white flex items-center gap-2">
                 <span>Interactive Benefit Calculator</span>
                 <Sparkles className="w-4 h-4 text-amber-400" />
@@ -280,14 +279,14 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
               </div>
 
               {/* Equivalence breakdown */}
-              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-900">
-                <div className="bg-slate-900 p-3 rounded-lg border border-slate-800">
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-line">
+                <div className="astra-frame p-3">
                   <div className="text-[10px] font-bold text-slate-400">Clinic Prescription Subsidy</div>
                   <div className="text-base font-black text-emerald-400">${clinicVoucherUsd}</div>
                   <div className="text-[10px] text-slate-500">Partner Health Network</div>
                 </div>
 
-                <div className="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                <div className="astra-frame p-3">
                   <div className="text-[10px] font-bold text-slate-400">Mobile Data Allowance</div>
                   <div className="text-base font-black text-cyan-400">{mobileDataMb} MB</div>
                   <div className="text-[10px] text-slate-500">Instant Airtime Transfer</div>
@@ -296,14 +295,14 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
             </div>
 
             {/* How Cowries are Earned Rules */}
-            <div className="bg-slate-950/80 rounded-xl border border-slate-800 p-5 space-y-3">
+            <div className="astra-frame p-5 space-y-3">
               <h4 className="text-sm font-black text-white flex items-center gap-2">
                 <span>How to Earn Daily Cowries</span>
                 <Coins className="w-4 h-4 text-amber-400" />
               </h4>
 
               <div className="space-y-2.5 text-xs text-slate-300">
-                <div className="flex items-start gap-2.5 p-2 rounded-lg bg-slate-900 border border-slate-800">
+                <div className="flex items-start gap-2.5 p-2 rounded-[4px] bg-ivory border border-line">
                   <span className="p-1 rounded bg-emerald-500/10 text-emerald-400 font-bold">1</span>
                   <div>
                     <span className="font-bold text-white">Daily Vitals & Hydration Check-In</span>
@@ -311,7 +310,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2.5 p-2 rounded-lg bg-slate-900 border border-slate-800">
+                <div className="flex items-start gap-2.5 p-2 rounded-[4px] bg-ivory border border-line">
                   <span className="p-1 rounded bg-amber-500/10 text-amber-400 font-bold">2</span>
                   <div>
                     <span className="font-bold text-white">Adherence Wheel of Health</span>
@@ -319,7 +318,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2.5 p-2 rounded-lg bg-slate-900 border border-slate-800">
+                <div className="flex items-start gap-2.5 p-2 rounded-[4px] bg-ivory border border-line">
                   <span className="p-1 rounded bg-indigo-500/10 text-indigo-400 font-bold">3</span>
                   <div>
                     <span className="font-bold text-white">Streak Multipliers (7+ Days)</span>
@@ -398,11 +397,11 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
               return (
                 <div
                   key={item.id}
-                  className="bg-slate-950/80 rounded-xl border border-slate-800 p-5 flex flex-col justify-between hover:border-slate-700 transition-all"
+                  className="aura-card p-5 flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className={`p-2.5 rounded-xl bg-gradient-to-tr ${item.accentColor} text-white shadow-md`}>
+                      <div className="p-2.5 rounded-[4px] bg-navy text-sunlight">
                         <IconComp className="w-5 h-5" />
                       </div>
 

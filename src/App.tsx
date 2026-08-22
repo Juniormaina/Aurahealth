@@ -9,7 +9,7 @@ import { SpinWheelLootbox } from './components/SpinWheelLootbox';
 import { RewardsHub } from './components/RewardsHub';
 import { AIHealthCoach } from './components/AIHealthCoach';
 import { HealthCheckinModal } from './components/HealthCheckinModal';
-import { JiweEconomyDiagram } from './components/JiweEconomyDiagram';
+import { SettingsPanel } from './components/SettingsPanel';
 
 import {
   INITIAL_COMPANION,
@@ -540,7 +540,7 @@ export default function App() {
 
   if (isLanding) {
     return (
-      <div className={`min-h-screen transition-colors duration-300 ${theme === 'morning' ? 'theme-morning bg-slate-50 text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
+      <div className={`min-h-screen transition-colors duration-300 ${theme === 'morning' ? 'theme-morning bg-canvas text-charcoal' : 'theme-midnight bg-[#0f1730] text-[#F6F1ED]'}`}>
         <LandingPage
           onGoogleSignIn={handleGoogleSignIn}
           onRealGoogleSignIn={handleRealGoogleSignIn}
@@ -585,7 +585,7 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen flex font-sans selection:bg-rose-500 selection:text-white transition-colors duration-300 ${theme === 'morning' ? 'theme-morning bg-slate-50 text-slate-900' : 'theme-midnight bg-slate-950 text-slate-100'}`}>
+    <div className={`min-h-screen flex font-sans selection:bg-sunlight selection:text-navy transition-colors duration-300 ${theme === 'morning' ? 'theme-morning bg-canvas text-charcoal' : 'theme-midnight bg-[#0f1730] text-[#F6F1ED]'}`}>
       {/* Sidebar */}
       <Sidebar
         activeTab={activeTab}
@@ -631,17 +631,17 @@ export default function App() {
 
       {/* Guided Tour Banner when in Demo Mode */}
       {isDemoMode && (
-        <div className="bg-gradient-to-r from-amber-950/80 via-slate-900 to-rose-950/80 border-b border-amber-500/30 py-2.5 px-4">
+        <div className="trust-band border-b border-[#FFFAF4]/12 py-2.5 px-4">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-2 text-amber-200">
-              <Compass className="w-4 h-4 text-amber-400 shrink-0 animate-spin" style={{ animationDuration: '8s' }} />
+            <div className="flex items-center gap-2 text-[#FFFAF4]">
+              <Compass className="w-4 h-4 text-sunlight shrink-0" />
               <span>
-                <strong>Guided Demo Walkthrough Active:</strong> Click <strong>+ Daily Check-In</strong> above to test AI attestation, feed <strong>Astra</strong>, or explore <strong>Sponsor Pools</strong>.
+                <strong>Guided Demo Walkthrough Active:</strong> Click <strong>+ Check-In</strong> above to test AI attestation, feed <strong>Astra</strong>, or explore <strong>Sponsor Pools</strong>.
               </span>
             </div>
             <button
               onClick={handleBackToLanding}
-              className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold px-3 py-1 rounded-lg border border-amber-500/40 text-[11px] whitespace-nowrap transition-colors"
+              className="bg-sunlight text-navy font-bold px-3 py-1 rounded-[4px] text-[11px] whitespace-nowrap"
             >
               Sign In with Google
             </button>
@@ -650,7 +650,7 @@ export default function App() {
       )}
 
       {/* Quick-Action Toolbar */}
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
+      <div className="bg-peach/90 border-b border-line sticky top-16 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 py-2 overflow-x-auto scrollbar-none">
             <button
@@ -671,10 +671,10 @@ export default function App() {
               <Search className="w-4 h-4" />
               <span className="hidden sm:inline">Search</span>
             </button>
-            <div className="h-4 w-px bg-slate-300 dark:bg-slate-700 mx-1" />
+            <div className="h-4 w-px bg-line mx-1" />
             <button
-              onClick={() => {}}
-              className="quick-action-toolbar-btn"
+              onClick={() => handleNavigateTab('settings')}
+              className={`quick-action-toolbar-btn ${activeTab === 'settings' ? 'active' : ''}`}
               aria-label="Settings"
               title="Settings"
             >
@@ -687,7 +687,7 @@ export default function App() {
 
       {/* Notification Toast */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 text-emerald-300 text-xs font-bold px-4 py-3 rounded-xl shadow-2xl animate-bounce flex items-center gap-2">
+        <div className="fixed bottom-6 right-6 z-50 bg-navy border border-line text-[#FFFAF4] text-xs font-bold px-4 py-3 rounded-[4px] flex items-center gap-2">
           <span className="text-base">🎉</span>
           <span>{toastMessage}</span>
         </div>
@@ -762,6 +762,15 @@ export default function App() {
         {activeTab === 'coach' && (
           <AIHealthCoach companion={companion} />
         )}
+
+        {activeTab === 'settings' && (
+          <SettingsPanel
+            theme={theme}
+            onToggleTheme={handleToggleTheme}
+            userName={userAccount?.name || 'Health Pioneer'}
+            userEmail={userAccount?.email}
+          />
+        )}
       </main>
 
       {/* Health Check-In Modal */}
@@ -774,19 +783,19 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="bg-slate-900 border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
+      <footer className="bg-navy py-6 text-center text-xs text-[#FFFAF4]/70">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <button
               onClick={handleBackToLanding}
-              className="text-slate-400 hover:text-slate-200 underline text-xs"
+              className="text-[#FFFAF4]/80 hover:text-sunlight underline text-xs"
             >
               Back to Landing
             </button>
             <span>•</span>
-            <strong className="text-slate-300">AuraHealth MVP</strong> • Daily Wellness & Community Health Adherence Platform
+            <strong className="text-[#FFFAF4]">AuraHealth MVP</strong> • Daily Wellness & Community Health Adherence Platform
           </div>
-          <div className="flex items-center gap-4 text-[11px] text-slate-400">
+          <div className="flex items-center gap-4 text-[11px]">
             <span>Verifiable Health Ledger</span>
             <span>•</span>
             <span>Sustainable Reward Economy</span>

@@ -1,25 +1,19 @@
 import React, { useState } from 'react';
-import { AuraLogo } from './AuraLogo';
+import { AuraLogo, AuraMark } from './AuraLogo';
 import {
   Sparkles,
   ShieldCheck,
-  Zap,
   ArrowRight,
   CheckCircle2,
   Play,
   Heart,
   Coins,
-  Activity,
-  UserCheck,
-  Globe,
   Lock,
-  ChevronRight,
   Gift,
   LogOut,
   Award,
   Watch,
   Flame,
-  ArrowUpRight,
   Sun,
   Moon,
   Mail,
@@ -28,7 +22,6 @@ import {
   EyeOff,
   UserPlus,
   LogIn,
-  KeyRound
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -46,6 +39,15 @@ interface LandingPageProps {
   theme?: 'midnight' | 'morning';
   onToggleTheme?: () => void;
 }
+
+const GoogleMark = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+  </svg>
+);
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onGoogleSignIn,
@@ -65,8 +67,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [showGoogleModal, setShowGoogleModal] = useState(false);
   const [customEmail, setCustomEmail] = useState('');
   const [customName, setCustomName] = useState('');
-
-  // Email Auth Modal State
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailTab, setEmailTab] = useState<'signin' | 'signup'>('signup');
   const [emailAddress, setEmailAddress] = useState('');
@@ -74,10 +74,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [emailName, setEmailName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
-
-  const handleQuickGoogleSelect = (email: string, name: string) => {
-    onGoogleSignIn(email, name);
-  };
 
   const handleCustomGoogleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,59 +85,54 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const handleEmailAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError(null);
-
     if (!emailAddress || !emailPassword) {
       setEmailError('Please fill in both email and password.');
       return;
     }
-
     if (emailPassword.length < 6) {
       setEmailError('Password must be at least 6 characters.');
       return;
     }
-
     if (emailTab === 'signup') {
       if (onEmailSignUp) {
         onEmailSignUp(emailAddress, emailPassword, emailName || emailAddress.split('@')[0]);
       } else {
         onGoogleSignIn(emailAddress, emailName || emailAddress.split('@')[0]);
       }
+    } else if (onEmailSignIn) {
+      onEmailSignIn(emailAddress, emailPassword);
     } else {
-      if (onEmailSignIn) {
-        onEmailSignIn(emailAddress, emailPassword);
-      } else {
-        onGoogleSignIn(emailAddress, emailAddress.split('@')[0]);
-      }
+      onGoogleSignIn(emailAddress, emailAddress.split('@')[0]);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-rose-500 selection:text-white">
-      {/* Top Header with Gradient */}
-      <header className="border-b border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <AuraLogo size="md" />
+  const isDark = theme === 'midnight';
+  const page = isDark ? 'bg-[#0f1730] text-[#F6F1ED]' : 'bg-canvas text-charcoal';
+  const heading = isDark ? 'text-[#F6F1ED]' : 'text-navy';
+  const muted = isDark ? 'text-[#F6F1ED]/70' : 'text-muted';
+  const card = 'aura-card p-6';
 
+  return (
+    <div className={`min-h-screen flex flex-col justify-between ${page}`}>
+      <header className="sticky top-0 z-40 bg-navy">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <AuraLogo size="md" inverted />
           <div className="flex items-center gap-3">
-            {/* Theme Toggle Button */}
             {onToggleTheme && (
               <button
+                type="button"
                 onClick={onToggleTheme}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-extrabold transition-all ${
-                  theme === 'morning'
-                    ? 'bg-amber-100 text-amber-950 border-amber-300 hover:bg-amber-200 shadow-sm'
-                    : 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
-                }`}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-[4px] text-xs font-bold bg-sunlight text-navy"
                 title="Switch Theme"
               >
                 {theme === 'morning' ? (
                   <>
-                    <Sun className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
+                    <Sun className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Light</span>
                   </>
                 ) : (
                   <>
-                    <Moon className="w-3.5 h-3.5 text-indigo-300 fill-indigo-300/30" />
+                    <Moon className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Dark</span>
                   </>
                 )}
@@ -150,19 +141,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             {(userAccount || isDemoMode) && onEnterDashboard ? (
               <div className="flex items-center gap-2">
-                <button
-                  onClick={onEnterDashboard}
-                  className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black text-xs px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-1.5"
-                >
-                  <span>Enter Dashboard</span>
+                <button type="button" onClick={onEnterDashboard} className="btn-primary text-xs">
+                  Enter Dashboard
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
                 {onSignOut && (
                   <button
+                    type="button"
                     onClick={onSignOut}
-                    className="bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-200 border border-slate-700 px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1"
+                    className="text-xs font-semibold text-[#FFFAF4]/80 hover:text-[#FFFAF4] px-3 py-2 flex items-center gap-1"
                   >
-                    <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                    <LogOut className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Sign Out</span>
                   </button>
                 )}
@@ -170,35 +159,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             ) : (
               <>
                 <button
+                  type="button"
                   onClick={onStartDemo}
-                  className="text-xs font-semibold text-slate-300 hover:text-white px-3.5 py-2 rounded-lg hover:bg-slate-800 transition-colors hidden sm:flex items-center gap-1.5"
+                  className="text-xs font-semibold text-[#FFFAF4]/80 hover:text-sunlight px-3.5 py-2 hidden sm:flex items-center gap-1.5"
                 >
-                  <Play className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  <Play className="w-3.5 h-3.5 fill-sunlight text-sunlight" />
                   Quick Demo
                 </button>
                 <button
+                  type="button"
                   onClick={onRealGoogleSignIn}
                   disabled={isLoggingIn}
-                  className="bg-white text-slate-950 hover:bg-slate-100 text-xs font-extrabold px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-2"
+                  className="bg-[#FFFAF4] text-navy hover:bg-peach text-xs font-extrabold px-4 py-2 rounded-[4px] flex items-center gap-2"
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
+                  <GoogleMark />
                   {isLoggingIn ? 'Connecting...' : 'Sign In with Google'}
                 </button>
               </>
@@ -207,489 +181,328 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </header>
 
-      {/* Main Hero Section with Gradient */}
-      <main className="hero-gradient max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-14 flex-1 flex flex-col justify-center relative">
-        {/* Active User Session Banner */}
+      <main className="hero-gradient max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-14 flex-1 flex flex-col justify-center w-full">
         {(userAccount || isDemoMode) && onEnterDashboard && (
-          <div className="max-w-3xl mx-auto w-full mb-8 bg-gradient-to-r from-emerald-950/80 via-slate-900 to-indigo-950/80 p-4 rounded-2xl border border-emerald-500/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center justify-center font-bold text-lg shrink-0">
-                👤
+          <div className="trust-band-teal max-w-3xl mx-auto w-full mb-8 p-4 rounded-[4px] flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-bold flex items-center gap-2">
+                Welcome back, {userAccount?.name || 'Guided Demo Explorer'}
+                <span className="aura-badge aura-badge-success">Active Session</span>
               </div>
-              <div>
-                <div className="text-xs font-black text-white flex items-center gap-2">
-                  <span>Welcome back, {userAccount?.name || 'Guided Demo Explorer'}!</span>
-                  <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.2 rounded-full font-bold">
-                    Active Session
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-300">
-                  Your daily companion Astra is ready for health check-ins and rewards.
-                </p>
-              </div>
+              <p className="text-[13px] leading-[1.6] mt-1">
+                Astra is ready for health check-ins and Cowries rewards.
+              </p>
             </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={onEnterDashboard}
-                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 hover:scale-105 active:scale-95"
-              >
-                <span>Enter Dashboard</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-              {onSignOut && (
-                <button
-                  onClick={onSignOut}
-                  className="bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-200 border border-slate-700 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1"
-                >
-                  <LogOut className="w-3.5 h-3.5 text-rose-400" />
-                  <span>Sign Out</span>
-                </button>
-              )}
-            </div>
+            <button type="button" onClick={onEnterDashboard} className="btn-primary text-xs shrink-0">
+              Enter Dashboard
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
 
-        {/* Top Highlight Badge */}
         <div className="flex justify-center mb-6">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-emerald-500/10 border border-slate-700/80 rounded-full px-4 py-1.5 text-xs text-slate-300">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <div className="inline-flex items-center gap-2 bg-peach border border-line rounded-[4px] px-4 py-1.5 text-xs text-muted">
+            <Sparkles className="w-3.5 h-3.5 text-gold" />
             <span>Daily Wellness • Evolving Companion • Real Rewards</span>
           </div>
         </div>
 
-        {/* Core Tagline / Value Proposition Sentence */}
+        <div className="flex justify-center mb-8">
+          <AuraMark
+            className="w-36 h-36 sm:w-44 sm:h-44 lg:w-52 lg:h-52"
+            title="Aura Health mark: glowing ring with a pulsing heartbeat"
+          />
+        </div>
+
         <div className="text-center max-w-4xl mx-auto mb-10 space-y-4">
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
+          <h1 className={`text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight ${heading}`}>
             AuraHealth
           </h1>
-
-          {/* Exact Value Sentence Highlight */}
-          <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-900 border border-slate-800 shadow-2xl my-4">
-            <p className="text-lg sm:text-2xl font-black bg-gradient-to-r from-rose-300 via-amber-200 to-emerald-300 bg-clip-text text-transparent leading-snug">
-              “Track your daily wellness, evolve your digital health companion, and earn real rewards.”
-            </p>
-          </div>
-
-          <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto font-normal">
-            Turn simple daily check-ins into an engaging journey. Connect wearables, evolve your companion Astra, unlock community sponsor clinic vouchers, and track health adherence with complete ease.
+          <p className={`text-lg sm:text-2xl font-semibold leading-[1.6] max-w-3xl mx-auto ${heading}`}>
+            Track your daily wellness, evolve your digital health companion, and earn real rewards.
           </p>
-        </div>
-
-        {/* 3-Step Interactive Value Funnel */}
-        <div className="mb-14">
-          <h2 className="text-center text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-6">
-            The AuraHealth 3-Step Value Funnel
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
-            {/* Step 1 */}
-            <div className="bg-gradient-to-b from-slate-900 to-slate-900/90 p-6 rounded-2xl border border-rose-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden group hover:border-rose-500/60 transition-all">
-              <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-rose-500/10 rounded-full blur-xl group-hover:bg-rose-500/20 transition-all" />
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-300 font-black text-xs flex items-center justify-center border border-rose-500/30">
-                    01
-                  </span>
-                  <Watch className="w-5 h-5 text-rose-400" />
-                </div>
-                <h3 className="text-lg font-black text-white mb-2 group-hover:text-rose-300 transition-colors">
-                  Track Your Daily Wellness
-                </h3>
-                <p className="text-xs text-slate-300 leading-relaxed mb-4">
-                  Auto-sync biometrics via Google Fit or Apple Health, or quickly log water, sleep, mood, and medication adherence in under 10 seconds.
-                </p>
-              </div>
-              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Wearable hardware verified</span>
-              </div>
-            </div>
-
-            {/* Step 2 */}
-            <div className="bg-gradient-to-b from-slate-900 to-slate-900/90 p-6 rounded-2xl border border-amber-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden group hover:border-amber-500/60 transition-all">
-              <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/20 transition-all" />
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 font-black text-xs flex items-center justify-center border border-amber-500/30">
-                    02
-                  </span>
-                  <Heart className="w-5 h-5 text-amber-400" />
-                </div>
-                <h3 className="text-lg font-black text-white mb-2 group-hover:text-amber-300 transition-colors">
-                  Evolve Your Companion
-                </h3>
-                <p className="text-xs text-slate-300 leading-relaxed mb-4">
-                  Your digital AI companion Astra reacts to your daily consistency—leveling up, expressing mood, and maintaining high vitality as you stay on track.
-                </p>
-              </div>
-              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 flex items-center gap-2">
-                <Flame className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>Streak protection & companion health</span>
-              </div>
-            </div>
-
-            {/* Step 3 */}
-            <div className="bg-gradient-to-b from-slate-900 to-slate-900/90 p-6 rounded-2xl border border-emerald-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden group hover:border-emerald-500/60 transition-all">
-              <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-all" />
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 font-black text-xs flex items-center justify-center border border-emerald-500/30">
-                    03
-                  </span>
-                  <Award className="w-5 h-5 text-emerald-400" />
-                </div>
-                <h3 className="text-lg font-black text-white mb-2 group-hover:text-emerald-300 transition-colors">
-                  Earn Real Rewards
-                </h3>
-                <p className="text-xs text-slate-300 leading-relaxed mb-4">
-                  Collect 🐚 Cowries for daily check-ins, spin the daily Loot Wheel, and redeem real clinic vouchers, gym passes, and partner health benefit codes.
-                </p>
-              </div>
-              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 flex items-center gap-2">
-                <Gift className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Instant voucher redemptions</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 3 Getting Started Option Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto w-full mb-16">
-          {/* Card 1: Sign in with Google */}
-          <div className="bg-gradient-to-b from-slate-900 to-slate-900/90 border border-slate-700/80 hover:border-rose-500/50 rounded-2xl p-6 flex flex-col justify-between shadow-2xl relative overflow-hidden group transition-all hover:-translate-y-1">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl group-hover:bg-rose-500/20 transition-all pointer-events-none" />
-            
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-11 h-11 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-white shadow-inner">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                </div>
-                <span className="bg-rose-500/10 text-rose-300 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-rose-500/20">
-                  Option 1
-                </span>
-              </div>
-
-              <h2 className="text-xl font-extrabold text-white mb-2 group-hover:text-rose-300 transition-colors">
-                Sign In with Google
-              </h2>
-              <p className="text-xs text-slate-300 leading-relaxed mb-4">
-                Instant 1-click access with Google OAuth. Automatic health ledger syncing and streak progress persistence.
-              </p>
-
-              <ul className="space-y-1.5 mb-6 text-xs text-slate-300">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span><strong>+200 Welcome Cowries</strong> bonus</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>Automatic streak preservation</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-2">
-              <button
-                onClick={onRealGoogleSignIn}
-                disabled={isLoggingIn}
-                className="w-full bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-slate-950 font-black text-xs py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
-              >
-                <span>{isLoggingIn ? 'Signing in...' : 'Sign In with Google'}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-
-              <button
-                onClick={() => setShowGoogleModal(true)}
-                className="w-full text-[11px] text-slate-400 hover:text-slate-200 py-0.5 font-medium underline"
-              >
-                Custom Google Email
-              </button>
-            </div>
-          </div>
-
-          {/* Card 2: Sign in / Sign up with Email */}
-          <div className="bg-gradient-to-b from-slate-900 to-slate-900/90 border border-slate-700/80 hover:border-cyan-500/50 rounded-2xl p-6 flex flex-col justify-between shadow-2xl relative overflow-hidden group transition-all hover:-translate-y-1">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/20 transition-all pointer-events-none" />
-
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-11 h-11 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-inner">
-                  <Mail className="w-5 h-5" />
-                </div>
-                <span className="bg-cyan-500/10 text-cyan-300 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-cyan-500/20">
-                  Option 2
-                </span>
-              </div>
-
-              <h2 className="text-xl font-extrabold text-white mb-2 group-hover:text-cyan-300 transition-colors">
-                Email Sign In / Sign Up
-              </h2>
-              <p className="text-xs text-slate-300 leading-relaxed mb-4">
-                Register or log in using your standard email and password. Fully integrated with Firebase Auth & cloud storage.
-              </p>
-
-              <ul className="space-y-1.5 mb-6 text-xs text-slate-300">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <span>Custom email & password account</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <span>Encrypted credentials & secure profiles</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-2">
-              <button
-                onClick={() => {
-                  setEmailTab('signup');
-                  setShowEmailModal(true);
-                }}
-                disabled={isLoggingIn}
-                className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>Create Email Account (Sign Up)</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setEmailTab('signin');
-                  setShowEmailModal(true);
-                }}
-                className="w-full text-[11px] text-cyan-400 hover:text-cyan-300 py-0.5 font-bold underline flex items-center justify-center gap-1"
-              >
-                <LogIn className="w-3 h-3" />
-                <span>Already registered? Sign In with Email</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Card 3: Interactive Demo Walkthrough */}
-          <div className="bg-gradient-to-b from-slate-900 to-slate-900/90 border border-slate-700/80 hover:border-amber-500/50 rounded-2xl p-6 flex flex-col justify-between shadow-2xl relative overflow-hidden group transition-all hover:-translate-y-1">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all pointer-events-none" />
-
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-11 h-11 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400 shadow-inner">
-                  <Play className="w-5 h-5 fill-amber-400" />
-                </div>
-                <span className="bg-amber-500/10 text-amber-300 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                  Option 3
-                </span>
-              </div>
-
-              <h2 className="text-xl font-extrabold text-white mb-2 group-hover:text-amber-300 transition-colors">
-                Guest Walkthrough
-              </h2>
-              <p className="text-xs text-slate-300 leading-relaxed mb-4">
-                Explore the platform instantly as a guest without signing up. Test Astra, daily check-in modal, and loot wheel.
-              </p>
-
-              <ul className="space-y-1.5 mb-6 text-xs text-slate-300">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  <span><strong>No password needed</strong> — 1-click guest access</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  <span>Guided tour overlays</span>
-                </li>
-              </ul>
-            </div>
-
-            <button
-              onClick={onStartDemo}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs py-3 px-4 rounded-xl border border-amber-500/30 transition-all flex items-center justify-center gap-2"
-            >
-              <Play className="w-3.5 h-3.5 fill-amber-300" />
-              <span>Launch Guest Walkthrough</span>
+          <p className={`text-sm sm:text-base leading-[1.6] max-w-2xl mx-auto ${muted}`}>
+            Turn simple daily check-ins into a welcoming journey. Connect wearables, care for Astra, unlock community sponsor clinic vouchers, and keep health adherence easy to follow.
+          </p>
+          <div className="pt-2">
+            <button type="button" onClick={onRealGoogleSignIn} disabled={isLoggingIn} className="btn-primary text-sm px-6 py-3">
+              Get Started
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Key Experience Highlights Grid */}
+        <div className="trust-band rounded-[4px] px-4 py-3 mb-12 max-w-5xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-3 text-sm leading-[1.6]">
+          <div className="flex items-center gap-2 font-semibold">
+            <ShieldCheck className="w-4 h-4 text-sunlight" />
+            WHO-inspired verification structure
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[#FFFAF4]/80 text-[13px]">
+            <span>12k+ community check-ins</span>
+            <span>•</span>
+            <span>Harmony-verified health pass</span>
+            <span>•</span>
+            <span>Community grant indicators</span>
+          </div>
+        </div>
+
+        <h2 className={`text-center text-xs font-extrabold uppercase tracking-widest mb-6 ${muted}`}>
+          The AuraHealth 3-Step Value Funnel
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full mb-14">
+          {[
+            {
+              n: '01',
+              icon: Watch,
+              title: 'Track Your Daily Wellness',
+              copy: 'Auto-sync biometrics via Google Fit or Apple Health, or quickly log water, sleep, mood, and medication in under 10 seconds.',
+              note: 'Wearable hardware verified',
+              noteIcon: CheckCircle2,
+            },
+            {
+              n: '02',
+              icon: Heart,
+              title: 'Evolve Your Companion',
+              copy: 'Astra reacts to your daily consistency—leveling up, expressing mood, and keeping vitality high as you stay on track.',
+              note: 'Streak protection & companion health',
+              noteIcon: Flame,
+            },
+            {
+              n: '03',
+              icon: Award,
+              title: 'Earn Real Rewards',
+              copy: 'Collect Cowries for daily check-ins, spin the Loot Wheel, and redeem clinic vouchers, gym passes, and partner benefit codes.',
+              note: 'Instant voucher redemptions',
+              noteIcon: Gift,
+            },
+          ].map((step) => (
+            <div key={step.n} className={card}>
+              <div className="flex items-center justify-between mb-4">
+                <span className="w-8 h-8 rounded-[4px] bg-navy text-sunlight font-black text-xs flex items-center justify-center">
+                  {step.n}
+                </span>
+                <step.icon className="w-5 h-5 text-gold" />
+              </div>
+              <h3 className={`text-lg font-bold mb-2 ${heading}`}>{step.title}</h3>
+              <p className={`text-sm leading-[1.6] mb-4 ${muted}`}>{step.copy}</p>
+              <div className={`text-[12px] leading-[1.6] flex items-center gap-2 ${muted}`}>
+                <step.noteIcon className="w-3.5 h-3.5 text-harmony shrink-0" />
+                <span>{step.note}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto w-full mb-16">
+          <div className={card}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-11 h-11 rounded-[4px] bg-ivory border border-line flex items-center justify-center">
+                <GoogleMark />
+              </div>
+              <span className="text-[11px] font-bold text-muted">Option 1</span>
+            </div>
+            <h2 className={`text-xl font-bold mb-2 ${heading}`}>Sign In with Google</h2>
+            <p className={`text-sm leading-[1.6] mb-4 ${muted}`}>
+              Instant 1-click access with Google OAuth. Automatic health ledger syncing and streak progress persistence.
+            </p>
+            <ul className={`space-y-1.5 mb-6 text-sm leading-[1.6] ${muted}`}>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-harmony shrink-0" />
+                +200 Welcome Cowries bonus
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-harmony shrink-0" />
+                Automatic streak preservation
+              </li>
+            </ul>
+            <button type="button" onClick={onRealGoogleSignIn} disabled={isLoggingIn} className="w-full btn-primary justify-center text-xs py-3">
+              {isLoggingIn ? 'Signing in...' : 'Sign In with Google'}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+            <button type="button" onClick={() => setShowGoogleModal(true)} className={`w-full text-[11px] py-2 underline ${muted}`}>
+              Custom Google Email
+            </button>
+          </div>
+
+          <div className={card}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-11 h-11 rounded-[4px] bg-ivory border border-line flex items-center justify-center text-navy">
+                <Mail className="w-5 h-5" />
+              </div>
+              <span className="text-[11px] font-bold text-muted">Option 2</span>
+            </div>
+            <h2 className={`text-xl font-bold mb-2 ${heading}`}>Email Sign In / Sign Up</h2>
+            <p className={`text-sm leading-[1.6] mb-4 ${muted}`}>
+              Register or log in using your email and password. Fully integrated with Firebase Auth and cloud storage.
+            </p>
+            <ul className={`space-y-1.5 mb-6 text-sm leading-[1.6] ${muted}`}>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-harmony shrink-0" />
+                Custom email & password account
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-harmony shrink-0" />
+                Encrypted credentials & secure profiles
+              </li>
+            </ul>
+            <button
+              type="button"
+              onClick={() => {
+                setEmailTab('signup');
+                setShowEmailModal(true);
+              }}
+              disabled={isLoggingIn}
+              className="w-full btn-primary justify-center text-xs py-3"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              Create Email Account
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEmailTab('signin');
+                setShowEmailModal(true);
+              }}
+              className="w-full text-[11px] text-navy font-bold py-2 underline flex items-center justify-center gap-1"
+            >
+              <LogIn className="w-3 h-3" />
+              Already registered? Sign In
+            </button>
+          </div>
+
+          <div className={card}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-11 h-11 rounded-[4px] bg-ivory border border-line flex items-center justify-center text-gold">
+                <Play className="w-5 h-5 fill-gold" />
+              </div>
+              <span className="text-[11px] font-bold text-muted">Option 3</span>
+            </div>
+            <h2 className={`text-xl font-bold mb-2 ${heading}`}>Guest Walkthrough</h2>
+            <p className={`text-sm leading-[1.6] mb-4 ${muted}`}>
+              Explore instantly as a guest. Test Astra, the daily check-in modal, and the loot wheel.
+            </p>
+            <ul className={`space-y-1.5 mb-6 text-sm leading-[1.6] ${muted}`}>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-gold shrink-0" />
+                No password needed — 1-click guest access
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-gold shrink-0" />
+                Guided tour overlays
+              </li>
+            </ul>
+            <button type="button" onClick={onStartDemo} className="w-full btn-ghost justify-center text-xs py-3 text-navy font-bold">
+              <Play className="w-3.5 h-3.5 fill-gold text-gold" />
+              Launch Guest Walkthrough
+            </button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
-          <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
-              <Heart className="w-5 h-5" />
+          {[
+            { icon: Heart, title: 'Evolving Digital Companion', copy: 'Astra reacts to hydration, sleep, and medication logs with clear mood cues and level progress.' },
+            { icon: Coins, title: 'Community Sponsor Grants', copy: 'Sponsors fund care grants, vitamin kits, and clinic vouchers as community adherence targets are met.' },
+            { icon: Lock, title: 'Seamless Security', copy: 'Adherence attestations verify daily habits quietly—without wallet popups or surprise fees.' },
+          ].map((item) => (
+            <div key={item.title} className="aura-card p-5 flex items-start gap-3">
+              <div className="w-10 h-10 rounded-[4px] bg-ivory border border-line flex items-center justify-center text-navy shrink-0">
+                <item.icon className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className={`text-sm font-bold mb-1 ${heading}`}>{item.title}</h3>
+                <p className={`text-sm leading-[1.6] ${muted}`}>{item.copy}</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-bold text-white mb-1">Evolving Digital Companion</h3>
-              <p className="text-xs text-slate-400">
-                Astra reacts to your daily hydration, sleep, and medication logs with whimsical expressions and level progressions.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-              <Coins className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-white mb-1">Community Sponsor Grants</h3>
-              <p className="text-xs text-slate-400">
-                Healthcare sponsors fund real care grants, vitamin kits, and clinic vouchers released as community adherence targets are hit.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-              <Lock className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-white mb-1">Seamless Security</h3>
-              <p className="text-xs text-slate-400">
-                Cryptographic adherence attestations verify daily health habits seamlessly under the hood without web3 popups or fees.
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
       </main>
 
-      {/* Google Sign-In Selection Modal */}
       {showGoogleModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
-            <button
-              onClick={() => setShowGoogleModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white text-sm"
-            >
+        <div className="fixed inset-0 z-50 bg-navy/50 flex items-center justify-center p-4">
+          <div className="bg-peach border border-line w-full max-w-md rounded-[4px] p-6 relative">
+            <button type="button" onClick={() => setShowGoogleModal(false)} className="absolute top-4 right-4 text-muted hover:text-charcoal text-sm">
               ✕
             </button>
-
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                  />
-                </svg>
+              <div className="w-10 h-10 rounded-[4px] bg-canvas border border-line flex items-center justify-center shrink-0">
+                <GoogleMark />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">Sign In with Google Account</h3>
-                <p className="text-xs text-slate-400">Enter your Google account details to authenticate</p>
+                <h3 className="text-lg font-bold text-navy">Sign In with Google Account</h3>
+                <p className="text-xs text-muted leading-[1.6]">Enter your Google account details to authenticate</p>
               </div>
             </div>
-
             <form onSubmit={handleCustomGoogleSubmit} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Your Full Name</label>
+                <label className="text-xs font-bold text-ink block mb-1">Your Full Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Jordan Taylor"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500"
+                  className="aura-input"
                 />
               </div>
-
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Google Email Address</label>
+                <label className="text-xs font-bold text-ink block mb-1">Google Email Address</label>
                 <input
                   type="email"
                   placeholder="name@gmail.com"
                   value={customEmail}
                   onChange={(e) => setCustomEmail(e.target.value)}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500"
+                  className="aura-input"
                 />
               </div>
-
-              <button
-                type="submit"
-                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs py-3 rounded-xl transition-all flex items-center justify-center gap-2 mt-2"
-              >
-                <span>Complete Google Authentication</span>
+              <button type="submit" className="w-full btn-primary justify-center text-xs py-3 mt-2">
+                Complete Google Authentication
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </form>
-
-            <div className="mt-4 text-[10px] text-slate-500 text-center flex items-center justify-center gap-1">
-              <Lock className="w-3 h-3 text-slate-400" />
-              <span>Secure account assigned automatically upon login.</span>
-            </div>
           </div>
         </div>
       )}
 
-      {/* Email Sign-In / Sign-Up Modal */}
       {showEmailModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 bg-navy/50 flex items-center justify-center p-4">
+          <div className="bg-peach border border-line w-full max-w-md rounded-[4px] p-6 relative">
             <button
+              type="button"
               onClick={() => {
                 setShowEmailModal(false);
                 setEmailError(null);
               }}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white text-sm"
+              className="absolute top-4 right-4 text-muted hover:text-charcoal text-sm"
             >
               ✕
             </button>
-
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center shrink-0 text-cyan-400">
+              <div className="w-10 h-10 rounded-[4px] bg-ivory border border-line flex items-center justify-center shrink-0 text-navy">
                 <Mail className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-white">
+                <h3 className="text-lg font-bold text-navy">
                   {emailTab === 'signup' ? 'Create Your Email Account' : 'Welcome Back'}
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-muted leading-[1.6]">
                   {emailTab === 'signup' ? 'Register to start tracking your daily habits' : 'Sign in to access your Aura health ledger'}
                 </p>
               </div>
             </div>
 
-            {/* Mode Switcher Tabs */}
-            <div className="grid grid-cols-2 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold mb-5">
+            <div className="grid grid-cols-2 bg-ivory p-1 rounded-[4px] border border-line text-xs font-bold mb-5">
               <button
                 type="button"
                 onClick={() => {
                   setEmailTab('signup');
                   setEmailError(null);
                 }}
-                className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  emailTab === 'signup'
-                    ? 'bg-cyan-500 text-slate-950 shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                className={`py-2 rounded-[4px] flex items-center justify-center gap-1.5 ${
+                  emailTab === 'signup' ? 'bg-sunlight text-navy' : 'text-muted'
                 }`}
               >
                 <UserPlus className="w-3.5 h-3.5" />
-                <span>Sign Up</span>
+                Sign Up
               </button>
               <button
                 type="button"
@@ -697,125 +510,110 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   setEmailTab('signin');
                   setEmailError(null);
                 }}
-                className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  emailTab === 'signin'
-                    ? 'bg-cyan-500 text-slate-950 shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                className={`py-2 rounded-[4px] flex items-center justify-center gap-1.5 ${
+                  emailTab === 'signin' ? 'bg-sunlight text-navy' : 'text-muted'
                 }`}
               >
                 <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In</span>
+                Sign In
               </button>
             </div>
 
             {emailError && (
-              <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs p-3 rounded-xl mb-4 font-semibold">
-                ⚠️ {emailError}
+              <div className="bg-peach border border-[#B42318]/30 text-[#B42318] text-xs p-3 rounded-[4px] mb-4 font-semibold leading-[1.6]">
+                {emailError}
               </div>
             )}
 
             <form onSubmit={handleEmailAuthSubmit} className="space-y-4">
               {emailTab === 'signup' && (
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Full Name</label>
+                  <label className="text-xs font-bold text-ink block mb-1">Full Name</label>
                   <div className="relative">
-                    <User className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <User className="w-4 h-4 text-muted absolute left-3 top-3" />
                     <input
                       type="text"
                       placeholder="e.g. Alex Morgan"
                       value={emailName}
                       onChange={(e) => setEmailName(e.target.value)}
                       required={emailTab === 'signup'}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500"
+                      className="aura-input pl-9"
                     />
                   </div>
                 </div>
               )}
-
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Email Address</label>
+                <label className="text-xs font-bold text-ink block mb-1">Email Address</label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <Mail className="w-4 h-4 text-muted absolute left-3 top-3" />
                   <input
                     type="email"
                     placeholder="alex@example.com"
                     value={emailAddress}
                     onChange={(e) => setEmailAddress(e.target.value)}
                     required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500"
+                    className="aura-input pl-9"
                   />
                 </div>
               </div>
-
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Password</label>
+                <label className="text-xs font-bold text-ink block mb-1">Password</label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <Lock className="w-4 h-4 text-muted absolute left-3 top-3" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="At least 6 characters"
                     value={emailPassword}
                     onChange={(e) => setEmailPassword(e.target.value)}
                     required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500"
+                    className="aura-input pl-9 pr-10"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-slate-500 hover:text-slate-300"
-                  >
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-muted">
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
-
-              <button
-                type="submit"
-                disabled={isLoggingIn}
-                className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs py-3 rounded-xl transition-all flex items-center justify-center gap-2 mt-2 shadow-lg"
-              >
+              <button type="submit" disabled={isLoggingIn} className="w-full btn-primary justify-center text-xs py-3 mt-2">
                 {isLoggingIn ? (
-                  <span>Processing...</span>
+                  'Processing...'
                 ) : emailTab === 'signup' ? (
                   <>
                     <UserPlus className="w-4 h-4" />
-                    <span>Create Account & Start</span>
+                    Create Account & Start
                   </>
                 ) : (
                   <>
                     <LogIn className="w-4 h-4" />
-                    <span>Sign In to Dashboard</span>
+                    Sign In to Dashboard
                   </>
                 )}
               </button>
             </form>
-
-            <div className="mt-4 text-[10px] text-slate-500 text-center flex items-center justify-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Firebase Auth & encrypted account records.</span>
+            <div className="mt-4 text-[10px] text-muted text-center flex items-center justify-center gap-1 leading-[1.6]">
+              <ShieldCheck className="w-3.5 h-3.5 text-harmony" />
+              Firebase Auth & encrypted account records.
             </div>
           </div>
         </div>
       )}
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950 py-6 text-center text-xs text-slate-500">
+      <footer className="bg-navy py-6 text-center text-xs text-[#FFFAF4]/70">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div>
-            <strong className="text-slate-300">AuraHealth MVP</strong> • Daily Health Habit & Adherence Platform
+            <strong className="text-[#FFFAF4]">AuraHealth MVP</strong> • Daily Health Habit & Adherence Platform
           </div>
-          <div className="flex items-center gap-4 text-[11px] text-slate-400">
+          <div className="flex items-center gap-4 text-[11px]">
             <span>Seamless Web2/Web3 Bridge</span>
             <span>•</span>
             <span>Sustainable Reward Economy</span>
           </div>
         </div>
-
         {onAdminLogin && (
           <div className="mt-4 flex justify-center">
             <button
+              type="button"
               onClick={onAdminLogin}
-              className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-rose-300 border border-slate-800 hover:border-rose-500/40 bg-slate-900/60 hover:bg-rose-950/20 px-3 py-1.5 rounded-lg transition-all"
+              className="flex items-center gap-1.5 text-[11px] font-semibold text-[#FFFAF4]/70 hover:text-sunlight px-3 py-1.5"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               Admin Login

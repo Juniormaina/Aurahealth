@@ -80,20 +80,20 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
   return (
     <div className="aura-card-gradient p-6 relative overflow-hidden max-w-4xl mx-auto flex flex-col h-[600px]">
       {/* Header */}
-      <div className="flex items-center gap-3 pb-4 border-b border-slate-200 dark:border-slate-700/50">
+      <div className="flex items-center gap-3 pb-4 border-b border-line">
         <div className="relative">
           <img
             src={companion.imageUrl}
             alt="Astra"
-            className="w-12 h-12 rounded-full border-2 border-rose-300 dark:border-rose-500 object-cover"
+            className="w-12 h-12 rounded-full border-2 border-sunlight object-cover"
           />
-          <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-white dark:border-slate-900 rounded-full" />
+          <span className="absolute bottom-0 right-0 w-3 h-3 bg-harmony border-2 border-peach rounded-full" />
         </div>
         <div>
-          <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-            Astra AI Health Coach <Sparkles className="w-4 h-4 text-amber-500" />
+          <h3 className="text-lg font-bold text-navy flex items-center gap-2">
+            Astra AI Health Coach <Sparkles className="w-4 h-4 text-gold" />
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-muted leading-[1.6]">
             Gemini AI + live web search • Not a substitute for professional medical advice • Stage: {companion.stage} (Level {companion.level})
           </p>
         </div>
@@ -107,27 +107,27 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
             className={`flex items-start gap-3 ${m.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
           >
             {m.sender === 'astra' ? (
-              <div className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-900/30 text-rose-500 border border-rose-200 dark:border-rose-500/30 flex items-center justify-center text-sm font-bold shrink-0">
+              <div className="w-8 h-8 rounded-full bg-ivory text-gold border border-line flex items-center justify-center text-sm font-bold shrink-0">
                 ✨
               </div>
             ) : (
-              <div className="w-8 h-8 rounded-full bg-cyan-50 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/30 flex items-center justify-center text-sm font-bold shrink-0">
+              <div className="w-8 h-8 rounded-full bg-navy text-sunlight border border-navy flex items-center justify-center text-sm font-bold shrink-0">
                 👤
               </div>
             )}
 
             <div
-              className={`max-w-[80%] rounded-2xl p-3.5 text-xs leading-relaxed ${
+              className={`max-w-[80%] rounded-[4px] p-3.5 text-xs leading-[1.6] ${
                 m.sender === 'user'
-                  ? 'bg-rose-500 text-white rounded-tr-none shadow-md'
-                  : 'bg-white/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-700 dark:text-slate-200 rounded-tl-none'
+                  ? 'bg-navy text-[#FFFAF4]'
+                  : 'bg-ivory border border-line text-ink'
               }`}
             >
               <p className="whitespace-pre-wrap">{m.text}</p>
 
               {m.sender === 'astra' && m.sources && m.sources.length > 0 && (
-                <div className="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-700/50 space-y-1">
-                  <div className="flex items-center gap-1 text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wide">
+                <div className="mt-2.5 pt-2 border-t border-line space-y-1">
+                  <div className="flex items-center gap-1 text-[9px] text-muted font-bold uppercase tracking-wide">
                     <Search className="w-2.5 h-2.5" /> Sources
                   </div>
                   {m.sources.map((s, sIdx) => (
@@ -136,7 +136,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
                       href={s.uri}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center gap-1 text-[10px] text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 truncate"
+                      className="flex items-center gap-1 text-[10px] text-harmony hover:text-navy truncate"
                       title={s.uri}
                     >
                       <ExternalLink className="w-2.5 h-2.5 shrink-0" />
@@ -148,7 +148,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
 
               <div
                 className={`text-[9px] mt-1 text-right font-mono ${
-                  m.sender === 'user' ? 'text-rose-100' : 'text-slate-400 dark:text-slate-500'
+                  m.sender === 'user' ? 'text-[#FFFAF4]/70' : 'text-muted'
                 }`}
               >
                 {m.time}
@@ -158,15 +158,15 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
         ))}
 
         {isLoading && (
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 italic">
-            <Loader2 className="w-4 h-4 animate-spin text-rose-500" />
+          <div className="flex items-center gap-2 text-xs text-muted italic">
+            <Loader2 className="w-4 h-4 animate-spin text-gold" />
             <span>Astra is searching & thinking...</span>
           </div>
         )}
       </div>
 
       {/* Input Box */}
-      <form onSubmit={handleSendMessage} className="pt-4 border-t border-slate-200 dark:border-slate-700/50 flex items-center gap-2">
+      <form onSubmit={handleSendMessage} className="pt-4 border-t border-line flex items-center gap-2">
         <input
           type="text"
           value={inputMessage}

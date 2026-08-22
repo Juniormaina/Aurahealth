@@ -16,14 +16,14 @@ interface CompanionAvatarProps {
 const TrendTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border border-slate-200 p-2.5 rounded-xl shadow-xl text-xs space-y-1">
-        <p className="font-bold text-slate-800 border-b border-slate-100 pb-1">{label}</p>
-        <div className="flex items-center gap-2 text-rose-500 font-semibold">
-          <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+      <div className="bg-peach border border-line p-2.5 rounded-[4px] text-xs space-y-1">
+        <p className="font-bold text-navy border-b border-line pb-1">{label}</p>
+        <div className="flex items-center gap-2 text-gold font-semibold">
+          <span className="w-2 h-2 rounded-full bg-sunlight"></span>
           <span>Health Integrity: {payload[0]?.value}%</span>
         </div>
-        <div className="flex items-center gap-2 text-cyan-600 font-semibold">
-          <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
+        <div className="flex items-center gap-2 text-gold font-semibold">
+          <span className="w-2 h-2 rounded-full bg-gold"></span>
           <span>Vitality: {payload[1]?.value}%</span>
         </div>
       </div>
@@ -88,10 +88,10 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
 
   const getMoodBadgeColor = (mood: string) => {
     switch (mood) {
-      case 'joyful': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      case 'energetic': return 'bg-amber-100 text-amber-700 border-amber-200';
-      case 'focused': return 'bg-blue-100 text-blue-700 border-blue-200';
-      default: return 'bg-purple-100 text-purple-700 border-purple-200';
+      case 'joyful': return 'bg-harmony/12 text-[#00695f] border-harmony/30';
+      case 'energetic': return 'bg-peach text-gold border-line';
+      case 'focused': return 'bg-ivory text-navy border-line';
+      default: return 'bg-ivory text-muted border-line';
     }
   };
 
@@ -108,13 +108,13 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-2xl">{getStageEmoji(companion.stage)}</span>
-            <h2 className="text-2xl font-black text-slate-800">{companion.name}</h2>
+            <h2 className="text-2xl font-bold text-navy">{companion.name}</h2>
             <span className={`text-xs px-2.5 py-0.5 rounded-full border font-semibold capitalize ${getMoodBadgeColor(companion.mood)}`}>
               Mood: {companion.mood}
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-            <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 font-bold">
+          <p className="text-xs text-muted mt-1 flex items-center gap-1.5">
+            <span className="bg-harmony/12 text-[#00695f] px-2 py-0.5 rounded-[4px] border border-harmony/30 font-bold">
               Health Pass ID #{companion.tokenId}
             </span>
             <span>• Verifiable Wellness Companion</span>
@@ -135,15 +135,15 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
       {/* Main Companion Display Area */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
         {/* Companion Visual Box (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col items-center justify-center bg-slate-50 rounded-2xl p-6 border border-slate-200 relative aura-module-card">
+        <div className="lg:col-span-5 flex flex-col items-center justify-center astra-frame p-6 relative">
           {/* Element Badge */}
-          <div className="absolute top-3 left-3 bg-teal-50 text-teal-600 text-[11px] font-medium px-2.5 py-1 rounded-lg border border-teal-200 flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-teal-500" />
+          <div className="absolute top-3 left-3 bg-ivory text-muted text-[11px] font-medium px-2.5 py-1 rounded-[4px] border border-line flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-gold" />
             Element: {companion.element}
           </div>
 
           {/* Evolution Stage Badge */}
-          <div className="absolute top-3 right-3 bg-rose-50 text-rose-600 text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-rose-200">
+          <div className="absolute top-3 right-3 bg-peach text-gold text-[11px] font-semibold px-2.5 py-1 rounded-[4px] border border-line">
             {companion.stage}
           </div>
 
@@ -155,10 +155,10 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
             }`}
           >
             {/* Ambient Aura Ring */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-teal-400 via-amber-400 to-cyan-400 blur-xl opacity-30 animate-pulse" />
+            <div className="absolute inset-0 rounded-full bg-sunlight/30 blur-xl opacity-40" />
 
             {/* Avatar Graphic */}
-            <div className="relative w-44 h-44 rounded-full border-4 border-white bg-slate-100 overflow-hidden shadow-lg flex items-center justify-center">
+            <div className="relative w-44 h-44 rounded-full border-4 border-peach bg-ivory overflow-hidden flex items-center justify-center">
               <img
                 src={companion.imageUrl}
                 alt={companion.name}
@@ -173,17 +173,17 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
             </div>
           </div>
 
-          <p className="text-xs text-slate-500 text-center italic mb-4">
+          <p className="text-xs text-muted text-center italic mb-4 leading-[1.6]">
             "Click Astra to interact and boost happiness!"
           </p>
 
           {/* Feeding Action Controls */}
-          <div className="w-full pt-4 border-t border-slate-200">
-            <div className="text-xs text-slate-600 font-semibold mb-2 flex items-center justify-between">
+          <div className="w-full pt-4 border-t border-line">
+            <div className="text-xs text-muted font-semibold mb-2 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <Utensils className="w-3.5 h-3.5 text-amber-500" /> Feed Astra (Uses Cowries)
               </span>
-              <span className="text-amber-600 font-bold">🐚 {cowriesBalance} Balance</span>
+              <span className="text-gold font-bold">🐚 {cowriesBalance} Balance</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -209,11 +209,11 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
         {/* Companion Stats & Evolution Progress (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Sub Tab Switcher */}
-          <div className="flex border-b border-slate-200 space-x-4 sm:space-x-6 text-xs font-semibold overflow-x-auto">
+          <div className="flex border-b border-line space-x-4 sm:space-x-6 text-xs font-semibold overflow-x-auto">
             <button
               onClick={() => setActiveTab('stats')}
               className={`pb-2 transition-colors whitespace-nowrap ${
-                activeTab === 'stats' ? 'text-teal-600 border-b-2 border-teal-500' : 'text-slate-500 hover:text-slate-700'
+                activeTab === 'stats' ? 'text-navy border-b-2 border-sunlight' : 'text-muted hover:text-navy'
               }`}
             >
               Vitality & Attributes
@@ -221,16 +221,16 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
             <button
               onClick={() => setActiveTab('trends')}
               className={`pb-2 transition-colors whitespace-nowrap flex items-center gap-1 ${
-                activeTab === 'trends' ? 'text-teal-600 border-b-2 border-teal-500' : 'text-slate-500 hover:text-slate-700'
+                activeTab === 'trends' ? 'text-navy border-b-2 border-sunlight' : 'text-muted hover:text-navy'
               }`}
             >
-              <TrendingUp className="w-3.5 h-3.5 text-teal-500" />
+              <TrendingUp className="w-3.5 h-3.5 text-gold" />
               <span>30-Day Trends</span>
             </button>
             <button
               onClick={() => setActiveTab('evolution')}
               className={`pb-2 transition-colors whitespace-nowrap ${
-                activeTab === 'evolution' ? 'text-teal-600 border-b-2 border-teal-500' : 'text-slate-500 hover:text-slate-700'
+                activeTab === 'evolution' ? 'text-navy border-b-2 border-sunlight' : 'text-muted hover:text-navy'
               }`}
             >
               Evolution Roadmap
@@ -238,7 +238,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
             <button
               onClick={() => setActiveTab('cosmetics')}
               className={`pb-2 transition-colors whitespace-nowrap ${
-                activeTab === 'cosmetics' ? 'text-teal-600 border-b-2 border-teal-500' : 'text-slate-500 hover:text-slate-700'
+                activeTab === 'cosmetics' ? 'text-navy border-b-2 border-sunlight' : 'text-muted hover:text-navy'
               }`}
             >
               Equipped Assets ({companion.equippedCosmetics.length})
@@ -447,8 +447,8 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
                     <span className="flex items-center gap-1 text-rose-500">
                       <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Health
                     </span>
-                    <span className="flex items-center gap-1 text-cyan-600">
-                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 inline-block"></span> Vitality
+                    <span className="flex items-center gap-1 text-harmony">
+                      <span className="w-2.5 h-2.5 rounded-full bg-harmony inline-block"></span> Vitality
                     </span>
                   </div>
                 </div>
@@ -458,32 +458,32 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
                     <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorHealth" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#f43f5e" stopOpacity={0.0} />
+                          <stop offset="5%" stopColor="#FBAF40" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#FBAF40" stopOpacity={0.0} />
                         </linearGradient>
                         <linearGradient id="colorVitality" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.0} />
+                          <stop offset="5%" stopColor="#D97706" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#D97706" stopOpacity={0.0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.6} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#EBF3F8" opacity={0.9} />
                       <XAxis
                         dataKey="date"
-                        tick={{ fill: '#64748b', fontSize: 10 }}
-                        stroke="#cbd5e1"
+                        tick={{ fill: '#666666', fontSize: 10 }}
+                        stroke="#EBF3F8"
                         interval={5}
                       />
                       <YAxis
                         domain={[30, 100]}
-                        tick={{ fill: '#64748b', fontSize: 10 }}
-                        stroke="#cbd5e1"
+                        tick={{ fill: '#666666', fontSize: 10 }}
+                        stroke="#EBF3F8"
                         unit="%"
                       />
                       <Tooltip content={<TrendTooltip />} />
                       <Area
                         type="monotone"
                         dataKey="health"
-                        stroke="#f43f5e"
+                        stroke="#FBAF40"
                         strokeWidth={2}
                         fillOpacity={1}
                         fill="url(#colorHealth)"
@@ -492,7 +492,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
                       <Area
                         type="monotone"
                         dataKey="vitality"
-                        stroke="#06b6d4"
+                        stroke="#D97706"
                         strokeWidth={2}
                         fillOpacity={1}
                         fill="url(#colorVitality)"

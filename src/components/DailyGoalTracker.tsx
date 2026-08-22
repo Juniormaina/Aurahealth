@@ -165,7 +165,7 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
             particleCount: 35,
             spread: 60,
             origin: { y: 0.7 },
-            colors: ['#71C7EC', '#FFD700', '#10b981'],
+            colors: ['#FBAF40', '#D97706', '#009688'],
           });
           if (onGoalUpdated) {
             onGoalUpdated(habit.xpReward, habit.cowriesReward);
@@ -191,7 +191,7 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
             particleCount: 30,
             spread: 50,
             origin: { y: 0.7 },
-            colors: ['#71C7EC', '#10b981'],
+            colors: ['#FBAF40', '#009688'],
           });
           if (onGoalUpdated) onGoalUpdated(h.xpReward, h.cowriesReward);
         }
@@ -207,25 +207,24 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
   return (
     <div className="aura-module-card p-6 relative overflow-hidden">
       {/* Header & Overall Summary */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-5 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-5 border-b border-line">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center">
-              <Target className="w-4 h-4 text-teal-500" />
+            <div className="w-8 h-8 rounded-[4px] bg-ivory border border-line flex items-center justify-center">
+              <Target className="w-4 h-4 text-harmony" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800">Habits Tracker</h3>
-            <span className="bg-teal-50 text-teal-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-teal-200 flex items-center gap-1">
+            <h3 className="text-xl font-bold text-navy">Habits Tracker</h3>
+            <span className="aura-badge aura-badge-success text-[10px]">
               <ShieldCheck className="w-3 h-3" /> Today
             </span>
           </div>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted leading-[1.6]">
             Track daily health milestones to feed Astra, keep your{' '}
-            <strong className="text-amber-600">{streakDays}-day streak</strong>, and earn Cowries.
+            <strong className="text-gold">{streakDays}-day streak</strong>, and earn Cowries.
           </p>
         </div>
 
-        {/* Progress Circular Badge / Status */}
-        <div className="aura-module-card p-3 flex items-center gap-4 shrink-0">
+        <div className="astra-frame p-3 flex items-center gap-4 shrink-0">
           <div className="relative w-12 h-12 flex items-center justify-center">
             <svg className="w-12 h-12 transform -rotate-90">
               <circle
@@ -234,7 +233,7 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
                 r="20"
                 stroke="currentColor"
                 strokeWidth="4"
-                className="text-slate-100"
+                className="text-line"
                 fill="transparent"
               />
               <circle
@@ -243,23 +242,23 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
                 r="20"
                 stroke="currentColor"
                 strokeWidth="4"
-                className="text-teal-500 transition-all duration-500"
+                className="text-harmony transition-all duration-500"
                 fill="transparent"
                 strokeDasharray={125.6}
                 strokeDashoffset={125.6 - (125.6 * overallPercentage) / 100}
                 strokeLinecap="round"
               />
             </svg>
-            <span className="absolute text-xs font-bold text-slate-700">{overallPercentage}%</span>
+            <span className="absolute text-xs font-bold text-navy">{overallPercentage}%</span>
           </div>
 
           <div>
-            <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <div className="text-xs font-bold text-navy flex items-center gap-1.5">
               <span>{completedCount} of {totalCount} Done</span>
-              {overallPercentage === 100 && <span className="text-amber-500">👑</span>}
+              {overallPercentage === 100 && <span className="text-gold">👑</span>}
             </div>
-            <div className="text-[11px] text-slate-500 flex items-center gap-1">
-              <Flame className="w-3.5 h-3.5 text-amber-500" />
+            <div className="text-[11px] text-muted flex items-center gap-1">
+              <Flame className="w-3.5 h-3.5 text-gold" />
               <span>{streakDays}-Day Streak</span>
             </div>
           </div>
@@ -276,60 +275,54 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
             <div
               key={habit.id}
               className={`aura-module-card p-4 transition-all relative overflow-hidden ${
-                habit.completed
-                  ? 'border-teal-300'
-                  : 'border-slate-100 hover:border-teal-200'
+                habit.completed ? 'border-harmony/40' : ''
               }`}
             >
-              {/* Progress Line Bar on Top Edge (solid teal) */}
               <div
-                className="absolute top-0 left-0 h-1 bg-teal-400 transition-all duration-500"
+                className={`absolute top-0 left-0 h-1 transition-all duration-500 ${habit.completed ? 'bg-harmony' : 'bg-sunlight'}`}
                 style={{ width: `${pct}%` }}
               />
 
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2.5">
-                  {/* Flat icon — solid teal tint, no gradient */}
-                  <div className={`p-2 rounded-xl ${habit.completed ? 'bg-teal-100 text-teal-600' : 'bg-teal-50 text-teal-500'}`}>
+                  <div className={`p-2 rounded-[4px] ${habit.completed ? 'bg-harmony/15 text-harmony' : 'bg-ivory text-gold'}`}>
                     <IconComponent className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-800 leading-snug">{habit.name}</h4>
-                    <div className="text-[11px] text-slate-500">
+                    <h4 className="text-sm font-bold text-navy leading-snug">{habit.name}</h4>
+                    <div className="text-[11px] text-muted">
                       {habit.current} / {habit.target} {habit.unit}
                     </div>
                   </div>
                 </div>
 
                 {habit.completed ? (
-                  <div className="flex items-center gap-1 text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200 text-[10px] font-bold">
+                  <div className="flex items-center gap-1 text-harmony bg-harmony/10 px-2 py-0.5 rounded-[4px] text-[10px] font-bold">
                     <CheckCircle2 className="w-3 h-3" /> Done
                   </div>
                 ) : (
-                  <div className="text-[10px] font-medium text-slate-500 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-200">
+                  <div className="text-[10px] font-medium text-muted bg-ivory px-2 py-0.5 rounded-[4px] border border-line">
                     {pct}%
                   </div>
                 )}
               </div>
 
-              {/* Progress Track (solid teal fill) */}
-              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-3">
+              <div className="w-full bg-ivory h-2 rounded-[4px] overflow-hidden mb-3">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${habit.completed ? 'bg-amber-400' : 'bg-teal-400'}`}
+                  className={`h-full rounded-[4px] transition-all duration-500 ${habit.completed ? 'bg-harmony' : 'bg-sunlight'}`}
                   style={{ width: `${pct}%` }}
                 />
               </div>
 
-              {/* Action Buttons for Accountability */}
-              <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100">
-                <span className="text-slate-500 flex items-center gap-1">
-                  <Zap className="w-3 h-3 text-amber-500" /> +{habit.xpReward} XP • <span className="text-amber-600 font-semibold">+{habit.cowriesReward} 🐚</span>
+              <div className="flex items-center justify-between text-[11px] pt-1 border-t border-line">
+                <span className="text-muted flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-gold" /> +{habit.xpReward} XP • <span className="text-gold font-semibold">+{habit.cowriesReward} 🐚</span>
                 </span>
 
                 {habit.id === 'water' && (
                   <button
                     onClick={() => handleIncrement('water', 8)}
-                    className="bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold px-2.5 py-1 rounded-lg border border-teal-200 transition-colors flex items-center gap-1"
+                    className="bg-ivory hover:bg-peach text-navy font-bold px-2.5 py-1 rounded-[4px] border border-line flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" /> +8 oz
                   </button>
@@ -340,9 +333,9 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
                     onClick={handleToggleMedication}
                     className={`${
                       habit.completed
-                        ? 'bg-teal-100 text-teal-700 border-teal-300'
-                        : 'bg-slate-50 hover:bg-teal-50 text-slate-600 border-slate-200 hover:border-teal-200'
-                    } font-bold px-2.5 py-1 rounded-lg border transition-colors flex items-center gap-1`}
+                        ? 'bg-harmony/15 text-harmony border-harmony/30'
+                        : 'bg-ivory text-ink border-line'
+                    } font-bold px-2.5 py-1 rounded-[4px] border flex items-center gap-1`}
                   >
                     {habit.completed ? 'Taken ✓' : 'Mark Taken'}
                   </button>
@@ -351,14 +344,14 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
                 {habit.id === 'movement' && (
                   <button
                     onClick={() => handleIncrement('movement', 10)}
-                    className="bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold px-2.5 py-1 rounded-lg border border-teal-200 transition-colors flex items-center gap-1"
+                    className="bg-ivory hover:bg-peach text-navy font-bold px-2.5 py-1 rounded-[4px] border border-line flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" /> +10 min
                   </button>
                 )}
 
                 {habit.id === 'sleep' && (
-                  <span className="text-[10px] text-teal-600 font-semibold">
+                  <span className="text-[10px] text-harmony font-semibold">
                     Logged {habit.current}h Rest
                   </span>
                 )}
@@ -369,19 +362,19 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
       </div>
 
       {/* Streak Bonus Callout */}
-      <div className="bg-teal-50 p-4 rounded-xl border border-teal-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+      <div className="bg-ivory p-4 rounded-[4px] border border-line flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-500 shrink-0">
+          <div className="w-9 h-9 rounded-[4px] bg-peach border border-line flex items-center justify-center text-gold shrink-0">
             <Award className="w-5 h-5" />
           </div>
           <div>
-            <div className="font-bold text-slate-800 flex items-center gap-1.5">
+            <div className="font-bold text-navy flex items-center gap-1.5">
               <span>Complete all habits for a bonus</span>
-              <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full border border-amber-200">
+              <span className="bg-peach text-gold text-[10px] px-2 py-0.5 rounded-[4px] border border-line">
                 +150 🐚 +200 XP
               </span>
             </div>
-            <p className="text-slate-500 text-[11px] mt-0.5">
+            <p className="text-muted text-[11px] mt-0.5 leading-[1.6]">
               Finishing every habit today secures your streak and boosts Astra's vitality.
             </p>
           </div>

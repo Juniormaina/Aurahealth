@@ -6,6 +6,19 @@ Gamified daily health check-in app with an evolving digital companion, a
 "Health Cowries" points economy, sponsor reward pools, and an AI health coach —
 backed by real, verified smart contracts on **Avalanche Fuji testnet**.
 
+## Brand mark
+
+The Aura Health logo is a circular health-tech mark: a glowing teal–blue–purple
+ring with a white heartbeat trace (neon-red glow) that pulses to signal vitality.
+It is used as:
+
+- The **favicon** (`public/favicon.svg`) and Apple touch icon
+- The **wordmark lockup** (`public/aurahealth-logo.svg`)
+- The in-app / landing glyph (`src/components/AuraLogo.tsx` — `AuraMark`)
+
+The landing page hero shows a large animated sample of the mark. Motion is
+disabled when `prefers-reduced-motion` is set.
+
 ## Live on-chain deployment
 
 All 5 gamification contracts are deployed and **source-verified** on Avalanche
@@ -143,12 +156,13 @@ them requires `forge install foundry-rs/forge-std` first.
 ## Project structure
 
 ```
+public/             favicon.svg (app icon) and aurahealth-logo.svg (wordmark)
 src/
   contracts/        Solidity sources (LoyaltyPoints, AchievementBadges, StreakTracker, TierSystem, IncentiveToken)
   script/           Foundry deployment scripts (optional, requires forge-std)
   Scripts/          Hardhat deployment/verification scripts (.cjs)
   services/         avalanche.ts (chain config + on-chain reads/writes), firebase.ts, healthDataService.ts
-  components/       React UI components
+  components/       React UI components (AuraLogo.tsx holds the animated mark)
   App.tsx           Main app shell and state
 server.ts           Express server (Gemini AI endpoints, static/Vite serving)
 hardhat.config.cjs  Hardhat network + Routescan verification config

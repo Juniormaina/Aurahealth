@@ -50,7 +50,7 @@ export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onWinPrize, 
           <div className="inline-flex items-center gap-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 text-xs font-semibold px-3 py-1 rounded-full border border-amber-200 dark:border-amber-500/30 mb-2">
             <Gift className="w-3.5 h-3.5" /> Adherence Reward Minigame
           </div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white">Adherence Wheel of Health</h2>
+          <h2 className="text-3xl font-bold text-navy">Adherence Wheel of Health</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
             Spin daily after reporting health check-ins to win Health Cowries, Companion XP boosts, and wellness raffle passes!
           </p>
@@ -91,7 +91,7 @@ export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onWinPrize, 
           <button
             onClick={spinWheel}
             disabled={isSpinning}
-            className="absolute z-10 w-20 h-20 rounded-full bg-slate-900 border-4 border-amber-400 shadow-2xl flex flex-col items-center justify-center text-amber-300 hover:scale-105 active:scale-95 transition-transform disabled:opacity-50 cursor-pointer"
+            className="absolute z-10 w-20 h-20 rounded-full bg-navy border-4 border-sunlight flex flex-col items-center justify-center text-sunlight hover:scale-105 active:scale-95 transition-transform disabled:opacity-50 cursor-pointer"
           >
             <Sparkles className="w-5 h-5 text-amber-400 animate-pulse" />
             <span className="text-xs font-black text-white">SPIN</span>

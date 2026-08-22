@@ -70,7 +70,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
       title: 'Settings',
       description: 'Manage your account, theme, and preferences',
       icon: <span className="text-lg">⚙️</span>,
-      action: () => { onClose(); },
+      action: () => { onNavigate('settings'); onClose(); },
       category: 'Actions',
     },
   ];
@@ -141,16 +141,14 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
         className={`search-modal ${theme === 'midnight' ? 'search-modal-dark' : ''}`}
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: theme === 'midnight'
-            ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
-            : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-          border: theme === 'midnight' ? '1px solid rgba(51, 65, 85, 0.5)' : '1px solid rgba(226, 232, 240, 0.8)',
+          background: theme === 'midnight' ? '#1b2440' : '#FFF1EA',
+          border: '1px solid #EBF3F8',
         }}
       >
         {/* Search Input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200 dark:border-slate-700">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center flex-shrink-0">
-            <Search className="w-4 h-4 text-white" />
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-line">
+          <div className="w-8 h-8 rounded-[4px] bg-navy flex items-center justify-center flex-shrink-0">
+            <Search className="w-4 h-4 text-sunlight" />
           </div>
           <input
             ref={inputRef}

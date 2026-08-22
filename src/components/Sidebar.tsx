@@ -16,9 +16,9 @@ import {
   Moon,
   Bell,
   HelpCircle,
-  Heart,
   Zap,
 } from 'lucide-react';
+import { AuraLogo } from './AuraLogo';
 
 interface SidebarProps {
   activeTab: string;
@@ -55,19 +55,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'companion', label: 'Companion', icon: Sparkles, shortcut: '⌘1' },
     { id: 'coach', label: 'AI Coach', icon: MessageSquare, shortcut: '⌘2' },
     { id: 'wheel', label: 'Rewards', icon: Award, shortcut: '⌘3' },
+    { id: 'settings', label: 'Settings', icon: Settings, shortcut: '⌘4' },
   ];
 
   const proNavItems = [
     { id: 'companion', label: 'Companion', icon: Sparkles, shortcut: '⌘1' },
     { id: 'coach', label: 'AI Coach', icon: MessageSquare, shortcut: '⌘2' },
     { id: 'wheel', label: 'Rewards', icon: Award, shortcut: '⌘3' },
+    { id: 'settings', label: 'Settings', icon: Settings, shortcut: '⌘4' },
   ];
 
   const navItems = isProMode ? proNavItems : essentialNavItems;
 
   const quickActions = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, action: () => onNavigate('companion') },
-    { id: 'settings', label: 'Settings', icon: Settings, action: () => {} },
+    { id: 'settings', label: 'Settings', icon: Settings, action: () => onNavigate('settings') },
   ];
 
   return (
@@ -92,30 +94,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
         aria-label="Main navigation"
       >
         {/* Logo Section */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
+        <div className="flex items-center justify-between p-4 border-b border-[#FFFAF4]/12">
           {!isCollapsed && (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center shadow-lg shadow-teal-500/30">
-                <Heart className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-bold text-lg text-white tracking-tight">Aura</span>
-            </div>
+            <AuraLogo size="sm" inverted showSubtitle={false} />
           )}
           {isCollapsed && (
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center mx-auto shadow-lg shadow-teal-500/30">
-              <Heart className="w-5 h-5 text-white" />
+            <div className="mx-auto">
+              <AuraLogo size="sm" markOnly />
             </div>
           )}
           <button
             onClick={onToggleCollapse}
-            className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors"
+            className="hidden lg:flex items-center justify-center w-8 h-8 rounded-[4px] text-[#FFFAF4]/70 hover:text-sunlight transition-colors"
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
           <button
             onClick={onCloseMobile}
-            className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors"
+            className="lg:hidden flex items-center justify-center w-8 h-8 rounded-[4px] text-[#FFFAF4]/70 hover:text-sunlight transition-colors"
             aria-label="Close menu"
           >
             <X className="w-4 h-4" />
@@ -127,9 +124,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={onOpenSearch}
             className={`
-              w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-              bg-slate-800/50 border border-slate-700/50
-              text-slate-400 hover:text-slate-200 hover:border-slate-600
+              w-full flex items-center gap-3 px-3 py-2.5 rounded-[4px]
+              bg-[#FFFAF4]/8 border border-[#FFFAF4]/12
+              text-[#FFFAF4]/70 hover:text-sunlight hover:border-sunlight/40
               transition-all text-sm
               ${isCollapsed ? 'justify-center px-2' : ''}
             `}
@@ -139,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && (
               <>
                 <span className="flex-1 text-left">Search...</span>
-                <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-xs font-mono text-slate-500 bg-slate-700/50 rounded border border-slate-600/50">
+                <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-xs font-mono text-[#FFFAF4]/50 bg-[#FFFAF4]/8 rounded-[4px] border border-[#FFFAF4]/12">
                   ⌘K
                 </kbd>
               </>
@@ -171,7 +168,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <nav className="flex-1 overflow-y-auto py-2" aria-label="Primary">
           <div className="px-3 mb-2">
             {!isCollapsed && (
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3">
+              <span className="text-xs font-semibold text-[#FFFAF4]/50 uppercase tracking-wider px-3">
                 {isProMode ? 'All Features' : 'Essentials'}
               </span>
             )}
@@ -199,7 +196,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {!isCollapsed && (
                   <>
                     <span className="flex-1">{item.label}</span>
-                    <kbd className="hidden xl:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-slate-500 bg-slate-700/30 rounded">
+                    <kbd className="hidden xl:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-[#FFFAF4]/45 bg-[#FFFAF4]/8 rounded-[4px]">
                       {item.shortcut}
                     </kbd>
                   </>
@@ -214,11 +211,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 onClick={onToggleProMode}
                 className={`
-                  w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+                  w-full flex items-center gap-3 px-3 py-2.5 rounded-[4px]
                   border transition-all text-sm font-medium
                   ${isProMode
-                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
-                    : 'bg-slate-800/30 border-slate-700/50 text-slate-400 hover:text-slate-200'
+                    ? 'bg-sunlight/15 border-sunlight/40 text-sunlight'
+                    : 'bg-[#FFFAF4]/8 border-[#FFFAF4]/12 text-[#FFFAF4]/70 hover:text-[#FFFAF4]'
                   }
                 `}
                 aria-pressed={isProMode}
@@ -226,7 +223,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <Zap className="w-4 h-4" />
                 <span className="flex-1 text-left">{isProMode ? 'Pro Mode Active' : 'Upgrade to Pro'}</span>
                 {isProMode && (
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-sunlight animate-pulse" />
                 )}
               </button>
             </div>
@@ -234,7 +231,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* Bottom Section */}
-        <div className="border-t border-slate-700/50 p-3 space-y-1">
+        <div className="border-t border-[#FFFAF4]/12 p-3 space-y-1">
           {/* Theme Toggle */}
           <button
             onClick={onToggleTheme}
@@ -263,7 +260,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               <Bell className="w-5 h-5" />
               <span className="flex-1">Notifications</span>
-              <span className="w-2 h-2 rounded-full bg-rose-400" />
+              <span className="w-2 h-2 rounded-full bg-sunlight" />
             </button>
           )}
 
@@ -281,8 +278,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* User Profile / Sign Out */}
           {userAccount && (
             <div className={`
-              flex items-center gap-3 px-3 py-2.5 rounded-lg
-              bg-slate-800/30 border border-slate-700/30
+              flex items-center gap-3 px-3 py-2.5 rounded-[4px]
+              bg-[#FFFAF4]/8 border border-[#FFFAF4]/12
               ${isCollapsed ? 'justify-center' : ''}
             `}>
               {userAccount.photoURL ? (
@@ -292,20 +289,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   className="w-8 h-8 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center">
-                  <User className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 rounded-full bg-sunlight flex items-center justify-center">
+                  <User className="w-4 h-4 text-navy" />
                 </div>
               )}
               {!isCollapsed && (
                 <>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-white truncate">{userAccount.name}</div>
-                    <div className="text-xs text-slate-400 truncate">{userAccount.email}</div>
+                    <div className="text-sm font-medium text-[#FFFAF4] truncate">{userAccount.name}</div>
+                    <div className="text-xs text-[#FFFAF4]/60 truncate">{userAccount.email}</div>
                   </div>
                   {onSignOut && (
                     <button
                       onClick={onSignOut}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      className="p-1.5 rounded-[4px] text-[#FFFAF4]/60 hover:text-sunlight transition-colors"
                       aria-label="Sign out"
                     >
                       <LogOut className="w-4 h-4" />
