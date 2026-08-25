@@ -157,7 +157,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/50 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
       <div className="aura-card-gradient w-full max-w-xl rounded-[4px] p-6 relative my-8">
         {/* Close Button */}
         <button
@@ -184,7 +184,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
           {/* Wearables & Health Data Sync Banner */}
           <div className="astra-frame p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-cyan-100 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-300 shrink-0">
+              <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-300 shrink-0">
                 <Smartphone className="w-4 h-4 text-cyan-500" />
               </div>
               <div>

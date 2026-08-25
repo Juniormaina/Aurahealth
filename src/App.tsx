@@ -10,6 +10,8 @@ import { RewardsHub } from './components/RewardsHub';
 import { AIHealthCoach } from './components/AIHealthCoach';
 import { HealthCheckinModal } from './components/HealthCheckinModal';
 import { SettingsPanel } from './components/SettingsPanel';
+import { JiweEconomyDiagram } from './components/JiweEconomyDiagram';
+import { QuickLogKind } from './components/QuickLogBar';
 
 import {
   INITIAL_COMPANION,
@@ -55,7 +57,7 @@ import {
 import { onAuthStateChanged, User } from 'firebase/auth';
 
 import confetti from 'canvas-confetti';
-import { Sparkles, Play, ArrowRight, Compass, Home, Settings, Search, MessageSquare, Award } from 'lucide-react';
+import { Compass, Home, Search, MessageSquare, Award } from 'lucide-react';
 
 export default function App() {
   const [isLanding, setIsLanding] = useState<boolean>(true);
@@ -64,17 +66,10 @@ export default function App() {
   const [userAccount, setUserAccount] = useState<{ name: string; email: string; isGoogle: boolean; uid?: string; photoURL?: string } | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [isProMode, setIsProMode] = useState<boolean>(false);
-  const [theme, setTheme] = useState<'midnight' | 'morning'>(() => (localStorage.getItem('aura_theme') as 'midnight' | 'morning') || 'morning');
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
-
-  const handleToggleTheme = () => {
-    const nextTheme = theme === 'midnight' ? 'morning' : 'midnight';
-    setTheme(nextTheme);
-    localStorage.setItem('aura_theme', nextTheme);
-    showToast(`Switched to ${nextTheme === 'morning' ? 'Light' : 'Dark'} mode`);
-  };
+  const [astraReaction, setAstraReaction] = useState<string | null>(null);
 
   const [wallet, setWallet] = useState<WalletState>(SANDBOX_WALLET);
   const [activeTab, setActiveTab] = useState<string>('companion');
@@ -281,8 +276,12 @@ export default function App() {
     setStats({
       cowriesBalance: 0,
       totalXp: 0,
+      avaxEarned: 0,
       currentStreak: 0,
-      activeGrantClaims: 0,
+      longestStreak: 0,
+      lastCheckInDate: null,
+      rank: 'Health Newcomer',
+      communityContributionScore: 0,
     });
     setCompanion(FRESH_USER_COMPANION);
     setCheckIns([]);
@@ -496,6 +495,29 @@ export default function App() {
     showToast(`Wheel Prize Claimed: ${prize.label}!`);
   };
 
+  const handleQuickLog = (kind: QuickLogKind) => {
+    const labels: Record<QuickLogKind, string> = {
+      hydration: '+ Water 💧',
+      medication: 'Meds logged',
+      sleep: 'Rest boost',
+      mood: 'Feeling good',
+    };
+    setAstraReaction(labels[kind]);
+    window.setTimeout(() => setAstraReaction(null), 1200);
+    setCompanion((prev) => ({
+      ...prev,
+      vitality: Math.min(100, prev.vitality + 4),
+      xp: prev.xp + 8,
+      mood: kind === 'mood' ? 'joyful' : kind === 'sleep' ? 'sleepy' : 'energetic',
+    }));
+    setStats((prev) => ({
+      ...prev,
+      cowriesBalance: prev.cowriesBalance + 5,
+      totalXp: prev.totalXp + 8,
+    }));
+    showToast(`${labels[kind]} · Astra gained XP`);
+  };
+
   // Claim Benefit from Rewards Hub
   const handleClaimBenefit = (cost: number, benefitTitle: string) => {
     setStats((prev) => {
@@ -540,7 +562,7 @@ export default function App() {
 
   if (isLanding) {
     return (
-      <div className={`min-h-screen transition-colors duration-300 ${theme === 'morning' ? 'theme-morning bg-canvas text-charcoal' : 'theme-midnight bg-[#0f1730] text-[#F6F1ED]'}`}>
+      <div className="min-h-screen bg-canvas text-white">
         <LandingPage
           onGoogleSignIn={handleGoogleSignIn}
           onRealGoogleSignIn={handleRealGoogleSignIn}
@@ -553,8 +575,6 @@ export default function App() {
           onEnterDashboard={() => setIsLanding(false)}
           onSignOut={handleLogout}
           onAdminLogin={handleAdminLogin}
-          theme={theme}
-          onToggleTheme={handleToggleTheme}
         />
       </div>
     );
@@ -578,54 +598,30 @@ export default function App() {
         onShowToast={showToast}
         onBackToLanding={handleAdminBackToLanding}
         onSignOut={handleLogout}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
       />
     );
   }
 
   return (
-    <div className={`min-h-screen flex font-sans selection:bg-sunlight selection:text-navy transition-colors duration-300 ${theme === 'morning' ? 'theme-morning bg-canvas text-charcoal' : 'theme-midnight bg-[#0f1730] text-[#F6F1ED]'}`}>
-      {/* Sidebar */}
+    <div className="min-h-screen flex font-sans selection:bg-sunlight selection:text-navy bg-canvas text-white">
       <Sidebar
         activeTab={activeTab}
         onNavigate={handleNavigateTab}
         isProMode={isProMode}
         onToggleProMode={() => setIsProMode(!isProMode)}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
         userAccount={userAccount}
         onSignOut={handleLogout}
-        onOpenSearch={() => setSearchOpen(true)}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         isMobileOpen={mobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      {/* Main Content Area */}
-      <div
-        className={`
-          flex-1 flex flex-col min-h-screen transition-all duration-300
-          ${sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-[260px]'}
-        `}
-      >
-        {/* Top Navbar */}
+      <div className="flex-1 flex flex-col min-h-screen min-w-0 app-shell-main">
         <Navbar
-          wallet={wallet}
           stats={stats}
-          activeTab={activeTab}
-          setActiveTab={handleNavigateTab}
-          onConnectWallet={handleConnectWallet}
           onOpenCheckin={() => setIsCheckinModalOpen(true)}
-          userAccount={userAccount}
-          isDemoMode={isDemoMode}
-          onBackToLanding={handleBackToLanding}
-          onSignOut={handleLogout}
-          isProMode={isProMode}
-          setIsProMode={setIsProMode}
-          theme={theme}
-          onToggleTheme={handleToggleTheme}
+          onOpenSearch={() => setSearchOpen(true)}
           onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         />
 
@@ -649,42 +645,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Quick-Action Toolbar */}
-      <div className="bg-peach/90 border-b border-line sticky top-16 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 py-2 overflow-x-auto scrollbar-none">
-            <button
-              onClick={() => handleNavigateTab('companion')}
-              className={`quick-action-toolbar-btn ${activeTab === 'companion' ? 'active' : ''}`}
-              aria-label="Dashboard"
-              title="Dashboard (⌘1)"
-            >
-              <Home className="w-4 h-4" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </button>
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="quick-action-toolbar-btn"
-              aria-label="Search"
-              title="Search (⌘K)"
-            >
-              <Search className="w-4 h-4" />
-              <span className="hidden sm:inline">Search</span>
-            </button>
-            <div className="h-4 w-px bg-line mx-1" />
-            <button
-              onClick={() => handleNavigateTab('settings')}
-              className={`quick-action-toolbar-btn ${activeTab === 'settings' ? 'active' : ''}`}
-              aria-label="Settings"
-              title="Settings"
-            >
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Settings</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Notification Toast */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-navy border border-line text-[#FFFAF4] text-xs font-bold px-4 py-3 rounded-[4px] flex items-center gap-2">
@@ -694,7 +654,7 @@ export default function App() {
       )}
 
       {/* Main Content Viewport */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24 lg:pb-6">
+      <main className="flex-1 max-w-7xl w-full min-w-0 mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24 lg:pb-6">
         {/* 5-Layer Economy Diagram Banner (Unlocked in Pro Mode) */}
         {isProMode && <JiweEconomyDiagram />}
 
@@ -710,6 +670,8 @@ export default function App() {
             onFeedCompanion={handleFeedCompanion}
             onOpenWheel={() => setActiveTab('wheel')}
             isFreshStart={!isDemoMode}
+            onQuickLog={handleQuickLog}
+            astraReaction={astraReaction}
             onGoalUpdated={(xp, cowries) => {
               setStats((prev) => {
                 const newCowries = prev.cowriesBalance + cowries;
@@ -765,8 +727,6 @@ export default function App() {
 
         {activeTab === 'settings' && (
           <SettingsPanel
-            theme={theme}
-            onToggleTheme={handleToggleTheme}
             userName={userAccount?.name || 'Health Pioneer'}
             userEmail={userAccount?.email}
           />
@@ -796,9 +756,12 @@ export default function App() {
             <strong className="text-[#FFFAF4]">AuraHealth MVP</strong> • Daily Wellness & Community Health Adherence Platform
           </div>
           <div className="flex items-center gap-4 text-[11px]">
-            <span>Verifiable Health Ledger</span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              Ledger Synced
+            </span>
             <span>•</span>
-            <span>Sustainable Reward Economy</span>
+            <span>Harmony-verified health pass</span>
           </div>
         </div>
       </footer>
@@ -846,7 +809,6 @@ export default function App() {
         onNavigate={handleNavigateTab}
         onOpenCheckin={() => setIsCheckinModalOpen(true)}
         activeTab={activeTab}
-        theme={theme}
       />
       </div>
     </div>

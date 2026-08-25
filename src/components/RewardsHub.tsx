@@ -140,6 +140,16 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
       icon: ShieldCheck,
       accentColor: 'from-amber-500 to-rose-500',
     },
+    {
+      id: 'b-5',
+      title: '$10 Partner Gym Pass',
+      category: 'voucher',
+      description: 'Day pass or class credit at participating gyms and community fitness studios.',
+      cowriesCost: 400,
+      realValue: '$10 Gym / Studio Voucher',
+      icon: Award,
+      accentColor: 'from-amber-500 to-orange-600',
+    },
   ];
 
   const handleRedeemBenefit = (item: BenefitItem) => {
@@ -166,7 +176,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
   };
 
   return (
-    <div className="aura-card-gradient p-6 relative overflow-hidden space-y-6">
+    <div className="aura-card-gradient gold-panel p-6 relative overflow-hidden space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-line pb-5">
         <div>
@@ -176,7 +186,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
             </span>
             <span className="text-xs text-muted">Verifiable Health Value</span>
           </div>
-          <h3 className="text-2xl font-bold text-navy flex items-center gap-2">
+          <h3 className="text-2xl font-bold text-white flex items-center gap-2">
             <span>AuraHealth Rewards Hub</span>
             <span className="text-2xl">🐚</span>
           </h3>
@@ -210,7 +220,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
             activeTab === 'conversion'
               ? 'bg-sunlight text-navy'
-              : 'text-muted hover:text-navy'
+              : 'text-slate-400 hover:text-white'
           }`}
         >
           <TrendingUp className="w-4 h-4" />
@@ -222,7 +232,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
             activeTab === 'milestones'
               ? 'bg-sunlight text-navy'
-              : 'text-muted hover:text-navy'
+              : 'text-slate-400 hover:text-white'
           }`}
         >
           <Trophy className="w-4 h-4" />
@@ -234,7 +244,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
             activeTab === 'redeem'
               ? 'bg-sunlight text-navy'
-              : 'text-muted hover:text-navy'
+              : 'text-slate-400 hover:text-white'
           }`}
         >
           <Gift className="w-4 h-4" />
@@ -388,56 +398,57 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
       {/* Tab 3: Redeem Real Benefits */}
       {activeTab === 'redeem' && (
         <div className="space-y-4">
+          <h4 className="text-sm font-bold text-white">Voucher marketplace</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {benefitsList.map((item) => {
               const IconComp = item.icon;
               const isClaimed = claimedBenefits.includes(item.id);
               const canAfford = cowriesBalance >= item.cowriesCost;
+              const categoryLabel = item.category === 'voucher' ? 'Clinic / Partner' : item.category;
 
               return (
                 <div
                   key={item.id}
-                  className="aura-card p-5 flex flex-col justify-between"
+                  className="aura-card gold-panel p-5 flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="p-2.5 rounded-[4px] bg-navy text-sunlight">
+                      <div className="p-2.5 rounded-xl bg-amber-400/15 text-amber-300 border border-amber-400/25">
                         <IconComp className="w-5 h-5" />
                       </div>
-
-                      <span className="bg-amber-500/10 text-amber-300 text-xs font-black px-3 py-1 rounded-full border border-amber-500/20 font-mono">
-                        {item.cowriesCost} 🐚
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full">
+                        {categoryLabel}
                       </span>
                     </div>
 
                     <h4 className="text-sm font-black text-white mb-1">{item.title}</h4>
                     <p className="text-xs text-slate-400 mb-3 leading-relaxed">{item.description}</p>
 
-                    <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-xs font-bold text-emerald-400 flex items-center justify-between mb-4">
-                      <span>Value:</span>
-                      <span>{item.realValue}</span>
+                    <div className="flex items-center justify-between mb-4 text-xs">
+                      <span className="text-slate-400">Value: {item.realValue}</span>
+                      <span className="text-amber-300 font-black font-mono">{item.cowriesCost} 🐚</span>
                     </div>
                   </div>
 
                   <button
                     onClick={() => handleRedeemBenefit(item)}
                     disabled={isClaimed || !canAfford}
-                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-black transition-all shadow-md flex items-center justify-center gap-1.5 ${
+                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 ${
                       isClaimed
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 cursor-default'
                         : !canAfford
-                        ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
-                        : `bg-gradient-to-r ${item.accentColor} text-white hover:scale-[1.02] active:scale-[0.98]`
+                        ? 'bg-white/5 text-slate-500 border border-white/10 cursor-not-allowed'
+                        : 'btn-primary'
                     }`}
                   >
                     {isClaimed ? (
-                      <span>Redeemed & Code Issued ✓</span>
+                      <span>Redeemed ✓</span>
                     ) : !canAfford ? (
-                      <span>Need {item.cowriesCost - cowriesBalance} More Cowries</span>
+                      <span>Need {item.cowriesCost - cowriesBalance} more</span>
                     ) : (
                       <>
                         <Gift className="w-4 h-4" />
-                        <span>Redeem Benefit ({item.cowriesCost} 🐚)</span>
+                        <span>Redeem</span>
                       </>
                     )}
                   </button>

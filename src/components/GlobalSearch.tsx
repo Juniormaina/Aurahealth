@@ -16,7 +16,6 @@ interface GlobalSearchProps {
   onNavigate: (tab: string) => void;
   onOpenCheckin: () => void;
   activeTab: string;
-  theme: 'midnight' | 'morning';
 }
 
 export const GlobalSearch: React.FC<GlobalSearchProps> = ({
@@ -25,7 +24,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
   onNavigate,
   onOpenCheckin,
   activeTab,
-  theme,
 }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -138,12 +136,8 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
       aria-label="Global search"
     >
       <div
-        className={`search-modal ${theme === 'midnight' ? 'search-modal-dark' : ''}`}
+        className="search-modal"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          background: theme === 'midnight' ? '#1b2440' : '#FFF1EA',
-          border: '1px solid #EBF3F8',
-        }}
       >
         {/* Search Input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-line">
@@ -156,7 +150,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search features, actions, and data..."
-            className="flex-1 bg-transparent border-none outline-none text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+            className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder:text-slate-400"
             aria-label="Search"
           />
           <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-1 text-xs font-mono text-slate-400 bg-slate-100 dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600">

@@ -239,7 +239,21 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
         </div>
       </div>
 
-      {/* Main Missions Grid */}
+      <div className="mission-stepper mb-6 pb-5 border-b border-line">
+        {missions.map((mission, idx) => {
+          const isDone = mission.completed;
+          const isActive = !isDone && missions.findIndex((m) => !m.completed) === idx;
+          return (
+            <div key={mission.id} className={`mission-step ${isDone ? 'done' : ''} ${isActive ? 'active' : ''}`}>
+              <div className="dot" aria-hidden="true">
+                {isDone ? <CheckCircle2 className="w-4 h-4" /> : idx + 1}
+              </div>
+              <span className="hidden sm:block text-[11px] font-semibold text-slate-300 truncate">{mission.title.replace(/^Mission \d+: /, '')}</span>
+              {idx < missions.length - 1 && <div className="rail" />}
+            </div>
+          );
+        })}
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {missions.map((mission, idx) => {
           const IconComp = mission.icon;

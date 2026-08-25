@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AuraLogo, AuraMark } from './AuraLogo';
+import { AuraLogo } from './AuraLogo';
 import {
   Sparkles,
   ShieldCheck,
@@ -14,8 +14,6 @@ import {
   Award,
   Watch,
   Flame,
-  Sun,
-  Moon,
   Mail,
   User,
   Eye,
@@ -36,8 +34,6 @@ interface LandingPageProps {
   onEnterDashboard?: () => void;
   onSignOut?: () => void;
   onAdminLogin?: () => void;
-  theme?: 'midnight' | 'morning';
-  onToggleTheme?: () => void;
 }
 
 const GoogleMark = () => (
@@ -61,8 +57,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onEnterDashboard,
   onSignOut,
   onAdminLogin,
-  theme = 'morning',
-  onToggleTheme,
 }) => {
   const [showGoogleModal, setShowGoogleModal] = useState(false);
   const [customEmail, setCustomEmail] = useState('');
@@ -106,41 +100,48 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     }
   };
 
-  const isDark = theme === 'midnight';
-  const page = isDark ? 'bg-[#0f1730] text-[#F6F1ED]' : 'bg-canvas text-charcoal';
-  const heading = isDark ? 'text-[#F6F1ED]' : 'text-navy';
-  const muted = isDark ? 'text-[#F6F1ED]/70' : 'text-muted';
-  const card = 'aura-card p-6';
+  const [previewMood, setPreviewMood] = useState(0);
+  const [previewPop, setPreviewPop] = useState(false);
+  const previewMoods = [
+    { id: 'joyful', emoji: '😊', vitality: 95, label: 'joyful' },
+    { id: 'energetic', emoji: '⚡', vitality: 88, label: 'energetic' },
+    { id: 'focused', emoji: '🎯', vitality: 82, label: 'focused' },
+    { id: 'eager', emoji: '🌟', vitality: 90, label: 'eager' },
+    { id: 'sleepy', emoji: '😴', vitality: 64, label: 'sleepy' },
+  ] as const;
+  const preview = previewMoods[previewMood];
+
+  const cycleAstraPreview = () => {
+    setPreviewMood((i) => (i + 1) % previewMoods.length);
+    setPreviewPop(true);
+    window.setTimeout(() => setPreviewPop(false), 700);
+  };
+  const heading = 'text-white';
+  const muted = 'text-slate-400';
+  const card = 'aura-card p-6 rounded-2xl border border-[#242E42] flex flex-col h-full';
 
   return (
-    <div className={`min-h-screen flex flex-col justify-between ${page}`}>
-      <header className="sticky top-0 z-40 bg-navy">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <AuraLogo size="md" inverted />
-          <div className="flex items-center gap-3">
-            {onToggleTheme && (
+    <div className="min-h-screen flex flex-col justify-between bg-canvas text-white">
+      <header className="sticky top-0 z-40 navbar-gradient">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <div className="justify-self-start">
+            <AuraLogo size="md" inverted />
+          </div>
+          <div className="justify-self-center">
+            {!(userAccount || isDemoMode) && (
               <button
                 type="button"
-                onClick={onToggleTheme}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-[4px] text-xs font-bold bg-sunlight text-navy"
-                title="Switch Theme"
+                onClick={onStartDemo}
+                className="text-sm font-semibold text-slate-300 hover:text-sunlight px-3 py-2 flex items-center gap-1.5"
               >
-                {theme === 'morning' ? (
-                  <>
-                    <Sun className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Light</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Dark</span>
-                  </>
-                )}
+                <Play className="w-3.5 h-3.5 fill-sunlight text-sunlight" />
+                Quick Demo
               </button>
             )}
-
+          </div>
+          <div className="justify-self-end flex items-center gap-2">
             {(userAccount || isDemoMode) && onEnterDashboard ? (
-              <div className="flex items-center gap-2">
+              <>
                 <button type="button" onClick={onEnterDashboard} className="btn-primary text-xs">
                   Enter Dashboard
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -149,33 +150,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <button
                     type="button"
                     onClick={onSignOut}
-                    className="text-xs font-semibold text-[#FFFAF4]/80 hover:text-[#FFFAF4] px-3 py-2 flex items-center gap-1"
+                    className="text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 flex items-center gap-1"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Sign Out</span>
                   </button>
                 )}
-              </div>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={onStartDemo}
-                  className="text-xs font-semibold text-[#FFFAF4]/80 hover:text-sunlight px-3.5 py-2 hidden sm:flex items-center gap-1.5"
-                >
-                  <Play className="w-3.5 h-3.5 fill-sunlight text-sunlight" />
-                  Quick Demo
-                </button>
-                <button
-                  type="button"
-                  onClick={onRealGoogleSignIn}
-                  disabled={isLoggingIn}
-                  className="bg-[#FFFAF4] text-navy hover:bg-peach text-xs font-extrabold px-4 py-2 rounded-[4px] flex items-center gap-2"
-                >
-                  <GoogleMark />
-                  {isLoggingIn ? 'Connecting...' : 'Sign In with Google'}
-                </button>
               </>
+            ) : (
+              <button
+                type="button"
+                onClick={onRealGoogleSignIn}
+                disabled={isLoggingIn}
+                className="btn-primary text-xs px-4 py-2"
+              >
+                <GoogleMark />
+                {isLoggingIn ? 'Connecting...' : 'Sign In'}
+              </button>
             )}
           </div>
         </div>
@@ -200,56 +191,82 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         )}
 
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex items-center gap-2 bg-peach border border-line rounded-[4px] px-4 py-1.5 text-xs text-muted">
-            <Sparkles className="w-3.5 h-3.5 text-gold" />
-            <span>Daily Wellness • Evolving Companion • Real Rewards</span>
+        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center max-w-6xl mx-auto mb-12">
+          <div className="text-center lg:text-left space-y-4">
+            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-xs text-slate-300">
+              <Sparkles className="w-3.5 h-3.5 text-sunlight" />
+              <span>Daily Wellness • Evolving Companion • Real Rewards</span>
+            </div>
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white">
+              AuraHealth
+            </h1>
+            <p className="text-lg sm:text-2xl font-semibold leading-[1.6] text-white">
+              Track your daily wellness, evolve your digital health companion, and earn real rewards.
+            </p>
+            <p className={`text-sm sm:text-base leading-[1.6] max-w-2xl ${muted}`}>
+              Turn simple daily check-ins into a welcoming journey. Connect wearables, care for Astra, unlock community sponsor clinic vouchers, and keep health adherence easy to follow.
+            </p>
+            <div className="pt-2 flex flex-wrap items-center gap-3 justify-center lg:justify-start">
+              <button type="button" onClick={onRealGoogleSignIn} disabled={isLoggingIn} className="btn-primary text-sm px-6 py-3">
+                Get Started
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button type="button" onClick={onStartDemo} className="btn-ghost text-sm">
+                <Play className="w-4 h-4" />
+                Guest Walkthrough
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="flex justify-center mb-8">
-          <AuraMark
-            className="w-36 h-36 sm:w-44 sm:h-44 lg:w-52 lg:h-52"
-            title="Aura Health mark: glowing ring with a pulsing heartbeat"
-          />
-        </div>
-
-        <div className="text-center max-w-4xl mx-auto mb-10 space-y-4">
-          <h1 className={`text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight ${heading}`}>
-            AuraHealth
-          </h1>
-          <p className={`text-lg sm:text-2xl font-semibold leading-[1.6] max-w-3xl mx-auto ${heading}`}>
-            Track your daily wellness, evolve your digital health companion, and earn real rewards.
-          </p>
-          <p className={`text-sm sm:text-base leading-[1.6] max-w-2xl mx-auto ${muted}`}>
-            Turn simple daily check-ins into a welcoming journey. Connect wearables, care for Astra, unlock community sponsor clinic vouchers, and keep health adherence easy to follow.
-          </p>
-          <div className="pt-2">
-            <button type="button" onClick={onRealGoogleSignIn} disabled={isLoggingIn} className="btn-primary text-sm px-6 py-3">
-              Get Started
-              <ArrowRight className="w-4 h-4" />
+          <div className="aura-card astra-hero p-6 rounded-2xl border border-[#242E42] relative overflow-hidden">
+            <button
+              type="button"
+              onClick={cycleAstraPreview}
+              className="w-full text-left"
+              aria-label="Play with Astra preview"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`relative ${previewPop ? 'scale-110' : ''} transition-transform`}>
+                  <img
+                    src="https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=500&auto=format&fit=crop&q=80"
+                    alt="Astra companion preview"
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-[#8C52FF]/50 shadow-[0_0_28px_rgba(140,82,255,0.35)]"
+                  />
+                  {previewPop && (
+                    <span className="absolute -top-2 -right-2 text-xl astra-reaction-bubble">{preview.emoji}</span>
+                  )}
+                </div>
+                <div>
+                  <div className="text-[11px] uppercase tracking-widest text-slate-400 font-bold">Companion preview</div>
+                  <h2 className="text-2xl font-bold text-white font-display">Astra</h2>
+                  <p className="text-sm text-slate-400">Spark Companion · Level 3</p>
+                </div>
+              </div>
+              <div className="mt-5 space-y-3">
+                <div>
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-slate-300">Vitality</span>
+                    <span className="text-[#00FFC2] font-bold tabular-nums">{preview.vitality}%</span>
+                  </div>
+                  <div className="energy-bar" aria-hidden="true">
+                    {Array.from({ length: 10 }, (_, i) => (
+                      <span key={i} className={i < Math.round(preview.vitality / 10) ? 'on' : ''} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
+                <span className="text-lg">{preview.emoji}</span>
+                Mood: {preview.label} · Click Astra to play
+              </div>
             </button>
-          </div>
-        </div>
-
-        <div className="trust-band rounded-[4px] px-4 py-3 mb-12 max-w-5xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-3 text-sm leading-[1.6]">
-          <div className="flex items-center gap-2 font-semibold">
-            <ShieldCheck className="w-4 h-4 text-sunlight" />
-            WHO-inspired verification structure
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-4 text-[#FFFAF4]/80 text-[13px]">
-            <span>12k+ community check-ins</span>
-            <span>•</span>
-            <span>Harmony-verified health pass</span>
-            <span>•</span>
-            <span>Community grant indicators</span>
           </div>
         </div>
 
         <h2 className={`text-center text-xs font-extrabold uppercase tracking-widest mb-6 ${muted}`}>
           The AuraHealth 3-Step Value Funnel
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full mb-14">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full mb-14 items-stretch">
           {[
             {
               n: '01',
@@ -278,7 +295,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           ].map((step) => (
             <div key={step.n} className={card}>
               <div className="flex items-center justify-between mb-4">
-                <span className="w-8 h-8 rounded-[4px] bg-navy text-sunlight font-black text-xs flex items-center justify-center">
+                <span className="w-8 h-8 rounded-xl bg-navy text-sunlight font-black text-xs flex items-center justify-center tabular-nums">
                   {step.n}
                 </span>
                 <step.icon className="w-5 h-5 text-gold" />
@@ -293,19 +310,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           ))}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto w-full mb-16">
-          <div className={card}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto w-full mb-16 items-stretch">
+          <div className={`${card} ring-1 ring-amber-400/40`}>
             <div className="flex items-center justify-between mb-4">
-              <div className="w-11 h-11 rounded-[4px] bg-ivory border border-line flex items-center justify-center">
+              <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
                 <GoogleMark />
               </div>
-              <span className="text-[11px] font-bold text-muted">Option 1</span>
+              <span className="aura-badge aura-badge-warning">Recommended</span>
             </div>
-            <h2 className={`text-xl font-bold mb-2 ${heading}`}>Sign In with Google</h2>
-            <p className={`text-sm leading-[1.6] mb-4 ${muted}`}>
+            <h2 className="text-xl font-bold mb-2 text-white">Sign In with Google</h2>
+            <p className={`text-sm leading-[1.6] mb-4 min-h-[64px] ${muted}`}>
               Instant 1-click access with Google OAuth. Automatic health ledger syncing and streak progress persistence.
             </p>
-            <ul className={`space-y-1.5 mb-6 text-sm leading-[1.6] ${muted}`}>
+            <ul className={`space-y-1.5 mb-6 text-sm leading-[1.6] flex-1 ${muted}`}>
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-harmony shrink-0" />
                 +200 Welcome Cowries bonus
@@ -319,6 +336,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               {isLoggingIn ? 'Signing in...' : 'Sign In with Google'}
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
+            <button type="button" onClick={onStartDemo} className="w-full btn-ghost justify-center text-xs py-2.5 mt-2">
+              <Play className="w-3.5 h-3.5" />
+              Continue as Guest
+            </button>
             <button type="button" onClick={() => setShowGoogleModal(true)} className={`w-full text-[11px] py-2 underline ${muted}`}>
               Custom Google Email
             </button>
@@ -326,16 +347,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           <div className={card}>
             <div className="flex items-center justify-between mb-4">
-              <div className="w-11 h-11 rounded-[4px] bg-ivory border border-line flex items-center justify-center text-navy">
+              <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-200">
                 <Mail className="w-5 h-5" />
               </div>
-              <span className="text-[11px] font-bold text-muted">Option 2</span>
+              <span className="text-[11px] font-bold text-slate-500">Option 2</span>
             </div>
-            <h2 className={`text-xl font-bold mb-2 ${heading}`}>Email Sign In / Sign Up</h2>
-            <p className={`text-sm leading-[1.6] mb-4 ${muted}`}>
+            <h2 className="text-xl font-bold mb-2 text-white">Email Sign In / Sign Up</h2>
+            <p className={`text-sm leading-[1.6] mb-4 min-h-[64px] ${muted}`}>
               Register or log in using your email and password. Fully integrated with Firebase Auth and cloud storage.
             </p>
-            <ul className={`space-y-1.5 mb-6 text-sm leading-[1.6] ${muted}`}>
+            <ul className={`space-y-1.5 mb-6 text-sm leading-[1.6] flex-1 ${muted}`}>
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-harmony shrink-0" />
                 Custom email & password account
@@ -352,7 +373,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 setShowEmailModal(true);
               }}
               disabled={isLoggingIn}
-              className="w-full btn-primary justify-center text-xs py-3"
+              className="w-full btn-ghost justify-center text-xs py-3 text-white font-bold border-white/15"
             >
               <UserPlus className="w-3.5 h-3.5" />
               Create Email Account
@@ -363,37 +384,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 setEmailTab('signin');
                 setShowEmailModal(true);
               }}
-              className="w-full text-[11px] text-navy font-bold py-2 underline flex items-center justify-center gap-1"
+              className="w-full text-[11px] text-slate-300 font-bold py-2 underline flex items-center justify-center gap-1"
             >
               <LogIn className="w-3 h-3" />
               Already registered? Sign In
-            </button>
-          </div>
-
-          <div className={card}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-11 h-11 rounded-[4px] bg-ivory border border-line flex items-center justify-center text-gold">
-                <Play className="w-5 h-5 fill-gold" />
-              </div>
-              <span className="text-[11px] font-bold text-muted">Option 3</span>
-            </div>
-            <h2 className={`text-xl font-bold mb-2 ${heading}`}>Guest Walkthrough</h2>
-            <p className={`text-sm leading-[1.6] mb-4 ${muted}`}>
-              Explore instantly as a guest. Test Astra, the daily check-in modal, and the loot wheel.
-            </p>
-            <ul className={`space-y-1.5 mb-6 text-sm leading-[1.6] ${muted}`}>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-gold shrink-0" />
-                No password needed — 1-click guest access
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-gold shrink-0" />
-                Guided tour overlays
-              </li>
-            </ul>
-            <button type="button" onClick={onStartDemo} className="w-full btn-ghost justify-center text-xs py-3 text-navy font-bold">
-              <Play className="w-3.5 h-3.5 fill-gold text-gold" />
-              Launch Guest Walkthrough
             </button>
           </div>
         </div>
@@ -404,8 +398,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             { icon: Coins, title: 'Community Sponsor Grants', copy: 'Sponsors fund care grants, vitamin kits, and clinic vouchers as community adherence targets are met.' },
             { icon: Lock, title: 'Seamless Security', copy: 'Adherence attestations verify daily habits quietly—without wallet popups or surprise fees.' },
           ].map((item) => (
-            <div key={item.title} className="aura-card p-5 flex items-start gap-3">
-              <div className="w-10 h-10 rounded-[4px] bg-ivory border border-line flex items-center justify-center text-navy shrink-0">
+            <div key={item.title} className="aura-card p-6 rounded-2xl border border-[#242E42] flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-sunlight shrink-0">
                 <item.icon className="w-5 h-5" />
               </div>
               <div>
@@ -418,8 +412,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </main>
 
       {showGoogleModal && (
-        <div className="fixed inset-0 z-50 bg-navy/50 flex items-center justify-center p-4">
-          <div className="bg-peach border border-line w-full max-w-md rounded-[4px] p-6 relative">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="aura-card w-full max-w-md p-6 relative">
             <button type="button" onClick={() => setShowGoogleModal(false)} className="absolute top-4 right-4 text-muted hover:text-charcoal text-sm">
               ✕
             </button>
@@ -428,7 +422,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <GoogleMark />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-navy">Sign In with Google Account</h3>
+                <h3 className="text-lg font-bold text-white">Sign In with Google Account</h3>
                 <p className="text-xs text-muted leading-[1.6]">Enter your Google account details to authenticate</p>
               </div>
             </div>
@@ -464,8 +458,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       )}
 
       {showEmailModal && (
-        <div className="fixed inset-0 z-50 bg-navy/50 flex items-center justify-center p-4">
-          <div className="bg-peach border border-line w-full max-w-md rounded-[4px] p-6 relative">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="aura-card w-full max-w-md p-6 relative">
             <button
               type="button"
               onClick={() => {
@@ -481,7 +475,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <Mail className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-navy">
+                <h3 className="text-lg font-bold text-white">
                   {emailTab === 'signup' ? 'Create Your Email Account' : 'Welcome Back'}
                 </h3>
                 <p className="text-xs text-muted leading-[1.6]">
@@ -490,7 +484,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 bg-ivory p-1 rounded-[4px] border border-line text-xs font-bold mb-5">
+            <div className="grid grid-cols-2 bg-white/5 p-1 rounded-xl border border-white/10 text-xs font-bold mb-5">
               <button
                 type="button"
                 onClick={() => {
@@ -597,15 +591,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       )}
 
-      <footer className="bg-navy py-6 text-center text-xs text-[#FFFAF4]/70">
+      <footer className="bg-[#07101c] py-6 text-center text-xs text-slate-400">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div>
-            <strong className="text-[#FFFAF4]">AuraHealth MVP</strong> • Daily Health Habit & Adherence Platform
+            <strong className="text-white">AuraHealth MVP</strong> • Daily Health Habit & Adherence Platform
           </div>
-          <div className="flex items-center gap-4 text-[11px]">
-            <span>Seamless Web2/Web3 Bridge</span>
+          <div className="flex flex-wrap items-center justify-center gap-3 text-[11px]">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              Ledger Synced
+            </span>
             <span>•</span>
-            <span>Sustainable Reward Economy</span>
+            <span className="inline-flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-cyan-300" />
+              Harmony-verified health pass
+            </span>
+            <span>•</span>
+            <span>ZK adherence attestations</span>
           </div>
         </div>
         {onAdminLogin && (

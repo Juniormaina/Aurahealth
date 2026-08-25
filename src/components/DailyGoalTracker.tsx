@@ -152,6 +152,29 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
   const totalCount = habits.length;
   const overallPercentage = Math.round((completedCount / totalCount) * 100);
 
+  const [popId, setPopId] = useState<string | null>(null);
+
+  const burst = () => {
+    confetti({
+      particleCount: 28,
+      spread: 70,
+      origin: { y: 0.7 },
+      colors: ['#FFB800', '#00FFC2', '#8C52FF'],
+    });
+  };
+
+  const markComplete = (id: string) => {
+    setHabits((prev) =>
+      prev.map((habit) => {
+        if (habit.id !== id || habit.completed) return habit;
+        burst();
+        setPopId(id);
+        window.setTimeout(() => setPopId(null), 550);
+        if (onGoalUpdated) onGoalUpdated(habit.xpReward, habit.cowriesReward);
+        return { ...habit, current: habit.target, completed: true };
+      })
+    );
+  };
   const handleIncrement = (id: string, step: number) => {
     setHabits((prev) =>
       prev.map((habit) => {
@@ -161,15 +184,10 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
         const nowCompleted = newCurrent >= habit.target;
 
         if (!wasCompleted && nowCompleted) {
-          confetti({
-            particleCount: 35,
-            spread: 60,
-            origin: { y: 0.7 },
-            colors: ['#FBAF40', '#D97706', '#009688'],
-          });
-          if (onGoalUpdated) {
-            onGoalUpdated(habit.xpReward, habit.cowriesReward);
-          }
+          burst();
+          setPopId(id);
+          window.setTimeout(() => setPopId(null), 550);
+          if (onGoalUpdated) onGoalUpdated(habit.xpReward, habit.cowriesReward);
         }
 
         return {
@@ -249,7 +267,7 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
                 strokeLinecap="round"
               />
             </svg>
-            <span className="absolute text-xs font-bold text-navy">{overallPercentage}%</span>
+            <span className="absolute text-xs font-bold text-white tabular-nums">{overallPercentage}%</span>
           </div>
 
           <div>
@@ -266,7 +284,7 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
       </div>
 
       {/* Habits Progress Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 items-stretch">
         {habits.map((habit) => {
           const IconComponent = habit.icon;
           const pct = Math.min(100, Math.round((habit.current / habit.target) * 100));
@@ -274,7 +292,7 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
           return (
             <div
               key={habit.id}
-              className={`aura-module-card p-4 transition-all relative overflow-hidden ${
+              className={`aura-module-card p-4 habit-card habit-ripple ${popId === habit.id ? 'pop' : ''} ${
                 habit.completed ? 'border-harmony/40' : ''
               }`}
             >
@@ -289,8 +307,8 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
                     <IconComponent className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-navy leading-snug">{habit.name}</h4>
-                    <div className="text-[11px] text-muted">
+                    <h4 className="text-sm font-bold text-white leading-snug">{habit.name}</h4>
+                    <div className="text-[11px] text-muted tabular-nums">
                       {habit.current} / {habit.target} {habit.unit}
                     </div>
                   </div>
@@ -301,7 +319,7 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
                     <CheckCircle2 className="w-3 h-3" /> Done
                   </div>
                 ) : (
-                  <div className="text-[10px] font-medium text-muted bg-ivory px-2 py-0.5 rounded-[4px] border border-line">
+                  <div className="text-[10px] font-medium text-muted bg-ivory px-2 py-0.5 rounded-[4px] border border-line tabular-nums">
                     {pct}%
                   </div>
                 )}
@@ -314,15 +332,16 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-between text-[11px] pt-1 border-t border-line">
-                <span className="text-muted flex items-center gap-1">
+              <div className="mt-auto flex items-center justify-between gap-2 text-[11px] pt-1 border-t border-line flex-wrap">
+                <span className="text-muted flex items-center gap-1 tabular-nums">
                   <Zap className="w-3 h-3 text-gold" /> +{habit.xpReward} XP • <span className="text-gold font-semibold">+{habit.cowriesReward} 🐚</span>
                 </span>
 
-                {habit.id === 'water' && (
+                <div className="flex items-center gap-1.5">
+                {habit.id === 'water' && !habit.completed && (
                   <button
                     onClick={() => handleIncrement('water', 8)}
-                    className="bg-ivory hover:bg-peach text-navy font-bold px-2.5 py-1 rounded-[4px] border border-line flex items-center gap-1"
+                    className="bg-ivory hover:bg-peach text-white font-bold px-2.5 py-1 rounded-[4px] border border-line flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" /> +8 oz
                   </button>
@@ -341,20 +360,25 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
                   </button>
                 )}
 
-                {habit.id === 'movement' && (
+                {habit.id === 'movement' && !habit.completed && (
                   <button
                     onClick={() => handleIncrement('movement', 10)}
-                    className="bg-ivory hover:bg-peach text-navy font-bold px-2.5 py-1 rounded-[4px] border border-line flex items-center gap-1"
+                    className="bg-ivory hover:bg-peach text-white font-bold px-2.5 py-1 rounded-[4px] border border-line flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" /> +10 min
                   </button>
                 )}
 
-                {habit.id === 'sleep' && (
-                  <span className="text-[10px] text-harmony font-semibold">
-                    Logged {habit.current}h Rest
-                  </span>
+                {!habit.completed && habit.id !== 'meds' && (
+                  <button
+                    type="button"
+                    onClick={() => markComplete(habit.id)}
+                    className="btn-primary !py-1 !px-2.5 text-[11px]"
+                  >
+                    Done
+                  </button>
                 )}
+                </div>
               </div>
             </div>
           );

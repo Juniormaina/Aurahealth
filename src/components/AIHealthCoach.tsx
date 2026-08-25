@@ -29,13 +29,10 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputMessage.trim() || isLoading) return;
-
-    const userText = inputMessage.trim();
+  const sendMessage = async (rawText: string) => {
+    if (!rawText.trim() || isLoading) return;
+    const userText = rawText.trim();
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
     const history = messages.map((m) => ({ sender: m.sender, text: m.text }));
     setMessages((prev) => [...prev, { sender: 'user', text: userText, time }]);
     setInputMessage('');
@@ -77,6 +74,17 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
     }
   };
 
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await sendMessage(inputMessage);
+  };
+
+  const promptChips = [
+    'How do I boost my streak?',
+    'Analyze my sleep pattern',
+    'What should I log today?',
+  ];
+
   return (
     <div className="aura-card-gradient p-6 relative overflow-hidden max-w-4xl mx-auto flex flex-col h-[600px]">
       {/* Header */}
@@ -117,10 +125,8 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
             )}
 
             <div
-              className={`max-w-[80%] rounded-[4px] p-3.5 text-xs leading-[1.6] ${
-                m.sender === 'user'
-                  ? 'bg-navy text-[#FFFAF4]'
-                  : 'bg-ivory border border-line text-ink'
+              className={`max-w-[80%] rounded-2xl p-3.5 text-xs leading-[1.6] ${
+                m.sender === 'user' ? 'chat-bubble-user text-white' : 'chat-bubble text-slate-100'
               }`}
             >
               <p className="whitespace-pre-wrap">{m.text}</p>
@@ -166,7 +172,21 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
       </div>
 
       {/* Input Box */}
-      <form onSubmit={handleSendMessage} className="pt-4 border-t border-line flex items-center gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-3">
+        {promptChips.map((chip) => (
+          <button
+            key={chip}
+            type="button"
+            className="prompt-chip"
+            disabled={isLoading}
+            onClick={() => sendMessage(chip)}
+          >
+            {chip}
+          </button>
+        ))}
+      </div>
+
+      <form onSubmit={handleSendMessage} className="pt-2 border-t border-line flex items-center gap-2">
         <input
           type="text"
           value={inputMessage}

@@ -17,8 +17,6 @@ import {
   Cpu,
   ArrowLeft,
   LogOut,
-  Sun,
-  Moon,
 } from 'lucide-react';
 
 type AdminTab = 'sponsors' | 'analytics' | 'contracts';
@@ -39,8 +37,6 @@ interface AdminDashboardProps {
   onShowToast: (msg: string) => void;
   onBackToLanding: () => void;
   onSignOut: () => void;
-  theme: 'midnight' | 'morning';
-  onToggleTheme: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -59,8 +55,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onShowToast,
   onBackToLanding,
   onSignOut,
-  theme,
-  onToggleTheme,
 }) => {
   const [adminTab, setAdminTab] = useState<AdminTab>('sponsors');
 
@@ -71,7 +65,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   ];
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans selection:bg-rose-500 selection:text-white transition-colors duration-300 ${theme === 'morning' ? 'theme-morning bg-slate-50 text-slate-900' : 'theme-midnight bg-slate-950 text-slate-100'}`}>
+    <div className="min-h-screen flex flex-col font-sans selection:bg-amber-400 selection:text-navy bg-canvas text-white">
       {/* Admin Header */}
       <header className="border-b border-slate-800/80 bg-gradient-to-r from-slate-900 via-rose-950/40 to-slate-900 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
@@ -86,23 +80,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={onToggleTheme}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-extrabold transition-all ${
-                theme === 'morning'
-                  ? 'bg-amber-100 text-amber-950 border-amber-300 hover:bg-amber-200 shadow-sm'
-                  : 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
-              }`}
-              title="Switch Theme"
-            >
-              {theme === 'morning' ? (
-                <Moon className="w-3.5 h-3.5 text-indigo-300 fill-indigo-300/30" />
-              ) : (
-                <Sun className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
-              )}
-              <span className="hidden sm:inline">{theme === 'morning' ? 'Dark' : 'Light'}</span>
-            </button>
-
             <button
               onClick={onBackToLanding}
               className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5"
