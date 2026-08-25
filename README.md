@@ -13,24 +13,22 @@ to try the product without an account.
 Copy lives in [`src/content/valueProps.ts`](src/content/valueProps.ts) and is
 shown in the UI, not only in marketing docs:
 
-1. **Hero + first onboarding step:** Aura Health helps African professionals
-   reduce stress in 5 minutes a day with AI-guided micro-sessions in local
-   languages.
-2. **Premium paywall:** Unlike Calm or Headspace, Aura Health delivers
-   culturally relevant wellness tools that improve sleep and focus within 7
-   days.
-3. **Impact dashboard:** Aura Health is the only wellness app that adapts to
-   your mood in real time, cutting anxiety levels by half in two weeks —
-   personalized as e.g. “Your anxiety check-ins dropped 39% in 14 days.”
+1. **Hero:** Aura Health helps professionals reduce stress in 5 minutes a day
+   with AI-guided micro-sessions in natural language. Subtext: start today —
+   free trial available. CTA: **Start Free Trial**.
+2. **Proof:** culturally relevant tools for sleep and focus within 7 days;
+   mood-adaptive anxiety reduction in two weeks — plus a Recharts sleep vs
+   anxiety chart (`GET /api/metrics/proof`).
+3. **Paywall:** same 7-day sleep/focus line in [`PremiumModal`](src/components/PremiumModal.tsx).
 
-Landing structure: **Hero** (statement 1 + Get Started / Guest Walkthrough) →
-3-step funnel → auth → **Proof** (all three statements).
+Landing: **Hero → Proof → Features → CTA**. Firebase Sign In stays in the
+header. Cowries / Loot Wheel details stay on the in-app **Rewards** tab.
 
 ## Product
 
 | Surface | What it does |
 |---|---|
-| **Landing** | Hero with statement 1; Get Started + Guest Walkthrough; Google/email auth; Proof section; footer “Ledger Synced” |
+| **Landing** | Hero, proof chart, features, Upgrade to Premium; compact Firebase auth |
 | **Companion** | Astra-first dashboard, mood-adaptive 5-min session, anxiety impact chart, habit cards, quick log |
 | **AI Coach** | Astra chat in the user’s session language; mood-adapted micro-sessions |
 | **Rewards** | Cowries balance, loot-wheel modal, community ticker, voucher marketplace |
@@ -44,7 +42,7 @@ Health Pass, and Wearables are settings sections, not top-level tabs.
 Sidebar **Upgrade to Premium** opens [`PremiumModal`](src/components/PremiumModal.tsx):
 monthly (7-day free trial, then auto-subscribe), annual, one-time lifetime, and
 corporate wellness package requests. Free users also see an in-app prompt after
-check-in. Plans are in-memory on the Express server for this MVP (not Stripe).
+check-in. Plans are in-memory on the Express server (not Stripe).
 
 ### Mood, anxiety, and funnel APIs
 
@@ -57,10 +55,11 @@ Schema: [`src/db/schema.sql`](src/db/schema.sql). Store: [`src/server/commerceSt
 | `POST` | `/api/subscriptions/trial` | Start 7-day trial → auto monthly |
 | `POST` | `/api/subscriptions/checkout` | Monthly, annual, or lifetime |
 | `POST` | `/api/metrics` | Log `moodScore` + `anxietyLevel` |
+| `GET` | `/api/metrics/proof` | Public 14-day sleep + anxiety series for landing |
 | `GET` | `/api/metrics/:userId/impact` | 14-day anxiety drop headline + series |
 | `POST` | `/api/funnel/event` | Engagement / conversion events |
 | `GET` | `/api/funnel/summary` | Trial → conversion counts |
-| `POST` | `/api/corporate/packages` | Team wellness lead |
+| `POST` | `/api/corporate` | Team wellness signup |
 
 Check-ins include an anxiety 1–10 slider. Coach and session cards adapt to
 Astra’s mood and Settings language.
@@ -255,7 +254,7 @@ src/
   script/           Foundry deployment scripts (optional, requires forge-std)
   Scripts/          Hardhat deployment/verification scripts (.cjs)
   services/         avalanche.ts, firebase.ts, healthDataService.ts, commerce.ts (API client)
-  components/       React UI (landing, paywall, impact dashboard, sidebar, coach, rewards, settings)
+  components/       React UI (landing/Hero Proof Features Cta, paywall, impact, sidebar, coach, rewards)
   App.tsx           App shell, auth, plans, and tab routing
   index.css         Dark design tokens, energy bars, chat bubbles, gold panels
 server.ts           Express (Gemini, metrics, subscriptions, funnel, Vite/static)

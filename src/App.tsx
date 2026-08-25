@@ -616,6 +616,7 @@ export default function App() {
   const handleStartTrial = async () => {
     const { plan } = await startTrial(commerceUserId, 'monthly');
     applyPlan(plan);
+    setIsLanding(false);
     showToast('7-day Premium trial started. Auto-subscribes monthly unless you cancel.');
   };
 
@@ -651,6 +652,14 @@ export default function App() {
           onEnterDashboard={() => setIsLanding(false)}
           onSignOut={handleLogout}
           onAdminLogin={handleAdminLogin}
+          onOpenPremium={() => setPremiumOpen(true)}
+        />
+        <PremiumModal
+          isOpen={premiumOpen}
+          onClose={() => setPremiumOpen(false)}
+          onStartTrial={handleStartTrial}
+          onCheckout={handleCheckout}
+          onCorporateRequest={handleCorporateRequest}
         />
       </div>
     );
@@ -860,7 +869,7 @@ export default function App() {
               Back to Landing
             </button>
             <span>•</span>
-            <strong className="text-[#FFFAF4]">AuraHealth MVP</strong> • Daily Wellness & Community Health Adherence Platform
+            <strong className="text-[#FFFAF4]">Aura Health</strong> · Daily wellness
           </div>
           <div className="flex items-center gap-4 text-[11px]">
             <span className="inline-flex items-center gap-1.5">

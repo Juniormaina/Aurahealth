@@ -17,6 +17,7 @@ export interface UserMetric {
   userId: string;
   moodScore: number;
   anxietyLevel: number;
+  sleepQuality?: number;
   sessionDate: string;
   language?: string;
   source?: string;
@@ -48,6 +49,7 @@ export function seedDemoMetrics(userId: string) {
       userId,
       moodScore: Math.round(2 + (1 - t) * 2.4),
       anxietyLevel: Math.round(8.4 - (1 - t) * 4.4),
+      sleepQuality: Math.round(5.2 + (1 - t) * 3.4),
       sessionDate: isoDate(-i),
       language: 'sw',
       source: 'seed',
@@ -145,7 +147,7 @@ export function impactSummary(userId: string) {
   const anxietyNow = avg(last3, 'anxietyLevel');
   const dropPct = anxietyStart > 0 ? Math.round(((anxietyStart - anxietyNow) / anxietyStart) * 100) : 0;
   return {
-    claim: 'Aura Health is the only wellness app that adapts to your mood in real time, cutting anxiety levels by half in two weeks.',
+    claim: 'Aura Health adapts to your mood in real time, cutting anxiety levels by half in two weeks.',
     days: last14.length,
     anxietyStart: Number(anxietyStart.toFixed(1)),
     anxietyNow: Number(anxietyNow.toFixed(1)),
@@ -158,6 +160,7 @@ export function impactSummary(userId: string) {
       date: r.sessionDate,
       anxiety: r.anxietyLevel,
       mood: r.moodScore,
+      sleep: r.sleepQuality ?? Math.round(10 - r.anxietyLevel * 0.6),
     })),
   };
 }

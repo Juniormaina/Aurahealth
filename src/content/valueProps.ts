@@ -1,10 +1,12 @@
 export const VALUE_PROPS = {
   microSessions:
-    'Aura Health helps African professionals reduce stress in 5 minutes a day with AI-guided micro-sessions in local languages.',
+    'Aura Health helps professionals reduce stress in 5 minutes a day with AI-guided micro-sessions in natural language.',
   culturalRelevance:
-    'Unlike Calm or Headspace, Aura Health delivers culturally relevant wellness tools that improve sleep and focus within 7 days.',
+    'Aura Health delivers culturally relevant wellness tools that improve sleep and focus within 7 days.',
   realtimeMood:
-    'Aura Health is the only wellness app that adapts to your mood in real time, cutting anxiety levels by half in two weeks.',
+    'Aura Health adapts to your mood in real time, cutting anxiety levels by half in two weeks.',
+  heroSubtext: 'Start your journey today — free trial available.',
+  ctaHeadline: 'Ready to reduce stress and improve focus?',
 } as const;
 
 export const SESSION_LANGUAGES = [

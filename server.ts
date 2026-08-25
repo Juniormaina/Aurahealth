@@ -189,6 +189,10 @@ Response MUST be valid JSON string only.`,
     res.json({ ok: true });
   });
 
+  app.get('/api/metrics/proof', (_req, res) => {
+    res.json(impactSummary('public-proof'));
+  });
+
   app.get('/api/metrics/:userId', (req, res) => {
     res.json({ metrics: listMetrics(req.params.userId) });
   });
@@ -208,21 +212,27 @@ Response MUST be valid JSON string only.`,
     res.json(funnelSummary());
   });
 
-  app.post('/api/corporate/packages', (req, res) => {
+  const saveCorporateLead = (req: express.Request, res: express.Response) => {
     const { company, contactEmail, seats, packageId, notes } = req.body || {};
-    if (!company || !contactEmail || !packageId) {
-      return res.status(400).json({ error: 'company, contactEmail, packageId required' });
+    if (!company || !contactEmail) {
+      return res.status(400).json({ error: 'company and contactEmail required' });
     }
     const lead = addCorporateLead({
       company,
       contactEmail,
       seats: Number(seats) || 25,
-      packageId,
+      packageId: packageId || 'team',
       notes,
     });
     res.json({ ok: true, lead });
-  });
+  };
 
+  app.post('/api/corporate', saveCorporateLead);
+  app.post('/api/corporate/packages', saveCorporateLead);
+
+  app.get('/api/corporate', (_req, res) => {
+    res.json({ packages: CORPORATE_PACKAGES, leads: listCorporateLeads() });
+  });
   app.get('/api/corporate/packages', (_req, res) => {
     res.json({ packages: CORPORATE_PACKAGES, leads: listCorporateLeads() });
   });

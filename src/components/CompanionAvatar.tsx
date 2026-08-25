@@ -107,7 +107,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
             <span className="text-2xl">{getStageEmoji(companion.stage)}</span>
             <h2 className="text-2xl font-bold text-white">{companion.name}</h2>
             <span className={`text-xs px-2.5 py-0.5 rounded-full border font-semibold capitalize ${getMoodBadgeColor(companion.mood)}`}>
-              Mood: {companion.mood}
+              {companion.mood}
             </span>
           </div>
           <p className="text-xs text-muted mt-1 flex items-center gap-1.5">

@@ -77,7 +77,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   return (
     <div className="space-y-6">
       {showUpgrade && <UpgradePrompt onUpgrade={onUpgrade} />}
-      <p className="text-sm text-slate-400 leading-[1.6]">{VALUE_PROPS.microSessions}</p>
+      <p className="text-sm text-slate-400 leading-[1.6]">{VALUE_PROPS.heroSubtext}</p>
       <section className="aura-module-card astra-hero p-6 relative overflow-hidden">
         <div className="flex flex-col items-center text-center relative z-10">
           <div className="relative">

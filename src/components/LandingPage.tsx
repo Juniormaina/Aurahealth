@@ -1,26 +1,21 @@
 import React, { useState } from 'react';
 import { AuraLogo } from './AuraLogo';
-import { VALUE_PROPS } from '../content/valueProps';
+import { Hero } from './landing/Hero';
+import { Proof } from './landing/Proof';
+import { Features } from './landing/Features';
+import { Cta } from './landing/Cta';
 import {
-  Sparkles,
   ShieldCheck,
   ArrowRight,
-  CheckCircle2,
   Play,
-  Heart,
-  Coins,
-  Lock,
-  Gift,
   LogOut,
-  Award,
-  Watch,
-  Flame,
   Mail,
   User,
   Eye,
   EyeOff,
   UserPlus,
   LogIn,
+  Lock,
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -35,6 +30,7 @@ interface LandingPageProps {
   onEnterDashboard?: () => void;
   onSignOut?: () => void;
   onAdminLogin?: () => void;
+  onOpenPremium: () => void;
 }
 
 const GoogleMark = () => (
@@ -58,6 +54,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onEnterDashboard,
   onSignOut,
   onAdminLogin,
+  onOpenPremium,
 }) => {
   const [showGoogleModal, setShowGoogleModal] = useState(false);
   const [customEmail, setCustomEmail] = useState('');
@@ -101,46 +98,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     }
   };
 
-  const [previewMood, setPreviewMood] = useState(0);
-  const [previewPop, setPreviewPop] = useState(false);
-  const previewMoods = [
-    { id: 'joyful', emoji: '😊', vitality: 95, label: 'joyful' },
-    { id: 'energetic', emoji: '⚡', vitality: 88, label: 'energetic' },
-    { id: 'focused', emoji: '🎯', vitality: 82, label: 'focused' },
-    { id: 'eager', emoji: '🌟', vitality: 90, label: 'eager' },
-    { id: 'sleepy', emoji: '😴', vitality: 64, label: 'sleepy' },
-  ] as const;
-  const preview = previewMoods[previewMood];
-
-  const cycleAstraPreview = () => {
-    setPreviewMood((i) => (i + 1) % previewMoods.length);
-    setPreviewPop(true);
-    window.setTimeout(() => setPreviewPop(false), 700);
-  };
-  const heading = 'text-white';
-  const muted = 'text-slate-400';
-  const card = 'aura-card p-6 rounded-2xl border border-[#242E42] flex flex-col h-full';
-
   return (
     <div className="min-h-screen flex flex-col justify-between bg-canvas text-white">
       <header className="sticky top-0 z-40 navbar-gradient">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <div className="justify-self-start">
-            <AuraLogo size="md" inverted />
-          </div>
-          <div className="justify-self-center">
-            {!(userAccount || isDemoMode) && (
-              <button
-                type="button"
-                onClick={onStartDemo}
-                className="text-sm font-semibold text-slate-300 hover:text-sunlight px-3 py-2 flex items-center gap-1.5"
-              >
-                <Play className="w-3.5 h-3.5 fill-sunlight text-sunlight" />
-                Quick Demo
-              </button>
-            )}
-          </div>
-          <div className="justify-self-end flex items-center gap-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
+          <AuraLogo size="md" inverted />
+          <div className="flex items-center gap-2">
             {(userAccount || isDemoMode) && onEnterDashboard ? (
               <>
                 <button type="button" onClick={onEnterDashboard} className="btn-primary text-xs">
@@ -163,7 +126,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 type="button"
                 onClick={onRealGoogleSignIn}
                 disabled={isLoggingIn}
-                className="btn-primary text-xs px-4 py-2"
+                className="btn-ghost text-xs px-4 py-2"
               >
                 <GoogleMark />
                 {isLoggingIn ? 'Connecting...' : 'Sign In'}
@@ -173,18 +136,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </header>
 
-      <main className="hero-gradient max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-14 flex-1 flex flex-col justify-center w-full">
+      <main className="hero-gradient max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-14 flex-1 w-full">
         {(userAccount || isDemoMode) && onEnterDashboard && (
-          <div className="trust-band-teal max-w-3xl mx-auto w-full mb-8 p-4 rounded-[4px] flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <div className="text-sm font-bold flex items-center gap-2">
-                Welcome back, {userAccount?.name || 'Guided Demo Explorer'}
-                <span className="aura-badge aura-badge-success">Active Session</span>
-              </div>
-              <p className="text-[13px] leading-[1.6] mt-1">
-                Astra is ready for health check-ins and Cowries rewards.
-              </p>
-            </div>
+          <div className="trust-band-teal max-w-3xl mx-auto w-full mb-8 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm font-bold">Welcome back, {userAccount?.name || 'Guest'}</p>
             <button type="button" onClick={onEnterDashboard} className="btn-primary text-xs shrink-0">
               Enter Dashboard
               <ArrowRight className="w-3.5 h-3.5" />
@@ -192,192 +147,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center max-w-6xl mx-auto mb-12">
-          <div className="text-center lg:text-left space-y-4">
-            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-xs text-slate-300">
-              <Sparkles className="w-3.5 h-3.5 text-sunlight" />
-              <span>5-minute micro-sessions • Kiswahili & vernacular • Wearables</span>
-            </div>
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white font-display">
-              AuraHealth
-            </h1>
-            <p className="text-lg sm:text-2xl font-semibold leading-[1.6] text-white">
-              {VALUE_PROPS.microSessions}
-            </p>
-            <p className={`text-sm sm:text-base leading-[1.6] max-w-2xl ${muted}`}>
-              AI-guided sessions adapt to your mood in real time. Connect Fitbit or Apple Watch, care for Astra, and see sleep, focus, and anxiety move in days — not months.
-            </p>
-            <div className="pt-2 flex flex-wrap items-center gap-3 justify-center lg:justify-start">
-              <button type="button" onClick={onRealGoogleSignIn} disabled={isLoggingIn} className="btn-primary text-sm px-6 py-3">
-                Get Started
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <button type="button" onClick={onStartDemo} className="btn-ghost text-sm">
-                <Play className="w-4 h-4" />
-                Guest Walkthrough
-              </button>
-            </div>
-          </div>
+        <Hero onStartTrial={onOpenPremium} />
+        <Proof />
+        <Features />
+        <Cta onUpgrade={onOpenPremium} />
 
-          <div className="aura-card astra-hero p-6 rounded-2xl border border-[#242E42] relative overflow-hidden">
-            <button
-              type="button"
-              onClick={cycleAstraPreview}
-              className="w-full text-left"
-              aria-label="Play with Astra preview"
-            >
-              <div className="flex items-center gap-4">
-                <div className={`relative ${previewPop ? 'scale-110' : ''} transition-transform`}>
-                  <img
-                    src="https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=500&auto=format&fit=crop&q=80"
-                    alt="Astra companion preview"
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-[#8C52FF]/50 shadow-[0_0_28px_rgba(140,82,255,0.35)]"
-                  />
-                  {previewPop && (
-                    <span className="absolute -top-2 -right-2 text-xl astra-reaction-bubble">{preview.emoji}</span>
-                  )}
-                </div>
-                <div>
-                  <div className="text-[11px] uppercase tracking-widest text-slate-400 font-bold">Companion preview</div>
-                  <h2 className="text-2xl font-bold text-white font-display">Astra</h2>
-                  <p className="text-sm text-slate-400">Spark Companion · Level 3</p>
-                </div>
-              </div>
-              <div className="mt-5 space-y-3">
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-slate-300">Vitality</span>
-                    <span className="text-[#00FFC2] font-bold tabular-nums">{preview.vitality}%</span>
-                  </div>
-                  <div className="energy-bar" aria-hidden="true">
-                    {Array.from({ length: 10 }, (_, i) => (
-                      <span key={i} className={i < Math.round(preview.vitality / 10) ? 'on' : ''} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
-                <span className="text-lg">{preview.emoji}</span>
-                Mood: {preview.label} · Click Astra to play
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <h2 className={`text-center text-xs font-extrabold uppercase tracking-widest mb-6 ${muted}`}>
-          The AuraHealth 3-Step Value Funnel
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full mb-14 items-stretch">
-          {[
-            {
-              n: '01',
-              icon: Watch,
-              title: 'Track Your Daily Wellness',
-              copy: 'Auto-sync biometrics via Google Fit or Apple Health, or quickly log water, sleep, mood, and medication in under 10 seconds.',
-              note: 'Wearable hardware verified',
-              noteIcon: CheckCircle2,
-            },
-            {
-              n: '02',
-              icon: Heart,
-              title: 'Evolve Your Companion',
-              copy: 'Astra reacts to your daily consistency—leveling up, expressing mood, and keeping vitality high as you stay on track.',
-              note: 'Streak protection & companion health',
-              noteIcon: Flame,
-            },
-            {
-              n: '03',
-              icon: Award,
-              title: 'Earn Real Rewards',
-              copy: 'Collect Cowries for daily check-ins, spin the Loot Wheel, and redeem clinic vouchers, gym passes, and partner benefit codes.',
-              note: 'Instant voucher redemptions',
-              noteIcon: Gift,
-            },
-          ].map((step) => (
-            <div key={step.n} className={card}>
-              <div className="flex items-center justify-between mb-4">
-                <span className="w-8 h-8 rounded-xl bg-navy text-sunlight font-black text-xs flex items-center justify-center tabular-nums">
-                  {step.n}
-                </span>
-                <step.icon className="w-5 h-5 text-gold" />
-              </div>
-              <h3 className={`text-lg font-bold mb-2 ${heading}`}>{step.title}</h3>
-              <p className={`text-sm leading-[1.6] mb-4 ${muted}`}>{step.copy}</p>
-              <div className={`text-[12px] leading-[1.6] flex items-center gap-2 ${muted}`}>
-                <step.noteIcon className="w-3.5 h-3.5 text-harmony shrink-0" />
-                <span>{step.note}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto w-full mb-16 items-stretch">
-          <div className={`${card} ring-1 ring-amber-400/40`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <GoogleMark />
-              </div>
-              <span className="aura-badge aura-badge-warning">Recommended</span>
-            </div>
-            <h2 className="text-xl font-bold mb-2 text-white">Sign In with Google</h2>
-            <p className={`text-sm leading-[1.6] mb-4 min-h-[64px] ${muted}`}>
-              Instant 1-click access with Google OAuth. Automatic health ledger syncing and streak progress persistence.
-            </p>
-            <ul className={`space-y-1.5 mb-6 text-sm leading-[1.6] flex-1 ${muted}`}>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-harmony shrink-0" />
-                +200 Welcome Cowries bonus
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-harmony shrink-0" />
-                Automatic streak preservation
-              </li>
-            </ul>
-            <button type="button" onClick={onRealGoogleSignIn} disabled={isLoggingIn} className="w-full btn-primary justify-center text-xs py-3">
-              {isLoggingIn ? 'Signing in...' : 'Sign In with Google'}
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-            <button type="button" onClick={onStartDemo} className="w-full btn-ghost justify-center text-xs py-2.5 mt-2">
-              <Play className="w-3.5 h-3.5" />
-              Continue as Guest
-            </button>
-            <button type="button" onClick={() => setShowGoogleModal(true)} className={`w-full text-[11px] py-2 underline ${muted}`}>
-              Custom Google Email
-            </button>
-          </div>
-
-          <div className={card}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-200">
-                <Mail className="w-5 h-5" />
-              </div>
-              <span className="text-[11px] font-bold text-slate-500">Option 2</span>
-            </div>
-            <h2 className="text-xl font-bold mb-2 text-white">Email Sign In / Sign Up</h2>
-            <p className={`text-sm leading-[1.6] mb-4 min-h-[64px] ${muted}`}>
-              Register or log in using your email and password. Fully integrated with Firebase Auth and cloud storage.
-            </p>
-            <ul className={`space-y-1.5 mb-6 text-sm leading-[1.6] flex-1 ${muted}`}>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-harmony shrink-0" />
-                Custom email & password account
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-harmony shrink-0" />
-                Encrypted credentials & secure profiles
-              </li>
-            </ul>
-            <button
-              type="button"
-              onClick={() => {
-                setEmailTab('signup');
-                setShowEmailModal(true);
-              }}
-              disabled={isLoggingIn}
-              className="w-full btn-ghost justify-center text-xs py-3 text-white font-bold border-white/15"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              Create Email Account
+        {!(userAccount || isDemoMode) && (
+          <div className="max-w-xl mx-auto flex flex-wrap items-center justify-center gap-3 text-sm">
+            <button type="button" onClick={onRealGoogleSignIn} disabled={isLoggingIn} className="btn-ghost text-xs">
+              <GoogleMark />
+              Continue with Google
             </button>
             <button
               type="button"
@@ -385,34 +164,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 setEmailTab('signin');
                 setShowEmailModal(true);
               }}
-              className="w-full text-[11px] text-slate-300 font-bold py-2 underline flex items-center justify-center gap-1"
+              className="btn-ghost text-xs"
             >
-              <LogIn className="w-3 h-3" />
-              Already registered? Sign In
+              <Mail className="w-3.5 h-3.5" />
+              Email
+            </button>
+            <button type="button" onClick={onStartDemo} className="text-xs font-semibold text-slate-400 hover:text-white flex items-center gap-1">
+              <Play className="w-3.5 h-3.5" />
+              Guest
+            </button>
+            <button type="button" onClick={() => setShowGoogleModal(true)} className="text-[11px] text-slate-500 underline">
+              Custom Google email
             </button>
           </div>
-        </div>
-
-        <h2 className={`text-center text-xs font-extrabold uppercase tracking-widest mb-6 ${muted}`}>
-          Proof
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
-          {[
-            { icon: Heart, title: '5 minutes a day', copy: VALUE_PROPS.microSessions },
-            { icon: Coins, title: 'Not Calm or Headspace', copy: VALUE_PROPS.culturalRelevance },
-            { icon: Lock, title: 'Mood-adaptive proof', copy: VALUE_PROPS.realtimeMood },
-          ].map((item) => (
-            <div key={item.title} className="aura-card p-6 rounded-2xl border border-[#242E42] flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-sunlight shrink-0">
-                <item.icon className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className={`text-sm font-bold mb-1 ${heading}`}>{item.title}</h3>
-                <p className={`text-sm leading-[1.6] ${muted}`}>{item.copy}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        )}
       </main>
 
       {showGoogleModal && (
@@ -427,7 +192,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white">Sign In with Google Account</h3>
-                <p className="text-xs text-muted leading-[1.6]">Enter your Google account details to authenticate</p>
+                <p className="text-xs text-muted leading-[1.6]">Firebase Auth — enter the Google account to use</p>
               </div>
             </div>
             <form onSubmit={handleCustomGoogleSubmit} className="space-y-4">
@@ -482,9 +247,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <h3 className="text-lg font-bold text-white">
                   {emailTab === 'signup' ? 'Create Your Email Account' : 'Welcome Back'}
                 </h3>
-                <p className="text-xs text-muted leading-[1.6]">
-                  {emailTab === 'signup' ? 'Register to start tracking your daily habits' : 'Sign in to access your Aura health ledger'}
-                </p>
+                <p className="text-xs text-muted leading-[1.6]">Firebase email authentication</p>
               </div>
             </div>
 
@@ -587,45 +350,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 )}
               </button>
             </form>
-            <div className="mt-4 text-[10px] text-muted text-center flex items-center justify-center gap-1 leading-[1.6]">
-              <ShieldCheck className="w-3.5 h-3.5 text-harmony" />
-              Firebase Auth & encrypted account records.
-            </div>
           </div>
         </div>
       )}
 
       <footer className="bg-[#07101c] py-6 text-center text-xs text-slate-400">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div>
-            <strong className="text-white">AuraHealth MVP</strong> • Daily Health Habit & Adherence Platform
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3 text-[11px]">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              Ledger Synced
-            </span>
-            <span>•</span>
-            <span className="inline-flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-cyan-300" />
-              Harmony-verified health pass
-            </span>
-            <span>•</span>
-            <span>ZK adherence attestations</span>
-          </div>
-        </div>
-        {onAdminLogin && (
-          <div className="mt-4 flex justify-center">
+          <strong className="text-white">Aura Health</strong>
+          {onAdminLogin && (
             <button
               type="button"
               onClick={onAdminLogin}
               className="flex items-center gap-1.5 text-[11px] font-semibold text-[#FFFAF4]/70 hover:text-sunlight px-3 py-1.5"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
-              Admin Login
+              Admin
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </footer>
     </div>
   );

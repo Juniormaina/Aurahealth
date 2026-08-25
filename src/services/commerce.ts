@@ -47,7 +47,7 @@ export function fetchImpact(userId: string) {
     anxietyNow: number;
     dropPct: number;
     headline: string;
-    series: { date: string; anxiety: number; mood: number }[];
+    series: { date: string; anxiety: number; mood: number; sleep?: number }[];
   }>(`/api/metrics/${encodeURIComponent(userId)}/impact`);
 }
 
@@ -65,7 +65,7 @@ export function requestCorporatePackage(payload: {
   packageId: string;
   notes?: string;
 }) {
-  return json('/api/corporate/packages', {
+  return json('/api/corporate', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

@@ -1,5 +1,5 @@
 -- Aura Health: plans, mood/anxiety metrics, funnel events
--- In-memory store on the Express server mirrors this schema for the MVP.
+-- In-memory store on the Express server mirrors this schema.
 
 CREATE TABLE user_plans (
   user_id TEXT PRIMARY KEY,
