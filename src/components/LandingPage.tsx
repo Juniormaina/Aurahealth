@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AuraLogo } from './AuraLogo';
+import { VALUE_PROPS } from '../content/valueProps';
 import {
   Sparkles,
   ShieldCheck,
@@ -195,16 +196,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="text-center lg:text-left space-y-4">
             <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-xs text-slate-300">
               <Sparkles className="w-3.5 h-3.5 text-sunlight" />
-              <span>Daily Wellness • Evolving Companion • Real Rewards</span>
+              <span>5-minute micro-sessions • Kiswahili & vernacular • Wearables</span>
             </div>
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white font-display">
               AuraHealth
             </h1>
             <p className="text-lg sm:text-2xl font-semibold leading-[1.6] text-white">
-              Track your daily wellness, evolve your digital health companion, and earn real rewards.
+              {VALUE_PROPS.microSessions}
             </p>
             <p className={`text-sm sm:text-base leading-[1.6] max-w-2xl ${muted}`}>
-              Turn simple daily check-ins into a welcoming journey. Connect wearables, care for Astra, unlock community sponsor clinic vouchers, and keep health adherence easy to follow.
+              AI-guided sessions adapt to your mood in real time. Connect Fitbit or Apple Watch, care for Astra, and see sleep, focus, and anxiety move in days — not months.
             </p>
             <div className="pt-2 flex flex-wrap items-center gap-3 justify-center lg:justify-start">
               <button type="button" onClick={onRealGoogleSignIn} disabled={isLoggingIn} className="btn-primary text-sm px-6 py-3">
@@ -392,11 +393,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         </div>
 
+        <h2 className={`text-center text-xs font-extrabold uppercase tracking-widest mb-6 ${muted}`}>
+          Proof
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
           {[
-            { icon: Heart, title: 'Evolving Digital Companion', copy: 'Astra reacts to hydration, sleep, and medication logs with clear mood cues and level progress.' },
-            { icon: Coins, title: 'Community Sponsor Grants', copy: 'Sponsors fund care grants, vitamin kits, and clinic vouchers as community adherence targets are met.' },
-            { icon: Lock, title: 'Seamless Security', copy: 'Adherence attestations verify daily habits quietly—without wallet popups or surprise fees.' },
+            { icon: Heart, title: '5 minutes a day', copy: VALUE_PROPS.microSessions },
+            { icon: Coins, title: 'Not Calm or Headspace', copy: VALUE_PROPS.culturalRelevance },
+            { icon: Lock, title: 'Mood-adaptive proof', copy: VALUE_PROPS.realtimeMood },
           ].map((item) => (
             <div key={item.title} className="aura-card p-6 rounded-2xl border border-[#242E42] flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-sunlight shrink-0">

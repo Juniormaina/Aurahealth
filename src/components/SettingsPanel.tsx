@@ -1,14 +1,25 @@
 import React, { useState } from 'react';
-import { Bell, ShieldCheck, Heart, Globe, ChevronDown } from 'lucide-react';
+import { Bell, ShieldCheck, Heart, Globe, ChevronDown, Watch } from 'lucide-react';
+import { SESSION_LANGUAGES, SessionLanguageId, VALUE_PROPS } from '../content/valueProps';
 
 interface SettingsPanelProps {
   userName: string;
   userEmail?: string;
+  sessionLanguage: SessionLanguageId;
+  onLanguageChange: (id: SessionLanguageId) => void;
+  onOpenWearables: () => void;
+  onOpenPremium: () => void;
+  planLabel: string;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   userName,
   userEmail,
+  sessionLanguage,
+  onLanguageChange,
+  onOpenWearables,
+  onOpenPremium,
+  planLabel,
 }) => {
   const [reminders, setReminders] = useState(true);
   const [streakAlerts, setStreakAlerts] = useState(true);
@@ -19,19 +30,42 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     <div className="space-y-6 max-w-3xl">
       <header>
         <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="text-slate-400 mt-1 leading-[1.6]">
-          Tune reminders and privacy so Aura Health stays encouraging without extra noise.
-        </p>
+        <p className="text-slate-400 mt-1 leading-[1.6]">{VALUE_PROPS.microSessions}</p>
       </header>
 
       <section id="settings-profile" className="aura-card p-5 scroll-mt-24">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Account</div>
         <h2 className="text-lg font-bold text-white">{userName}</h2>
         <p className="text-sm text-slate-400 leading-[1.6]">{userEmail || 'Guest walkthrough session'}</p>
-        <div className="mt-3 inline-flex items-center gap-2 text-xs text-emerald-300 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-3 py-1">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-          Ledger Synced
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-2 text-xs text-emerald-300 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-3 py-1 capitalize">
+            Plan: {planLabel}
+          </span>
+          <button type="button" onClick={onOpenPremium} className="text-xs font-semibold text-[#FFB800] underline">
+            Change plan
+          </button>
         </div>
+      </section>
+
+      <section className="aura-card p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <Globe className="w-4 h-4 text-[#00FFC2]" />
+          <h2 className="text-lg font-bold text-white">Session language</h2>
+        </div>
+        <p className="text-sm text-slate-400 leading-[1.6]">
+          Guided micro-sessions in English, Kiswahili, and vernacular.
+        </p>
+        <select
+          className="aura-input"
+          value={sessionLanguage}
+          onChange={(e) => onLanguageChange(e.target.value as SessionLanguageId)}
+        >
+          {SESSION_LANGUAGES.map((lang) => (
+            <option key={lang.id} value={lang.id}>
+              {lang.native} ({lang.label})
+            </option>
+          ))}
+        </select>
       </section>
 
       <section className="aura-card p-5 space-y-4">
@@ -91,12 +125,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
       <section id="settings-wearables" className="aura-card p-5 space-y-3 scroll-mt-24">
         <div className="flex items-center gap-2">
-          <Globe className="w-4 h-4 text-[#00FFC2]" />
+          <Watch className="w-4 h-4 text-[#00FFC2]" />
           <h2 className="text-lg font-bold text-white">Wearables</h2>
         </div>
         <p className="text-sm text-slate-400 leading-[1.6]">
-          Connect Apple Health or Google Fit from the check-in flow. Synced biometrics stay on your account until you attest a day.
+          Connect Fitbit, Apple Watch / Apple Health, or Google Fit so Astra can adapt sessions to real sleep and heart-rate data.
         </p>
+        <button type="button" onClick={onOpenWearables} className="btn-ghost text-xs">
+          Connect Fitbit or Apple Watch
+        </button>
       </section>
 
       <section className="aura-card p-5 flex items-start gap-3">

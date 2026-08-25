@@ -26,6 +26,7 @@ export interface HealthCheckIn {
   sleepHours: number;
   medicationTaken: boolean;
   moodRating: number; // 1-5
+  anxietyLevel?: number; // 1-10
   activityMinutes: number;
   symptoms?: string;
   notes?: string;

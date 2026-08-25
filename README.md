@@ -8,18 +8,62 @@ Aura Health is a **dark-only** gamified daily health app: an evolving companion
 in with Google or email, or use **Continue as Guest** / **Guest Walkthrough**
 to try the product without an account.
 
+## Value propositions (in-product)
+
+Copy lives in [`src/content/valueProps.ts`](src/content/valueProps.ts) and is
+shown in the UI, not only in marketing docs:
+
+1. **Hero + first onboarding step:** Aura Health helps African professionals
+   reduce stress in 5 minutes a day with AI-guided micro-sessions in local
+   languages.
+2. **Premium paywall:** Unlike Calm or Headspace, Aura Health delivers
+   culturally relevant wellness tools that improve sleep and focus within 7
+   days.
+3. **Impact dashboard:** Aura Health is the only wellness app that adapts to
+   your mood in real time, cutting anxiety levels by half in two weeks —
+   personalized as e.g. “Your anxiety check-ins dropped 39% in 14 days.”
+
+Landing structure: **Hero** (statement 1 + Get Started / Guest Walkthrough) →
+3-step funnel → auth → **Proof** (all three statements).
+
 ## Product
 
 | Surface | What it does |
 |---|---|
-| **Landing** | Hero with Get Started + Guest Walkthrough; Google/email auth with guest under Google; footer “Ledger Synced” verification |
-| **Companion** | Astra-first dashboard: vitality/XP, habit cards, daily goals, dark Recharts chart, sticky quick log |
-| **AI Coach** | Chat with Astra plus prompt chips (streak, sleep, what to log) |
+| **Landing** | Hero with statement 1; Get Started + Guest Walkthrough; Google/email auth; Proof section; footer “Ledger Synced” |
+| **Companion** | Astra-first dashboard, mood-adaptive 5-min session, anxiety impact chart, habit cards, quick log |
+| **AI Coach** | Astra chat in the user’s session language; mood-adapted micro-sessions |
 | **Rewards** | Cowries balance, loot-wheel modal, community ticker, voucher marketplace |
-| **Settings** | Profile, Health Pass Sync, wearables; verification lives in a drawer |
+| **Settings** | Plan, session language (Kiswahili / vernacular), Health Pass, Fitbit / Apple Watch |
 
 Primary nav is **Companion**, **AI Coach**, **Rewards**, and **Settings**. Profile,
 Health Pass, and Wearables are settings sections, not top-level tabs.
+
+### Premium, trial, and plans
+
+Sidebar **Upgrade to Premium** opens [`PremiumModal`](src/components/PremiumModal.tsx):
+monthly (7-day free trial, then auto-subscribe), annual, one-time lifetime, and
+corporate wellness package requests. Free users also see an in-app prompt after
+check-in. Plans are in-memory on the Express server for this MVP (not Stripe).
+
+### Mood, anxiety, and funnel APIs
+
+Schema: [`src/db/schema.sql`](src/db/schema.sql). Store: [`src/server/commerceStore.ts`](src/server/commerceStore.ts).
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/plans` | Tiers, corporate packages, value props |
+| `GET` | `/api/subscriptions/:userId` | Current plan (`free` / `trial` / `premium` / `lifetime` / `corporate`) |
+| `POST` | `/api/subscriptions/trial` | Start 7-day trial → auto monthly |
+| `POST` | `/api/subscriptions/checkout` | Monthly, annual, or lifetime |
+| `POST` | `/api/metrics` | Log `moodScore` + `anxietyLevel` |
+| `GET` | `/api/metrics/:userId/impact` | 14-day anxiety drop headline + series |
+| `POST` | `/api/funnel/event` | Engagement / conversion events |
+| `GET` | `/api/funnel/summary` | Trial → conversion counts |
+| `POST` | `/api/corporate/packages` | Team wellness lead |
+
+Check-ins include an anxiety 1–10 slider. Coach and session cards adapt to
+Astra’s mood and Settings language.
 
 ### App shell
 
@@ -28,7 +72,8 @@ Health Pass, and Wearables are settings sections, not top-level tabs.
 - Header: search, tabular Cowries, **+ Check-In** (icon-only on small screens).
 - **Quick log** bar for hydration, meds, sleep, and mood, with an Astra reaction
   and XP / Cowries bump.
-- **Upgrade to Pro** card at the bottom of the sidebar.
+- **Upgrade to Premium** card at the bottom of the sidebar (paywall, not a
+  silent toggle).
 
 ## Design system
 
@@ -203,23 +248,30 @@ them requires `forge install foundry-rs/forge-std` first.
 ```
 public/             favicon.svg (app icon) and aurahealth-logo.svg (wordmark)
 src/
+  content/          Value props, session languages, subscription tier catalog
+  db/schema.sql     Plans, user_metrics, funnel_events, corporate_leads
+  server/           In-memory commerce/metrics store used by Express
   contracts/        Solidity sources (LoyaltyPoints, AchievementBadges, StreakTracker, TierSystem, IncentiveToken)
   script/           Foundry deployment scripts (optional, requires forge-std)
   Scripts/          Hardhat deployment/verification scripts (.cjs)
-  services/         avalanche.ts (chain config + on-chain reads/writes), firebase.ts, healthDataService.ts
-  components/       React UI (landing, sidebar, dashboard, coach, rewards, settings)
-  App.tsx           App shell, auth, and tab routing
+  services/         avalanche.ts, firebase.ts, healthDataService.ts, commerce.ts (API client)
+  components/       React UI (landing, paywall, impact dashboard, sidebar, coach, rewards, settings)
+  App.tsx           App shell, auth, plans, and tab routing
   index.css         Dark design tokens, energy bars, chat bubbles, gold panels
-server.ts           Express server (Gemini AI endpoints, static/Vite serving)
+server.ts           Express (Gemini, metrics, subscriptions, funnel, Vite/static)
 hardhat.config.cjs  Hardhat network + Routescan verification config
 deployments.json    Deployed contract addresses (this repo's live Fuji deployment)
 ```
 
 ## Notes
 
-UI (current): locked carbon-mint dark theme; collapsible pushing sidebar;
-Astra-first companion home; quick log; loot wheel as a modal; verification
-in the landing footer and settings drawer — not in the hero.
+Monetization (current): three value props in hero, onboarding, paywall, and
+impact chart; trial → auto-subscribe; corporate package endpoint; mood/anxiety
+logging. Plan state is process-local until a real billing provider is wired.
+
+UI: locked carbon-mint dark theme; collapsible pushing sidebar; Astra-first
+companion home; quick log; loot wheel as a modal; verification in the landing
+footer and settings drawer — not in the hero.
 
 Contracts (earlier): Hardhat toolchain, Routescan verification, and the five
 live Fuji addresses in `src/services/avalanche.ts`. Fictional contract

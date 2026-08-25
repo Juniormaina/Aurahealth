@@ -66,10 +66,10 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
       accentColor: 'from-blue-500 to-emerald-500',
     },
     {
-      id: 'dev-ahealth',
-      name: 'Apple HealthKit',
+      id: 'dev-awatch',
+      name: 'Apple Watch / HealthKit',
       provider: 'apple_health',
-      icon: '🍎',
+      icon: '⌚',
       connected: false,
       lastSynced: 'Not connected',
       accuracyRating: '99.5% Hardware Verified',
@@ -191,7 +191,7 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              Eliminate manual self-reporting by connecting Google Fit, Apple Health, or smartwatch sensors.
+              Eliminate manual self-reporting by connecting Fitbit, Apple Watch, Google Fit, or Apple Health.
             </p>
           </div>
         </div>

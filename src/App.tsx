@@ -12,6 +12,12 @@ import { HealthCheckinModal } from './components/HealthCheckinModal';
 import { SettingsPanel } from './components/SettingsPanel';
 import { JiweEconomyDiagram } from './components/JiweEconomyDiagram';
 import { QuickLogKind } from './components/QuickLogBar';
+import { PremiumModal } from './components/PremiumModal';
+import { UpgradePrompt } from './components/UpgradePrompt';
+import { WearablesSyncModal } from './components/WearablesSyncModal';
+import { SESSION_LANGUAGES, SessionLanguageId } from './content/valueProps';
+import { checkout, fetchPlan, logMetric, requestCorporatePackage, startTrial, trackFunnel } from './services/commerce';
+import type { PlanInterval, UserPlan } from './server/commerceStore';
 
 import {
   INITIAL_COMPANION,
@@ -66,6 +72,11 @@ export default function App() {
   const [userAccount, setUserAccount] = useState<{ name: string; email: string; isGoogle: boolean; uid?: string; photoURL?: string } | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [isProMode, setIsProMode] = useState<boolean>(false);
+  const [premiumOpen, setPremiumOpen] = useState<boolean>(false);
+  const [wearablesOpen, setWearablesOpen] = useState<boolean>(false);
+  const [userPlan, setUserPlan] = useState<UserPlan | null>(null);
+  const [sessionLanguage, setSessionLanguage] = useState<SessionLanguageId>('sw');
+  const [latestAnxiety, setLatestAnxiety] = useState<number>(7);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
@@ -124,6 +135,30 @@ export default function App() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
+
+  const commerceUserId = userAccount?.uid || (isDemoMode ? 'demo-guest' : 'anon');
+
+  const persistMetric = (moodScore: number, anxietyLevel: number, source: string) => {
+    setLatestAnxiety(anxietyLevel);
+    logMetric({
+      userId: commerceUserId,
+      moodScore,
+      anxietyLevel,
+      sessionDate: new Date().toISOString().slice(0, 10),
+      language: sessionLanguage,
+      source,
+    }).catch(() => undefined);
+  };
+
+  useEffect(() => {
+    trackFunnel(commerceUserId, 'session_start');
+    fetchPlan(commerceUserId)
+      .then((r) => {
+        setUserPlan(r.plan);
+        setIsProMode(['premium', 'trial', 'lifetime', 'corporate'].includes(r.plan.plan));
+      })
+      .catch(() => undefined);
+  }, [commerceUserId]);
 
   // Firebase Auth Observer
   useEffect(() => {
@@ -427,6 +462,15 @@ export default function App() {
     setTxLogs((prev) => [tx, ...prev]);
 
     showToast(`Adherence record verified & saved to database! +${newCheckIn.cowriesEarned} 🐚 & +${newCheckIn.xpEarned} XP!`);
+    persistMetric(
+      newCheckIn.moodRating,
+      newCheckIn.anxietyLevel ?? Math.max(1, 11 - newCheckIn.moodRating * 2),
+      'checkin'
+    );
+    if (userPlan?.plan === 'free') {
+      setPremiumOpen(true);
+      trackFunnel(commerceUserId, 'upgrade_prompt_shown', { after: 'checkin' });
+    }
   };
 
   // Handle Onboarding Tutorial Mission Completed
@@ -516,6 +560,7 @@ export default function App() {
       totalXp: prev.totalXp + 8,
     }));
     showToast(`${labels[kind]} · Astra gained XP`);
+    if (kind === 'mood') persistMetric(4, Math.max(1, latestAnxiety - 1), 'quick_log');
   };
 
   // Claim Benefit from Rewards Hub
@@ -558,6 +603,37 @@ export default function App() {
     const tx = createAvalancheTxRecord('RewardSponsorPool.sol', 'createPool', `PoolFunded(${newPool.totalFundAvax} AVAX)`);
     setTxLogs((prev) => [tx, ...prev]);
     showToast(`New Sponsor Grant Pool Created: ${newPool.title}`);
+  };
+
+  const isPaidPlan = ['premium', 'trial', 'lifetime', 'corporate'].includes(userPlan?.plan || '');
+
+  const applyPlan = (plan: UserPlan) => {
+    setUserPlan(plan);
+    setIsProMode(['premium', 'trial', 'lifetime', 'corporate'].includes(plan.plan));
+    setPremiumOpen(false);
+  };
+
+  const handleStartTrial = async () => {
+    const { plan } = await startTrial(commerceUserId, 'monthly');
+    applyPlan(plan);
+    showToast('7-day Premium trial started. Auto-subscribes monthly unless you cancel.');
+  };
+
+  const handleCheckout = async (interval: PlanInterval) => {
+    const { plan } = await checkout(commerceUserId, interval);
+    applyPlan(plan);
+    showToast(interval === 'lifetime' ? 'Lifetime Premium unlocked.' : `Premium ${interval} is active.`);
+  };
+
+  const handleCorporateRequest = async (payload: {
+    company: string;
+    contactEmail: string;
+    seats: number;
+    packageId: string;
+  }) => {
+    await requestCorporatePackage(payload);
+    trackFunnel(commerceUserId, 'corporate_lead', payload);
+    showToast('Corporate wellness request sent. We will follow up with a package quote.');
   };
 
   if (isLanding) {
@@ -607,8 +683,11 @@ export default function App() {
       <Sidebar
         activeTab={activeTab}
         onNavigate={handleNavigateTab}
-        isProMode={isProMode}
-        onToggleProMode={() => setIsProMode(!isProMode)}
+        isProMode={isPaidPlan}
+        onToggleProMode={() => {
+          setPremiumOpen(true);
+          trackFunnel(commerceUserId, 'upgrade_prompt_shown', { from: 'sidebar' });
+        }}
         userAccount={userAccount}
         onSignOut={handleLogout}
         isCollapsed={sidebarCollapsed}
@@ -672,6 +751,10 @@ export default function App() {
             isFreshStart={!isDemoMode}
             onQuickLog={handleQuickLog}
             astraReaction={astraReaction}
+            userId={commerceUserId}
+            showUpgrade={!isPaidPlan}
+            onUpgrade={() => setPremiumOpen(true)}
+            sessionLanguage={sessionLanguage}
             onGoalUpdated={(xp, cowries) => {
               setStats((prev) => {
                 const newCowries = prev.cowriesBalance + cowries;
@@ -722,13 +805,22 @@ export default function App() {
 
         {/* Tab 3: AI Health Coach */}
         {activeTab === 'coach' && (
-          <AIHealthCoach companion={companion} />
+          <AIHealthCoach
+            companion={companion}
+            language={SESSION_LANGUAGES.find((l) => l.id === sessionLanguage)?.native || 'Kiswahili'}
+            latestAnxiety={latestAnxiety}
+          />
         )}
 
         {activeTab === 'settings' && (
           <SettingsPanel
             userName={userAccount?.name || 'Health Pioneer'}
             userEmail={userAccount?.email}
+            sessionLanguage={sessionLanguage}
+            onLanguageChange={setSessionLanguage}
+            onOpenWearables={() => setWearablesOpen(true)}
+            onOpenPremium={() => setPremiumOpen(true)}
+            planLabel={userPlan?.plan || 'free'}
           />
         )}
       </main>
@@ -740,6 +832,21 @@ export default function App() {
         onSuccess={handleCheckinSuccess}
         onShowToast={showToast}
         wallet={wallet}
+      />
+
+      <PremiumModal
+        isOpen={premiumOpen}
+        onClose={() => setPremiumOpen(false)}
+        onStartTrial={handleStartTrial}
+        onCheckout={handleCheckout}
+        onCorporateRequest={handleCorporateRequest}
+      />
+
+      <WearablesSyncModal
+        isOpen={wearablesOpen}
+        onClose={() => setWearablesOpen(false)}
+        onSyncData={() => showToast('Wearable biometrics synced.')}
+        onShowToast={showToast}
       />
 
       {/* Footer */}

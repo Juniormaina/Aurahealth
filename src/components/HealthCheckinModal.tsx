@@ -25,6 +25,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
   const [sleepHours, setSleepHours] = useState<number>(7.5);
   const [medicationTaken, setMedicationTaken] = useState<boolean>(true);
   const [moodRating, setMoodRating] = useState<number>(5);
+  const [anxietyLevel, setAnxietyLevel] = useState<number>(6);
   const [activityMinutes, setActivityMinutes] = useState<number>(30);
   const [notes, setNotes] = useState<string>('');
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -133,6 +134,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
       sleepHours,
       medicationTaken,
       moodRating,
+      anxietyLevel,
       activityMinutes,
       notes: notes || 'Daily health adherence routine completed.',
       proofHash,
@@ -340,6 +342,21 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="astra-frame p-4">
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-xs font-bold text-slate-200">Anxiety level (1–10)</label>
+              <span className="tabular-nums text-[#8C52FF] font-bold text-sm">{anxietyLevel}</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={anxietyLevel}
+              onChange={(e) => setAnxietyLevel(Number(e.target.value))}
+              className="w-full accent-[#8C52FF]"
+            />
           </div>
 
           {/* Physical Activity Minutes */}

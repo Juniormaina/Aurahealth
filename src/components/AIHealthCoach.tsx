@@ -4,6 +4,8 @@ import { MessageSquare, Send, Sparkles, Bot, Loader2, Heart, Flame, ExternalLink
 
 interface AIHealthCoachProps {
   companion: HealthCompanion;
+  language?: string;
+  latestAnxiety?: number;
 }
 
 interface ChatSource {
@@ -18,11 +20,11 @@ interface ChatMessage {
   sources?: ChatSource[];
 }
 
-export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
+export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, language = 'Kiswahili', latestAnxiety }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       sender: 'astra',
-      text: `Hello friend! I am Astra, your AI Health Companion! I can chat about your routine, streaks and rewards, and I can also search the web for real health and medical information. I'm not a doctor though — for anything urgent or about diagnosis/medication, please see a licensed professional. What's on your mind?`,
+      text: `Habari. I'm Astra. ${language} micro-sessions adapt to your mood in real time. Today's anxiety check-in is ${latestAnxiety ?? 7}/10 — we can do a 5-minute reset together. I'm not a doctor; for diagnosis or medication, see a licensed professional.`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -51,6 +53,8 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
             streakDays: companion.streakDays,
             mood: companion.mood,
           },
+          language,
+          latestAnxiety,
         }),
       });
 
@@ -80,9 +84,9 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion }) => {
   };
 
   const promptChips = [
+    'Start a 5-minute Kiswahili stress reset',
+    'Adapt a session to my mood',
     'How do I boost my streak?',
-    'Analyze my sleep pattern',
-    'What should I log today?',
   ];
 
   return (

@@ -209,14 +209,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={onToggleProMode}
             className={`pro-upgrade-card w-[calc(100%-0.5rem)] text-left ${isCollapsed ? 'p-2 mx-auto flex justify-center' : ''}`}
             aria-pressed={isProMode}
-            data-tooltip={isCollapsed ? 'Upgrade to Pro' : undefined}
+            data-tooltip={isCollapsed ? 'Upgrade to Premium' : undefined}
           >
             <div className={`flex items-center gap-2 ${isCollapsed ? 'justify-center' : ''}`}>
               <Zap className="w-4 h-4 text-[#FFB800]" />
               {!isCollapsed && (
                 <div>
-                  <div className="text-xs font-bold text-white">{isProMode ? 'Pro Mode Active' : 'Upgrade to Pro'}</div>
-                  <div className="text-[10px] text-slate-400">Unlock economy layers</div>
+                  <div className="text-xs font-bold text-white">{isProMode ? 'Premium Active' : 'Upgrade to Premium'}</div>
+                  <div className="text-[10px] text-slate-400">Culturally relevant sleep & focus</div>
                 </div>
               )}
             </div>

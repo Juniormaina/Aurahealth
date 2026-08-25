@@ -6,6 +6,9 @@ import { CompanionAvatar } from './CompanionAvatar';
 import { DailyGoalTracker } from './DailyGoalTracker';
 import { OnboardingTutorial } from './OnboardingTutorial';
 import { QuickLogBar, QuickLogKind } from './QuickLogBar';
+import { ImpactDashboard } from './ImpactDashboard';
+import { UpgradePrompt } from './UpgradePrompt';
+import { moodAdaptiveSession, SessionLanguageId, VALUE_PROPS } from '../content/valueProps';
 
 interface DashboardHomeProps {
   companion: HealthCompanion;
@@ -20,6 +23,10 @@ interface DashboardHomeProps {
   onGoalUpdated: (addedXp: number, addedCowries: number) => void;
   onQuickLog?: (kind: QuickLogKind) => void;
   astraReaction?: string | null;
+  userId: string;
+  showUpgrade: boolean;
+  onUpgrade: () => void;
+  sessionLanguage: SessionLanguageId;
 }
 
 const MOOD_EMOJI: Record<HealthCompanion['mood'], string> = {
@@ -43,6 +50,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   onGoalUpdated,
   onQuickLog,
   astraReaction,
+  userId,
+  showUpgrade,
+  onUpgrade,
+  sessionLanguage,
 }) => {
   const [missionsExpanded, setMissionsExpanded] = useState(false);
   const xpPct = Math.min(100, (companion.xp / Math.max(1, companion.xpToNextLevel)) * 100);
@@ -61,8 +72,12 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
     });
   }, [companion.vitality]);
 
+  const session = moodAdaptiveSession(companion.mood, sessionLanguage);
+
   return (
     <div className="space-y-6">
+      {showUpgrade && <UpgradePrompt onUpgrade={onUpgrade} />}
+      <p className="text-sm text-slate-400 leading-[1.6]">{VALUE_PROPS.microSessions}</p>
       <section className="aura-module-card astra-hero p-6 relative overflow-hidden">
         <div className="flex flex-col items-center text-center relative z-10">
           <div className="relative">
@@ -144,6 +159,19 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         </div>
       </section>
 
+      <section className="aura-module-card p-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-[#8C52FF]">Mood-adaptive session</div>
+          <h3 className="text-lg font-bold text-white">{session.title} · {session.minutes} min · {session.language}</h3>
+          <p className="text-sm text-slate-400 leading-[1.6] mt-1">{session.script}</p>
+        </div>
+        <button type="button" onClick={() => onNavigateTab('coach')} className="btn-primary text-xs shrink-0">
+          Start with Astra
+        </button>
+      </section>
+
+      <ImpactDashboard userId={userId} />
+
       <section className="aura-module-card p-5">
         <h3 className="text-sm font-bold text-white mb-4">Habit tracking history</h3>
         <div className="h-48">
@@ -219,6 +247,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               onNavigateTab={onNavigateTab}
               onMissionCompleted={onMissionCompleted}
               streakDays={companion.streakDays}
+              autoOpenGuide
             />
             <div className="mt-4 flex flex-wrap gap-3">
               <button onClick={() => onNavigateTab('wheel')} className="btn-ghost">

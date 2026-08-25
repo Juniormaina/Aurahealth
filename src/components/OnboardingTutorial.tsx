@@ -19,6 +19,7 @@ import {
   X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { VALUE_PROPS } from '../content/valueProps';
 
 export interface OnboardingMission {
   id: string;
@@ -39,6 +40,7 @@ interface OnboardingTutorialProps {
   onNavigateTab: (tab: string) => void;
   onMissionCompleted: (xp: number, cowries: number, missionId: string) => void;
   streakDays: number;
+  autoOpenGuide?: boolean;
 }
 
 export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
@@ -47,9 +49,22 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
   onNavigateTab,
   onMissionCompleted,
   streakDays,
+  autoOpenGuide = false,
 }) => {
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [currentModalStep, setCurrentModalStep] = useState(0);
+
+  React.useEffect(() => {
+    if (!autoOpenGuide) return;
+    try {
+      if (!window.localStorage.getItem('aura-onboard-guide')) {
+        setShowGuideModal(true);
+        window.localStorage.setItem('aura-onboard-guide', '1');
+      }
+    } catch {
+      setShowGuideModal(true);
+    }
+  }, [autoOpenGuide]);
 
   const [missions, setMissions] = useState<OnboardingMission[]>([
     {
@@ -158,11 +173,10 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
 
   const tutorialSteps = [
     {
-      title: 'Welcome to AuraHealth Companion!',
+      title: '5 minutes a day, in your language',
       icon: '✨',
-      subtitle: 'Your journey from Zero Baseline to Health Mastery',
-      description:
-        'AuraHealth turns your real-day health adherence—hydration, medication, sleep, and physical activity—into a gamified companion experience that rewards you with Cowries 🐚 and levels up Astra!',
+      subtitle: 'First step',
+      description: VALUE_PROPS.microSessions,
     },
     {
       title: 'Step 1: Hatch & Nurture Astra',

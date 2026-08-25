@@ -3,6 +3,19 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
+import {
+  addCorporateLead,
+  checkout,
+  funnelSummary,
+  getOrCreatePlan,
+  impactSummary,
+  listCorporateLeads,
+  listMetrics,
+  recordMetric,
+  startTrial,
+  trackFunnel,
+} from './src/server/commerceStore';
+import { CORPORATE_PACKAGES, SUBSCRIPTION_TIERS, VALUE_PROPS } from './src/content/valueProps';
 
 // This project's env vars (GEMINI_API_KEY, PRIVATE_KEY, etc.) live in
 // src/.env, not a root .env — load that explicitly, with a plain
@@ -136,6 +149,84 @@ Response MUST be valid JSON string only.`,
   const APP_CONTEXT_TERMS = /\b(streak|cowrie|cowries|xp|level|badge|companion|astra|wheel|sponsor|check-?in|cosmic|egg|hatchling|vitality|harmony|mission|quest)\b/i;
   const shouldSearch = (text: string) => text.trim().length >= 8 && !APP_CONTEXT_TERMS.test(text);
 
+  app.get('/api/plans', (_req, res) => {
+    res.json({
+      valueProps: VALUE_PROPS,
+      tiers: SUBSCRIPTION_TIERS,
+      corporate: CORPORATE_PACKAGES,
+    });
+  });
+
+  app.get('/api/subscriptions/:userId', (req, res) => {
+    res.json({ plan: getOrCreatePlan(req.params.userId) });
+  });
+
+  app.post('/api/subscriptions/trial', (req, res) => {
+    const { userId, interval } = req.body || {};
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    res.json({ plan: startTrial(String(userId), interval || 'monthly') });
+  });
+
+  app.post('/api/subscriptions/checkout', (req, res) => {
+    const { userId, interval } = req.body || {};
+    if (!userId || !interval) return res.status(400).json({ error: 'userId and interval required' });
+    res.json({ plan: checkout(String(userId), interval) });
+  });
+
+  app.post('/api/metrics', (req, res) => {
+    const { userId, moodScore, anxietyLevel, sessionDate, language, source } = req.body || {};
+    if (!userId || moodScore == null || anxietyLevel == null) {
+      return res.status(400).json({ error: 'userId, moodScore, anxietyLevel required' });
+    }
+    recordMetric({
+      userId: String(userId),
+      moodScore: Number(moodScore),
+      anxietyLevel: Number(anxietyLevel),
+      sessionDate: sessionDate || new Date().toISOString().slice(0, 10),
+      language,
+      source,
+    });
+    res.json({ ok: true });
+  });
+
+  app.get('/api/metrics/:userId', (req, res) => {
+    res.json({ metrics: listMetrics(req.params.userId) });
+  });
+
+  app.get('/api/metrics/:userId/impact', (req, res) => {
+    res.json(impactSummary(req.params.userId));
+  });
+
+  app.post('/api/funnel/event', (req, res) => {
+    const { userId, event, meta } = req.body || {};
+    if (!userId || !event) return res.status(400).json({ error: 'userId and event required' });
+    trackFunnel(String(userId), String(event), meta);
+    res.json({ ok: true });
+  });
+
+  app.get('/api/funnel/summary', (_req, res) => {
+    res.json(funnelSummary());
+  });
+
+  app.post('/api/corporate/packages', (req, res) => {
+    const { company, contactEmail, seats, packageId, notes } = req.body || {};
+    if (!company || !contactEmail || !packageId) {
+      return res.status(400).json({ error: 'company, contactEmail, packageId required' });
+    }
+    const lead = addCorporateLead({
+      company,
+      contactEmail,
+      seats: Number(seats) || 25,
+      packageId,
+      notes,
+    });
+    res.json({ ok: true, lead });
+  });
+
+  app.get('/api/corporate/packages', (_req, res) => {
+    res.json({ packages: CORPORATE_PACKAGES, leads: listCorporateLeads() });
+  });
+
   // AI Companion Chat & Health Coach Endpoint
   // Real multi-turn conversation (full history sent each turn). Factual/
   // medical questions are grounded with a real Tavily web search — Gemini's
@@ -144,7 +235,7 @@ Response MUST be valid JSON string only.`,
   // instead: search, then feed the results in as context.
   app.post('/api/ai-coach', async (req, res) => {
     try {
-      const { userMessage, companionState, history } = req.body;
+      const { userMessage, companionState, history, language, latestAnxiety } = req.body;
       const userText = String(userMessage || '');
 
       if (!process.env.GEMINI_API_KEY) {
@@ -159,6 +250,8 @@ Response MUST be valid JSON string only.`,
 
       const baseInstruction = `You are Astra, a whimsical but genuinely helpful AI Health Companion on the AuraHealth Wellness App.
 Current Pet Stats — Stage: ${companionState?.stage || 'Hatchling'}, Level: ${companionState?.level || 1}, Streak: ${companionState?.streakDays ?? 0} Days, Mood: ${companionState?.mood || 'joyful'}.
+Preferred session language: ${language || 'English'}. Latest anxiety check-in (1-10): ${latestAnxiety ?? 'unknown'}.
+Adapt this reply to the user's mood in real time. Offer a 5-minute culturally relevant micro-session (breath, gratitude, or focus) in the requested language when they ask for help with stress, sleep, or anxiety. You are not Calm or Headspace — stay grounded in African professional life, ubuntu, and local language.
 
 You can have real, multi-turn conversations — remember what the user already told you earlier in this chat.
 
