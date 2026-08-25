@@ -2,9 +2,55 @@
 
 **Live app:** [aurahealth-delta.vercel.app](https://aurahealth-delta.vercel.app/)
 
-Gamified daily health check-in app with an evolving digital companion, a
-"Health Cowries" points economy, sponsor reward pools, and an AI health coach —
-backed by real, verified smart contracts on **Avalanche Fuji testnet**.
+Aura Health is a **dark-only** gamified daily health app: an evolving companion
+(**Astra**), a Health Cowries economy, sponsor rewards, and an AI coach (Astra)
+— backed by real, verified smart contracts on **Avalanche Fuji testnet**. Sign
+in with Google or email, or use **Continue as Guest** / **Guest Walkthrough**
+to try the product without an account.
+
+## Product
+
+| Surface | What it does |
+|---|---|
+| **Landing** | Hero with Get Started + Guest Walkthrough; Google/email auth with guest under Google; footer “Ledger Synced” verification |
+| **Companion** | Astra-first dashboard: vitality/XP, habit cards, daily goals, dark Recharts chart, sticky quick log |
+| **AI Coach** | Chat with Astra plus prompt chips (streak, sleep, what to log) |
+| **Rewards** | Cowries balance, loot-wheel modal, community ticker, voucher marketplace |
+| **Settings** | Profile, Health Pass Sync, wearables; verification lives in a drawer |
+
+Primary nav is **Companion**, **AI Coach**, **Rewards**, and **Settings**. Profile,
+Health Pass, and Wearables are settings sections, not top-level tabs.
+
+### App shell
+
+- Collapsible sidebar (**240px** expanded, **64px** collapsed) that **pushes**
+  the main column on desktop (not an overlay). Collapse animates in **250ms**.
+- Header: search, tabular Cowries, **+ Check-In** (icon-only on small screens).
+- **Quick log** bar for hydration, meds, sleep, and mood, with an Astra reaction
+  and XP / Cowries bump.
+- **Upgrade to Pro** card at the bottom of the sidebar.
+
+## Design system
+
+Theme is locked to dark (no light/dark switcher). `theme-color` is `#0B0F17`.
+
+| Token | Value |
+|---|---|
+| Base | `#0B0F17` |
+| Cards | `#141A26` |
+| Borders | `#242E42` |
+| Mint | `#00FFC2` |
+| Gold | `#FFB800` |
+| Violet | `#8C52FF` |
+
+- Fonts: **Inter** (UI) + **Space Grotesk** (display), loaded in `index.html`.
+  Counters use tabular numerals.
+- Cards: `rounded-2xl`, ~`p-6`, `#242E42` borders.
+- Primary CTAs: gold→orange gradient (`#FFB800` → `#FF7A00`) with orange glow.
+- Progress: teal→mint energy bars (segmented 10-cell `.energy-bar`).
+- Astra hero: violet radial glow on `#141A26`.
+
+Motion on the logo is disabled when `prefers-reduced-motion` is set.
 
 ## Brand mark
 
@@ -15,9 +61,6 @@ It is used as:
 - The **favicon** (`public/favicon.svg`) and Apple touch icon
 - The **wordmark lockup** (`public/aurahealth-logo.svg`)
 - The in-app / landing glyph (`src/components/AuraLogo.tsx` — `AuraMark`)
-
-The landing page hero shows a large animated sample of the mark. Motion is
-disabled when `prefers-reduced-motion` is set.
 
 ## Live on-chain deployment
 
@@ -121,6 +164,8 @@ npm run start      # run the production server
 npm run lint       # tsc --noEmit
 ```
 
+Dev server: `http://localhost:3000` (`tsx server.ts`).
+
 ## Smart contract workflow
 
 ```bash
@@ -162,30 +207,21 @@ src/
   script/           Foundry deployment scripts (optional, requires forge-std)
   Scripts/          Hardhat deployment/verification scripts (.cjs)
   services/         avalanche.ts (chain config + on-chain reads/writes), firebase.ts, healthDataService.ts
-  components/       React UI components (AuraLogo.tsx holds the animated mark)
-  App.tsx           Main app shell and state
+  components/       React UI (landing, sidebar, dashboard, coach, rewards, settings)
+  App.tsx           App shell, auth, and tab routing
+  index.css         Dark design tokens, energy bars, chat bubbles, gold panels
 server.ts           Express server (Gemini AI endpoints, static/Vite serving)
 hardhat.config.cjs  Hardhat network + Routescan verification config
 deployments.json    Deployed contract addresses (this repo's live Fuji deployment)
 ```
 
-## Notes on what changed in this pass
+## Notes
 
-- Set up the missing Hardhat toolchain (`hardhat.config.cjs`, `@openzeppelin/contracts`)
-  — none of the 5 contracts had a working build/deploy pipeline before.
-- Fixed a broken import in `src/script/LoyaltyPoints.s.sol` (pointed at a
-  nonexistent `../src/LoyaltyPoints.sol`; corrected to `../contracts/LoyaltyPoints.sol`).
-- Renamed the Hardhat scripts in `src/Scripts/` from `.js` to `.cjs` — the
-  project's `package.json` has `"type": "module"`, so plain `.js` files were
-  being parsed as ES modules and failing on `require()`.
-- Fixed `interact.cjs`, which read a flat `deployments.json` schema that
-  `deploy-all.cjs` no longer produces after being extended to deploy all 5
-  contracts (it now reads the nested `contracts.<Name>.address` shape).
-- Removed `src/contracts/SolidityCode.ts` — dead code holding three fictional,
-  never-deployed contracts (`ProofOfAdherence`, `HealthCompanionNFT`,
-  `RewardSponsorPool`) with fabricated addresses that the Smart Contracts tab
-  displayed as if they were real.
-- Replaced the fake `CONTRACT_ADDRESSES` in `src/services/avalanche.ts` (three
-  made-up addresses) with the 5 real, deployed, verified contract addresses,
-  and pointed the explorer config at the real Routescan Fuji explorer instead
-  of a placeholder `explorer.aurahealth.io` URL.
+UI (current): locked carbon-mint dark theme; collapsible pushing sidebar;
+Astra-first companion home; quick log; loot wheel as a modal; verification
+in the landing footer and settings drawer — not in the hero.
+
+Contracts (earlier): Hardhat toolchain, Routescan verification, and the five
+live Fuji addresses in `src/services/avalanche.ts`. Fictional contract
+placeholders were removed so the Smart Contracts tab only shows deployed
+source.
