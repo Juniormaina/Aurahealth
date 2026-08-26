@@ -265,7 +265,7 @@ src/
   script/           Foundry deployment scripts (optional, requires forge-std)
   Scripts/          Hardhat deployment/verification scripts (.cjs)
   services/         avalanche.ts, firebase.ts, healthDataService.ts, commerce.ts (API client)
-  components/       React UI (landing/Hero Proof Features Cta, paywall, impact, sidebar, coach, rewards)
+  components/       React UI (landing Hero/Features/Proof/Rewards/Pricing/Cta, paywall, impact, sidebar, coach, rewards)
   App.tsx           App shell, auth, plans, and tab routing
   index.css         Dark design tokens, energy bars, chat bubbles, gold panels
 server.ts           Express (Gemini, metrics, subscriptions, funnel, Vite/static)
