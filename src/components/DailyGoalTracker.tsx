@@ -159,7 +159,7 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
       particleCount: 28,
       spread: 70,
       origin: { y: 0.7 },
-      colors: ['#FFB800', '#00FFC2', '#8C52FF'],
+      colors: ['#2F7A73', '#5EC8B8', '#6E62C4'],
     });
   };
 

@@ -2,9 +2,9 @@ export const VALUE_PROPS = {
   microSessions:
     'Aura Health helps professionals reduce stress in 5 minutes a day with AI-guided micro-sessions in natural language.',
   culturalRelevance:
-    'Aura Health delivers culturally relevant wellness tools that improve sleep and focus within 7 days.',
+    'Culturally relevant sessions designed to support sleep and focus. Early self-reported logs suggest many people feel a difference within a week — not a clinical guarantee.',
   realtimeMood:
-    'Aura Health adapts to your mood in real time, cutting anxiety levels by half in two weeks.',
+    'Astra adapts to how you say you feel. Demo check-in samples show anxiety scores trending down over two weeks of daily logs — results are individual, not a medical claim.',
   heroSubtext: 'Start your journey today — free trial available.',
   ctaHeadline: 'Ready to reduce stress and improve focus?',
 } as const;

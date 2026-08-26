@@ -88,20 +88,20 @@ export const Hero: React.FC<HeroProps> = ({ onStartTrial }) => {
         >
           <div className="relative shrink-0">
             <span
-              className="astra-ambient absolute inset-[-10px] rounded-full bg-[#8C52FF]/40 blur-md pointer-events-none"
+              className="astra-ambient absolute inset-[-10px] rounded-full bg-[var(--color-accent-secondary)]/40 blur-md pointer-events-none"
               aria-hidden
             />
             <img
               src="https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=500&auto=format&fit=crop&q=80"
               alt="Astra"
-              className={`relative w-16 h-16 rounded-full object-cover border-2 border-[#8C52FF]/50 ${pop ? 'scale-105' : ''} transition-transform`}
+              className={`relative w-16 h-16 rounded-full object-cover border-2 border-[var(--color-accent-secondary)]/50 ${pop ? 'scale-105' : ''} transition-transform`}
             />
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-lg font-bold text-white font-display">Astra</h2>
             <p className="text-sm text-[#9CA3AF] min-h-[2.6rem] leading-[1.5]">
               {typed}
-              <span className="inline-block w-px h-4 ml-0.5 align-[-2px] bg-[#00FFC2] animate-pulse" aria-hidden />
+              <span className="inline-block w-px h-4 ml-0.5 align-[-2px] bg-[var(--color-harmony)] animate-pulse" aria-hidden />
             </p>
           </div>
         </button>

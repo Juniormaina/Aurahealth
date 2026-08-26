@@ -5,7 +5,8 @@ import { Proof } from './landing/Proof';
 import { Features } from './landing/Features';
 import { Rewards } from './landing/Rewards';
 import { Pricing } from './landing/Pricing';
-import { Cta } from './landing/Cta';
+import { Trust } from './landing/Trust';
+import { AdminLoginModal } from './AdminLoginModal';
 import {
   ShieldCheck,
   ArrowRight,
@@ -68,6 +69,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [emailName, setEmailName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [showAdminModal, setShowAdminModal] = useState(false);
 
   const handleCustomGoogleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,11 +186,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <Proof />
         <Rewards />
         <Pricing onStartTrial={onOpenPremium} />
-        <Cta onUpgrade={onOpenPremium} />
+        <Trust />
 
         {!(userAccount || isDemoMode) && (
-          <div className="max-w-xl mx-auto flex flex-wrap items-center justify-center gap-3 text-sm">
-            <button type="button" onClick={onRealGoogleSignIn} disabled={isLoggingIn} className="btn-ghost text-xs">
+          <div className="max-w-xl mx-auto flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center gap-3 text-sm">
+            <button type="button" onClick={onRealGoogleSignIn} disabled={isLoggingIn} className="btn-ghost text-xs justify-center">
               <GoogleMark />
               Continue with Google
             </button>
@@ -198,17 +200,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 setEmailTab('signin');
                 setShowEmailModal(true);
               }}
-              className="btn-ghost text-xs"
+              className="btn-ghost text-xs justify-center"
             >
               <Mail className="w-3.5 h-3.5" />
-              Email
+              Continue with email
             </button>
-            <button type="button" onClick={onStartDemo} className="text-xs font-semibold text-slate-400 hover:text-white flex items-center gap-1">
+            <button type="button" onClick={onStartDemo} className="btn-ghost text-xs justify-center">
               <Play className="w-3.5 h-3.5" />
-              Guest
+              Continue as Guest
             </button>
-            <button type="button" onClick={() => setShowGoogleModal(true)} className="text-[11px] text-slate-500 underline">
-              Custom Google email
+            <button type="button" onClick={() => setShowGoogleModal(true)} className="btn-ghost text-xs justify-center">
+              <GoogleMark />
+              Use a different Google account
             </button>
           </div>
         )}
@@ -225,8 +228,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <GoogleMark />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">Sign In with Google Account</h3>
-                <p className="text-xs text-muted leading-[1.6]">Firebase Auth — enter the Google account to use</p>
+                <h3 className="text-lg font-bold text-white">Use a different Google account</h3>
+                <p className="text-xs text-muted leading-[1.6]">Enter the Google account you want to use for this session.</p>
               </div>
             </div>
             <form onSubmit={handleCustomGoogleSubmit} className="space-y-4">
@@ -293,7 +296,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   setEmailError(null);
                 }}
                 className={`py-2 rounded-[4px] flex items-center justify-center gap-1.5 ${
-                  emailTab === 'signup' ? 'bg-sunlight text-navy' : 'text-muted'
+                  emailTab === 'signup' ? 'bg-primary text-[var(--color-primary-foreground)]' : 'text-muted'
                 }`}
               >
                 <UserPlus className="w-3.5 h-3.5" />
@@ -306,7 +309,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   setEmailError(null);
                 }}
                 className={`py-2 rounded-[4px] flex items-center justify-center gap-1.5 ${
-                  emailTab === 'signin' ? 'bg-sunlight text-navy' : 'text-muted'
+                  emailTab === 'signin' ? 'bg-primary text-[var(--color-primary-foreground)]' : 'text-muted'
                 }`}
               >
                 <LogIn className="w-3.5 h-3.5" />
@@ -315,7 +318,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
 
             {emailError && (
-              <div className="bg-peach border border-[#B42318]/30 text-[#B42318] text-xs p-3 rounded-[4px] mb-4 font-semibold leading-[1.6]">
+              <div className="bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/40 text-[var(--color-danger)] text-xs p-3 rounded-[4px] mb-4 font-semibold leading-[1.6]">
                 {emailError}
               </div>
             )}
@@ -388,17 +391,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       )}
 
+      <AdminLoginModal
+        isOpen={showAdminModal}
+        onClose={() => setShowAdminModal(false)}
+        onSuccess={() => {
+          setShowAdminModal(false);
+          onAdminLogin?.();
+        }}
+        signedInEmail={userAccount?.email}
+      />
+
       <footer className="bg-[#07101c] py-6 text-center text-xs text-slate-400">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <strong className="text-white">Aura Health</strong>
           {onAdminLogin && (
             <button
               type="button"
-              onClick={onAdminLogin}
-              className="flex items-center gap-1.5 text-[11px] font-semibold text-[#FFFAF4]/70 hover:text-sunlight px-3 py-1.5"
+              onClick={() => setShowAdminModal(true)}
+              className="flex items-center gap-1.5 text-[11px] font-semibold text-[#FFFAF4]/70 hover:text-[var(--color-harmony)] px-3 py-1.5"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
-              Admin
+              Staff admin
             </button>
           )}
         </div>

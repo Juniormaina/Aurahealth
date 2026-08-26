@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Menu, Coins, Search } from 'lucide-react';
+import { Sparkles, Menu, Search } from 'lucide-react';
 import { EconomyStats } from '../types';
 
 interface NavbarProps {
@@ -14,10 +14,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCheckin,
   onOpenSearch,
   onToggleMobileMenu,
-  stats,
 }) => {
-  const cowries = stats?.cowriesBalance ?? 0;
-
   return (
     <header className="navbar-gradient sticky top-0 z-30">
       <div className="px-4 sm:px-6 lg:px-8">
@@ -27,7 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onToggleMobileMenu}
-                className="lg:hidden p-2 text-white hover:text-[#00FFC2]"
+                className="lg:hidden p-2 text-white hover:text-[var(--color-harmony)]"
                 aria-label="Open menu"
               >
                 <Menu className="w-5 h-5" />
@@ -53,14 +50,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </kbd>
               </button>
             )}
-            <div
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#141A26] border border-[#242E42] text-[#FFB800] text-xs sm:text-sm font-bold font-display tabular-nums"
-              title="Cowrie wallet"
-            >
-              <Coins className="w-4 h-4" />
-              <span>{cowries.toLocaleString()}</span>
-              <span className="hidden sm:inline text-slate-400 font-semibold">Cowries</span>
-            </div>
             <button type="button" onClick={onOpenCheckin} className="flex items-center gap-2 btn-primary shrink-0">
               <Sparkles className="w-4 h-4" />
               <span className="hidden sm:inline">+ Check-In</span>

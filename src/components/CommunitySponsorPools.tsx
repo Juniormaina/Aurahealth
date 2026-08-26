@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SponsorPool } from '../types';
-import { Coins, ShieldCheck, CheckCircle2, ArrowUpRight, PlusCircle, Building2, Sparkles, Loader2 } from 'lucide-react';
+import { Coins, PlusCircle, Building2, Sparkles, Loader2 } from 'lucide-react';
 import { createAvalancheTxRecord } from '../services/avalanche';
 import { CommunityLeaderboard } from './CommunityLeaderboard';
 import confetti from 'canvas-confetti';
@@ -70,21 +70,23 @@ export const CommunitySponsorPools: React.FC<CommunitySponsorPoolsProps> = ({
   return (
     <div className="space-y-6">
       {/* 5-Layer Economy Explainer Banner */}
-      <div className="aura-card-gradient p-6 relative overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 p-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30">
+      <div className="aura-card-gradient p-6 relative z-20 isolate overflow-hidden">
+        <div className="relative z-10 flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="shrink-0 bg-white/5 text-[var(--color-accent-secondary)] p-2.5 rounded-xl border border-[#242E42]">
               <Coins className="w-6 h-6" />
             </div>
-            <div>
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white">5-Layer Sustainable Economy</h2>
+            <div className="min-w-0 relative z-10">
+              <h2 className="relative z-10 text-2xl font-black text-white leading-tight">
+                5-Layer Sustainable Economy
+              </h2>
               <p className="text-xs text-slate-400">Sponsor-backed community value loop</p>
             </div>
           </div>
 
           <button
             onClick={() => setIsDepositOpen(true)}
-            className="bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+            className="btn-primary text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-2"
           >
             <PlusCircle className="w-4 h-4" /> Deposit Sponsor Grant Pool
           </button>
@@ -112,7 +114,7 @@ export const CommunitySponsorPools: React.FC<CommunitySponsorPoolsProps> = ({
       </div>
 
       {/* Active Sponsor Pools Grid */}
-      <div className="space-y-4">
+      <div className="relative z-0 isolate space-y-4">
         <h3 className="text-lg font-black text-white flex items-center gap-2">
           <Building2 className="w-5 h-5 text-rose-400" /> Active Sponsor Grant Pools
         </h3>
@@ -123,11 +125,16 @@ export const CommunitySponsorPools: React.FC<CommunitySponsorPoolsProps> = ({
             return (
               <div
                 key={pool.id}
-                className="bg-slate-900/90 rounded-2xl border border-slate-800 p-5 shadow-xl flex flex-col justify-between hover:border-slate-700 transition-colors"
+                className="relative z-0 isolate overflow-hidden bg-slate-900/90 rounded-2xl border border-slate-800 p-5 shadow-xl flex flex-col justify-between hover:border-slate-700 transition-colors"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-2xl">{pool.sponsorLogo}</span>
+                  <div className="flex items-center justify-between mb-3 gap-2">
+                    <span
+                      className="relative z-0 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/5 text-xl leading-none"
+                      aria-hidden
+                    >
+                      {pool.sponsorLogo}
+                    </span>
                     <span className="text-[10px] font-semibold bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-md border border-rose-500/30">
                       {pool.category}
                     </span>

@@ -465,8 +465,8 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
                           <stop offset="95%" stopColor="#22D3EE" stopOpacity={0.0} />
                         </linearGradient>
                         <linearGradient id="colorVitality" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.4} />
-                          <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.0} />
+                          <stop offset="5%" stopColor="var(--color-accent-secondary)" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="var(--color-accent-secondary)" stopOpacity={0.0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
@@ -495,7 +495,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
                       <Area
                         type="monotone"
                         dataKey="vitality"
-                        stroke="#F59E0B"
+                        stroke="var(--color-accent-secondary)"
                         strokeWidth={2}
                         fillOpacity={1}
                         fill="url(#colorVitality)"

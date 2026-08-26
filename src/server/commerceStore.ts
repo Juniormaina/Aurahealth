@@ -147,7 +147,7 @@ export function impactSummary(userId: string) {
   const anxietyNow = avg(last3, 'anxietyLevel');
   const dropPct = anxietyStart > 0 ? Math.round(((anxietyStart - anxietyNow) / anxietyStart) * 100) : 0;
   return {
-    claim: 'Aura Health adapts to your mood in real time, cutting anxiety levels by half in two weeks.',
+    claim: 'Self-reported check-ins in this demo sample trend toward lower anxiety over two weeks — not a clinical result.',
     days: last14.length,
     anxietyStart: Number(anxietyStart.toFixed(1)),
     anxietyNow: Number(anxietyNow.toFixed(1)),

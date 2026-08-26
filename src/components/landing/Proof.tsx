@@ -3,6 +3,8 @@ import { motion } from 'motion/react';
 import { VALUE_PROPS } from '../../content/valueProps';
 import { ProofChart } from './ProofChart';
 import { fadeUp, Reveal } from './Reveal';
+import { IconBadge } from '../ui/IconBadge';
+import { Moon, Activity } from 'lucide-react';
 
 const Sparkline: React.FC<{ points: number[]; color: string }> = ({ points, color }) => {
   const max = Math.max(...points);
@@ -26,21 +28,27 @@ const Sparkline: React.FC<{ points: number[]; color: string }> = ({ points, colo
 const METRICS = [
   {
     label: 'Anxiety',
-    badge: '−50% Anxiety in 14 Days',
+    badge: 'Lower anxiety over 14 days',
     copy: VALUE_PROPS.realtimeMood,
     points: [8.4, 8.1, 7.6, 7.2, 6.8, 6.1, 5.4, 4.8, 4.4, 4.2],
-    color: '#8C52FF',
+    color: 'var(--color-accent-secondary)',
     bar: 50,
-    pill: 'metric-pill-violet bg-[#8C52FF]/15 text-[#C4B5FD] border border-[#8C52FF]/40',
+    icon: Activity,
+    variant: 'violet' as const,
+    footnote:
+      'Based on self-reported in-app check-ins in a demo/seeded sample (n=14 days), not a clinical trial. Individual results vary.',
   },
   {
     label: 'Sleep quality',
-    badge: '+Sleep & Focus in 7 Days',
+    badge: 'Sleep & focus support in 7 days',
     copy: VALUE_PROPS.culturalRelevance,
     points: [4.2, 4.6, 5.0, 5.5, 6.1, 6.6, 7.1, 7.4, 7.8, 8.1],
-    color: '#00FFC2',
+    color: 'var(--color-harmony)',
     bar: 78,
-    pill: 'metric-pill bg-[#00FFC2]/12 text-[#00FFC2] border border-[#00FFC2]/35',
+    icon: Moon,
+    variant: 'teal' as const,
+    footnote:
+      'Illustrative trend from self-reported sleep logs. Product/legal review needed before treating this as a health outcome claim.',
   },
 ];
 
@@ -57,19 +65,25 @@ export const Proof: React.FC = () => (
           className="aura-card landing-feature-card p-5 rounded-2xl border border-[#242E42]"
         >
           <div className="flex items-center justify-between gap-2 mb-3">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{metric.label}</span>
-            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${metric.pill}`}>{metric.badge}</span>
+            <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              <IconBadge icon={metric.icon} variant={metric.variant} size="sm" />
+              {metric.label}
+            </span>
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-slate-200">
+              {metric.badge}
+            </span>
           </div>
           <Sparkline points={metric.points} color={metric.color} />
           <div className="mt-3 h-1.5 rounded-full bg-white/8 overflow-hidden">
             <div className="h-full rounded-full" style={{ width: `${metric.bar}%`, background: metric.color }} />
           </div>
           <p className="text-sm text-slate-300 leading-[1.6] mt-3">{metric.copy}</p>
+          <p className="text-[11px] text-slate-500 leading-[1.5] mt-3 border-t border-white/10 pt-2">{metric.footnote}</p>
         </motion.article>
       ))}
     </div>
     <motion.div variants={fadeUp} className="aura-card p-5 rounded-2xl border border-[#242E42]">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-[#00FFC2] mb-3">
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-harmony)] mb-3">
         Sleep quality vs anxiety · 14 days
       </div>
       <ProofChart />

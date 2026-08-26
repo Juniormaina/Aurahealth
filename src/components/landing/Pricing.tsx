@@ -15,28 +15,42 @@ export const Pricing: React.FC<PricingProps> = ({ onStartTrial }) => (
     <motion.p variants={fadeUp} className="text-center text-sm text-slate-400 mb-6 leading-[1.6]">
       Start with a 7-day trial. Upgrade when the 5-minute habit sticks.
     </motion.p>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {SUBSCRIPTION_TIERS.map((tier) => (
-        <motion.article
-          key={tier.id}
-          variants={fadeUp}
-          className={`aura-card landing-feature-card p-6 rounded-2xl border flex flex-col ${
-            tier.id === 'monthly' ? 'border-[#FFB800]/50' : 'border-[#242E42]'
-          }`}
-        >
-          <h3 className="text-sm font-bold text-white">{tier.name}</h3>
-          <p className="text-3xl font-bold text-white font-display mt-2 tabular-nums">
-            ${tier.priceUsd}
-            <span className="text-sm font-semibold text-slate-400">
-              {tier.cadence !== 'once' ? `/${tier.cadence === 'month' ? 'mo' : 'yr'}` : ''}
-            </span>
-          </p>
-          <p className="text-sm text-slate-400 leading-[1.6] mt-2 flex-1">{tier.highlight}</p>
-          <button type="button" onClick={onStartTrial} className={tier.id === 'monthly' ? 'btn-primary mt-5 justify-center text-xs' : 'btn-ghost mt-5 justify-center text-xs'}>
-            {tier.id === 'monthly' ? 'Start Free Trial' : 'Choose plan'}
-          </button>
-        </motion.article>
-      ))}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+      {SUBSCRIPTION_TIERS.map((tier) => {
+        const featured = tier.id === 'annual';
+        return (
+          <motion.article
+            key={tier.id}
+            variants={fadeUp}
+            className={`aura-card landing-feature-card p-6 rounded-2xl border flex flex-col relative ${
+              featured
+                ? 'border-[var(--color-primary)] shadow-[0_12px_40px_rgba(47,122,115,0.22)] md:-translate-y-1 md:scale-[1.03] z-10'
+                : 'border-[#242E42]'
+            }`}
+          >
+            {featured && (
+              <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-[var(--color-primary)] text-[var(--color-primary-foreground)]">
+                Best value
+              </span>
+            )}
+            <h3 className="text-sm font-bold text-white">{tier.name}</h3>
+            <p className="text-3xl font-bold text-white font-display mt-2 tabular-nums">
+              ${tier.priceUsd}
+              <span className="text-sm font-semibold text-slate-400">
+                {tier.cadence !== 'once' ? `/${tier.cadence === 'month' ? 'mo' : 'yr'}` : ''}
+              </span>
+            </p>
+            <p className="text-sm text-slate-400 leading-[1.6] mt-2 flex-1">{tier.highlight}</p>
+            <button
+              type="button"
+              onClick={onStartTrial}
+              className={featured ? 'btn-primary mt-5 justify-center text-xs' : 'btn-ghost mt-5 justify-center text-xs'}
+            >
+              Start free trial
+            </button>
+          </motion.article>
+        );
+      })}
     </div>
   </Reveal>
 );

@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 /* ============================================
-   AURA HEALTH — Carbon Mint & Cyber Violet
-   Base: #0B0F17 · Cards: #141A26 · Border: #242E42
-   Mint: #00FFC2 · Gold: #FFB800 · Violet: #8C52FF
+   AURA HEALTH — Calm wellness tokens
+   Canvas #0B0F17 · Primary teal #2F7A73 (WCAG AA on white text)
+   Astra violet #6E62C4 · Harmony mint (on-dark) · Danger kept warm
    ============================================ */
 
 @theme {
@@ -12,54 +12,65 @@
   --color-peach: #141A26;
   --color-ivory: #141A26;
   --color-navy: #0B0F17;
-  --color-sunlight: #FFB800;
+  --color-primary: #2F7A73;
+  --color-primary-hover: #276660;
+  --color-primary-foreground: #F4FFFC;
+  --color-accent-secondary: #6E62C4;
+  --color-sunlight: #2F7A73;
   --color-charcoal: #FFFFFF;
   --color-ink: #FFFFFF;
   --color-muted: #94A3B8;
-  --color-gold: #FFB800;
-  --color-harmony: #00FFC2;
-  --color-violet: #8C52FF;
+  --color-gold: #C4A574;
+  --color-harmony: #5EC8B8;
+  --color-violet: #6E62C4;
   --color-line: #242E42;
+  --color-danger: #DC5A5A;
   --radius-card: 1rem;
   --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-display: "Space Grotesk", "Inter", sans-serif;
 }
 
 :root {
-  --color-primary: #00FFC2;
+  --color-primary: #2F7A73;
+  --color-primary-hover: #276660;
+  --color-primary-foreground: #F4FFFC;
+  --color-accent-secondary: #6E62C4;
   --color-secondary: #141A26;
-  --color-accent: #FFB800;
+  --color-accent: #6E62C4;
   --color-neutral: #141A26;
   --color-canvas: #0B0F17;
   --color-peach: #141A26;
   --color-ivory: #141A26;
   --color-navy: #0B0F17;
-  --color-sunlight: #FFB800;
+  --color-sunlight: #2F7A73;
   --color-charcoal: #FFFFFF;
   --color-ink: #FFFFFF;
   --color-muted: #94A3B8;
-  --color-gold: #FFB800;
-  --color-harmony: #00FFC2;
-  --color-violet: #8C52FF;
+  --color-gold: #C4A574;
+  --color-harmony: #5EC8B8;
+  --color-violet: #6E62C4;
   --color-line: #242E42;
   --color-text: #FFFFFF;
   --color-text-muted: #94A3B8;
   --color-text-inverse: #0B0F17;
+  --color-danger: #DC5A5A;
+  --color-danger-bg: rgba(220, 90, 90, 0.12);
+  --color-warning: #C98A3A;
 
   --gradient-primary: linear-gradient(180deg, #0B0F17 0%, #10151f 100%);
   --gradient-soft: linear-gradient(180deg, #10151f 0%, #0B0F17 100%);
-  --gradient-hero: radial-gradient(1200px 600px at 50% -10%, rgba(140, 82, 255, 0.18), #0B0F17 55%);
+  --gradient-hero: radial-gradient(1200px 600px at 50% -10%, rgba(110, 98, 196, 0.16), #0B0F17 55%);
   --gradient-navy: linear-gradient(180deg, #0B0F17 0%, #070a10 100%);
-  --gradient-cta: linear-gradient(135deg, #FFB800 0%, #FF7A00 100%);
-  --gradient-energy: linear-gradient(90deg, #00E5E5 0%, #00FFC2 100%);
-  --gradient-astra: radial-gradient(circle at 80% 20%, rgba(140, 82, 255, 0.25) 0%, rgba(20, 26, 38, 1) 70%);
+  --gradient-cta: linear-gradient(180deg, #2F7A73 0%, #276660 100%);
+  --gradient-energy: linear-gradient(90deg, #3D9B8F 0%, #5EC8B8 100%);
+  --gradient-astra: radial-gradient(circle at 80% 20%, rgba(110, 98, 196, 0.22) 0%, rgba(20, 26, 38, 1) 70%);
 
-  --accent-primary: #FFB800;
-  --accent-gold: #FFB800;
-  --accent-success: #00FFC2;
-  --accent-warning: #FF7A00;
-  --accent-danger: #F87171;
-  --accent-info: #00E5E5;
+  --accent-primary: #2F7A73;
+  --accent-gold: #C4A574;
+  --accent-success: #5EC8B8;
+  --accent-warning: #C98A3A;
+  --accent-danger: #DC5A5A;
+  --accent-info: #5EC8B8;
 
   --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-display: "Space Grotesk", "Inter", sans-serif;
@@ -126,7 +137,7 @@ p, li, label {
   font-size: var(--text-highlight);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--color-gold);
+  color: var(--color-harmony);
   line-height: 1;
   letter-spacing: -0.02em;
 }
@@ -185,15 +196,15 @@ p, li, label {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #FFB800 0%, #FF7A00 100%);
-  color: #0B0F17;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
   font-weight: 700;
   padding: 0.625rem 1.25rem;
   border-radius: 9999px;
   border: none;
   cursor: pointer;
-  transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-  box-shadow: 0px 4px 14px rgba(255, 122, 0, 0.35);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: 0px 4px 14px rgba(47, 122, 115, 0.28);
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -203,8 +214,9 @@ p, li, label {
 
 .btn-primary:hover {
   transform: none;
-  filter: brightness(1.06);
-  box-shadow: 0px 6px 18px rgba(255, 122, 0, 0.45);
+  filter: none;
+  background: var(--color-primary-hover);
+  box-shadow: 0px 6px 18px rgba(47, 122, 115, 0.35);
 }
 
 .btn-primary:active {
@@ -213,7 +225,7 @@ p, li, label {
 
 .btn-secondary {
   background: var(--color-harmony);
-  color: #FFFAF4;
+  color: #06201C;
   font-weight: 700;
   padding: 0.625rem 1.25rem;
   border-radius: var(--radius-card);
@@ -268,8 +280,8 @@ p, li, label {
 }
 
 .aura-input:focus {
-  border-color: #F59E0B;
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(47, 122, 115, 0.28);
 }
 
 .aura-input::placeholder {
@@ -324,9 +336,40 @@ p, li, label {
 .aura-progress-bar-gold {
   height: 100%;
   border-radius: 9999px;
-  background: linear-gradient(90deg, #FFB800 0%, #FF7A00 100%);
+  background: linear-gradient(90deg, var(--color-accent-secondary) 0%, var(--color-harmony) 100%);
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 12px rgba(255, 184, 0, 0.35);
+  box-shadow: 0 0 12px rgba(110, 98, 196, 0.28);
+}
+
+.icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.icon-badge-teal {
+  background: rgba(47, 122, 115, 0.18);
+  color: #7ED9CD;
+  border: 1px solid rgba(94, 200, 184, 0.28);
+}
+.icon-badge-violet {
+  background: rgba(110, 98, 196, 0.2);
+  color: #C4B5FD;
+  border: 1px solid rgba(110, 98, 196, 0.35);
+}
+.icon-badge-slate {
+  background: rgba(255, 255, 255, 0.06);
+  color: #E2E8F0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.rewards-band {
+  background: linear-gradient(180deg, rgba(110, 98, 196, 0.12) 0%, rgba(20, 26, 38, 0.6) 100%);
+  border: 1px solid rgba(110, 98, 196, 0.28);
+}
+
+.admin-shell {
+  background: #0a0d14;
 }
 
 @keyframes fadeIn {
@@ -360,15 +403,15 @@ p, li, label {
   background: rgba(148, 163, 184, 0.45);
   border-radius: var(--radius-full);
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.7); }
+::-webkit-scrollbar-thumb:hover { background: rgba(47, 122, 115, 0.7); }
 
 ::selection {
-  background: rgba(245, 158, 11, 0.35);
+  background: rgba(47, 122, 115, 0.4);
   color: #FFFFFF;
 }
 
 :focus-visible {
-  outline: 2px solid #F59E0B;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -483,7 +526,7 @@ p, li, label {
 
 .landing-nav-link:hover {
   color: #FFFFFF;
-  border-bottom-color: #FFB800;
+  border-bottom-color: var(--color-primary);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -548,7 +591,7 @@ p, li, label {
 }
 
 .text-gradient-purple {
-  color: #F59E0B;
+  color: var(--color-accent-secondary);
   background: none;
   -webkit-text-fill-color: currentColor;
 }
@@ -613,9 +656,9 @@ p, li, label {
 
 .sidebar-item.active {
   background: rgba(255, 255, 255, 0.08);
-  color: #00FFC2;
+  color: var(--color-harmony);
   box-shadow: none;
-  border-left: 3px solid #00FFC2;
+  border-left: 3px solid var(--color-harmony);
   border-radius: 10px;
 }
 
@@ -706,8 +749,8 @@ p, li, label {
 
 .quick-action-btn:hover,
 .quick-action-btn.active {
-  background: rgba(251, 175, 64, 0.16);
-  color: var(--color-sunlight);
+  background: rgba(47, 122, 115, 0.18);
+  color: var(--color-harmony);
 }
 
 .dashboard-grid {
@@ -875,10 +918,10 @@ p, li, label {
 }
 
 .gold-panel {
-  border-color: rgba(255, 184, 0, 0.45) !important;
-  box-shadow: 0 0 28px rgba(255, 184, 0, 0.12);
+  border-color: rgba(196, 165, 116, 0.45) !important;
+  box-shadow: 0 0 28px rgba(196, 165, 116, 0.12);
 }
-.gold-panel .btn-primary { box-shadow: 0px 4px 14px rgba(255, 122, 0, 0.35); }
+.gold-panel .btn-primary { box-shadow: 0px 4px 14px rgba(47, 122, 115, 0.28); }
 
 .mission-stepper {
   display: flex;
@@ -908,13 +951,13 @@ p, li, label {
   color: #94A3B8;
 }
 .mission-step.done .dot {
-  border-color: #00FFC2;
-  background: rgba(0, 255, 194, 0.15);
-  color: #00FFC2;
+  border-color: var(--color-harmony);
+  background: rgba(94, 200, 184, 0.15);
+  color: var(--color-harmony);
 }
 .mission-step.active .dot {
-  border-color: #FFB800;
-  color: #FFB800;
+  border-color: var(--color-primary);
+  color: var(--color-harmony);
 }
 .mission-step .rail {
   flex: 1;
@@ -922,7 +965,7 @@ p, li, label {
   background: #242E42;
   min-width: 16px;
 }
-.mission-step.done .rail { background: #00FFC2; }
+.mission-step.done .rail { background: var(--color-harmony); }
 
 .chat-bubble {
   background: #141A26;
@@ -946,8 +989,8 @@ p, li, label {
   white-space: nowrap;
 }
 .prompt-chip:hover {
-  border-color: #00FFC2;
-  color: #00FFC2;
+  border-color: var(--color-harmony);
+  color: var(--color-harmony);
 }
 
 .pro-upgrade-card {
@@ -963,7 +1006,7 @@ p, li, label {
   inset: 0;
   padding: 1px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #FFB800, #8C52FF, #00FFC2);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent-secondary), var(--color-harmony));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -1033,15 +1076,15 @@ p, li, label {
 }
 
 .icon-nav-item:hover {
-  background: rgba(251, 175, 64, 0.16);
-  color: var(--color-sunlight);
+  background: rgba(47, 122, 115, 0.18);
+  color: var(--color-harmony);
 }
 
 .icon-nav-item.active {
   background: transparent;
-  color: var(--color-sunlight);
+  color: var(--color-harmony);
   box-shadow: none;
-  border-bottom: 2px solid var(--color-sunlight);
+  border-bottom: 2px solid var(--color-primary);
 }
 
 .aura-tooltip { position: relative; }
@@ -1102,7 +1145,7 @@ p, li, label {
 
 .mobile-bottom-nav-item.active,
 .mobile-bottom-nav-item:hover {
-  color: var(--color-sunlight);
+  color: var(--color-harmony);
 }
 
 .quick-action-floating {
@@ -1119,8 +1162,8 @@ p, li, label {
   width: 48px;
   height: 48px;
   border-radius: var(--radius-card);
-  background: var(--color-sunlight);
-  color: var(--color-navy);
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
   border: none;
   cursor: pointer;
   display: flex;
@@ -1157,8 +1200,8 @@ p, li, label {
   position: absolute;
   top: -40px;
   left: 0;
-  background: var(--color-sunlight);
-  color: var(--color-navy);
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
   padding: 8px 16px;
   z-index: 200;
   transition: top 0.2s ease;
@@ -1191,9 +1234,9 @@ p, li, label {
 
 .quick-action-toolbar-btn.active {
   background: transparent;
-  color: #F59E0B;
+  color: var(--color-harmony);
   border-color: transparent;
-  border-bottom: 2px solid var(--color-sunlight);
+  border-bottom: 2px solid var(--color-primary);
   font-weight: 700;
   border-radius: 0;
 }
@@ -1230,8 +1273,10 @@ p, li, label {
   color: #FFFFFF;
 }
 
-.btn-primary,
+.btn-primary {
+  color: var(--color-primary-foreground);
+}
 .bg-sunlight,
 .bg-sunlight.text-navy {
-  color: #0B0F17;
+  color: var(--color-primary-foreground);
 }

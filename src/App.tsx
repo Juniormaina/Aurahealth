@@ -688,7 +688,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex font-sans selection:bg-sunlight selection:text-navy bg-canvas text-white">
+    <div className="min-h-screen flex font-sans selection:bg-primary selection:text-primary-foreground bg-canvas text-white">
       <Sidebar
         activeTab={activeTab}
         onNavigate={handleNavigateTab}
@@ -718,14 +718,14 @@ export default function App() {
         <div className="trust-band border-b border-[#FFFAF4]/12 py-2.5 px-4">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2 text-[#FFFAF4]">
-              <Compass className="w-4 h-4 text-sunlight shrink-0" />
+              <Compass className="w-4 h-4 text-[var(--color-harmony)] shrink-0" />
               <span>
-                <strong>Guided Demo Walkthrough Active:</strong> Click <strong>+ Check-In</strong> above to test AI attestation, feed <strong>Astra</strong>, or explore <strong>Sponsor Pools</strong>.
+                <strong>Guided demo:</strong> Use <strong>+ Check-In</strong> to try a session with <strong>Astra</strong>. Open <strong>Rewards</strong> when you want optional perks.
               </span>
             </div>
             <button
               onClick={handleBackToLanding}
-              className="bg-sunlight text-navy font-bold px-3 py-1 rounded-[4px] text-[11px] whitespace-nowrap"
+              className="bg-primary text-[var(--color-primary-foreground)] font-bold px-3 py-1 rounded-[4px] text-[11px] whitespace-nowrap"
             >
               Sign In with Google
             </button>
@@ -743,10 +743,6 @@ export default function App() {
 
       {/* Main Content Viewport */}
       <main className="flex-1 max-w-7xl w-full min-w-0 mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24 lg:pb-6">
-        {/* 5-Layer Economy Diagram Banner (Unlocked in Pro Mode) */}
-        {isProMode && <JiweEconomyDiagram />}
-
-        {/* Tab 1: Companion & Log (Primary Gameplay Loop) — Style-Guide Dashboard */}
         {activeTab === 'companion' && (
           <DashboardHome
             companion={companion}
@@ -797,6 +793,14 @@ export default function App() {
         {/* Tab 2: Rewards Wheel & Hub */}
         {activeTab === 'wheel' && (
           <div className="space-y-6">
+            <header className="rewards-band rounded-2xl p-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Rewards</p>
+              <h2 className="text-xl font-bold text-white font-display mt-1">Wellness points & perks</h2>
+              <p className="text-sm text-slate-400 mt-1 leading-[1.6]">
+                This layer is optional. Daily sessions with Astra stay the same whether or not you redeem points.
+              </p>
+            </header>
+            {isProMode && <JiweEconomyDiagram />}
             <RewardsHub
               cowriesBalance={stats.cowriesBalance}
               totalXp={stats.totalXp}
@@ -864,7 +868,7 @@ export default function App() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleBackToLanding}
-              className="text-[#FFFAF4]/80 hover:text-sunlight underline text-xs"
+              className="text-[#FFFAF4]/80 hover:text-[var(--color-harmony)] underline text-xs"
             >
               Back to Landing
             </button>

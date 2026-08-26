@@ -12,6 +12,7 @@ import {
   listCorporateLeads,
   listMetrics,
   recordMetric,
+  seedDemoMetrics,
   startTrial,
   trackFunnel,
 } from './src/server/commerceStore';
@@ -69,6 +70,8 @@ async function startServer() {
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', network: 'AuraHealth Verification Engine' });
   });
+
+  seedDemoMetrics('public-proof');
 
   // AI Health Check-in Verification & Attestation Endpoint
   app.post('/api/verify-checkin', async (req, res) => {

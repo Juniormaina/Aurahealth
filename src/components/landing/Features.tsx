@@ -2,31 +2,32 @@ import React from 'react';
 import { Droplets, Sparkles, MessageCircle, Building2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { fadeUp, Reveal } from './Reveal';
+import { IconBadge, IconBadgeVariant } from '../ui/IconBadge';
 
-const FEATURES = [
+const FEATURES: { icon: typeof Droplets; title: string; copy: string; variant: IconBadgeVariant }[] = [
   {
     icon: Droplets,
     title: 'Track daily wellness',
     copy: 'Log water, sleep, mood, and medication in seconds — or sync a wearable.',
-    accent: 'bg-[#00E5E5]/12 text-[#00E5E5]',
+    variant: 'teal',
   },
   {
     icon: Sparkles,
     title: 'Evolve Astra',
     copy: 'Your companion grows with consistent check-ins so staying on track feels like play.',
-    accent: 'bg-[#8C52FF]/15 text-[#C4B5FD]',
+    variant: 'violet',
   },
   {
     icon: MessageCircle,
     title: 'Natural-language sessions',
     copy: 'AI-guided 5-minute micro-sessions that adapt to how you feel, in the language you speak.',
-    accent: 'bg-[#00FFC2]/12 text-[#00FFC2]',
+    variant: 'teal',
   },
   {
     icon: Building2,
     title: 'Corporate wellness',
     copy: 'Bulk signups for teams — culturally relevant sessions and shared impact reports.',
-    accent: 'bg-[#FFB800]/15 text-[#FFB800]',
+    variant: 'violet',
   },
 ];
 
@@ -42,9 +43,7 @@ export const Features: React.FC = () => (
           variants={fadeUp}
           className="aura-card landing-feature-card p-5 rounded-2xl border border-[#242E42] flex gap-3"
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${item.accent}`}>
-            <item.icon className="w-5 h-5" />
-          </div>
+          <IconBadge icon={item.icon} variant={item.variant} />
           <div>
             <h3 className="text-sm font-bold text-white mb-1">{item.title}</h3>
             <p className="text-sm text-slate-400 leading-[1.6]">{item.copy}</p>

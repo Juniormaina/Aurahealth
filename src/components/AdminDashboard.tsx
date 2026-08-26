@@ -65,7 +65,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   ];
 
   return (
-    <div className="min-h-screen flex flex-col font-sans selection:bg-amber-400 selection:text-navy bg-canvas text-white">
+    <div className="min-h-screen flex flex-col font-sans selection:bg-rose-500/40 bg-canvas text-white admin-shell">
       {/* Admin Header */}
       <header className="border-b border-slate-800/80 bg-gradient-to-r from-slate-900 via-rose-950/40 to-slate-900 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Flame, Coins, Sparkles, Trophy, ChevronDown, Star } from 'lucide-react';
+import { Flame, Sparkles, Trophy, ChevronDown, Star, Calendar } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { HealthCompanion, EconomyStats } from '../types';
 import { CompanionAvatar } from './CompanionAvatar';
@@ -9,6 +9,7 @@ import { QuickLogBar, QuickLogKind } from './QuickLogBar';
 import { ImpactDashboard } from './ImpactDashboard';
 import { UpgradePrompt } from './UpgradePrompt';
 import { moodAdaptiveSession, SessionLanguageId, VALUE_PROPS } from '../content/valueProps';
+import { IconBadge } from './ui/IconBadge';
 
 interface DashboardHomeProps {
   companion: HealthCompanion;
@@ -122,36 +123,28 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
       <section aria-label="Quick stats" className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="aura-module-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-            <Flame className="w-5 h-5 text-gold" />
-          </div>
+          <IconBadge icon={Flame} variant="teal" />
           <div>
             <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Streak</div>
             <div className="aura-highlight-number tabular-nums">{stats.currentStreak}<span className="text-sm font-bold text-slate-400 ml-1">days</span></div>
           </div>
         </div>
         <div className="aura-module-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-xl">
-            {MOOD_EMOJI[companion.mood]}
-          </div>
+          <IconBadge variant="violet">{MOOD_EMOJI[companion.mood]}</IconBadge>
           <div>
             <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Astra's Mood</div>
             <div className="text-base font-bold text-white capitalize leading-tight">{companion.mood}</div>
           </div>
         </div>
         <div className="aura-module-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-            <Coins className="w-5 h-5 text-amber-300" />
-          </div>
+          <IconBadge icon={Calendar} variant="slate" />
           <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Cowries</div>
-            <div className="aura-highlight-number tabular-nums">{stats.cowriesBalance}</div>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Check-ins</div>
+            <div className="aura-highlight-number tabular-nums">{companion.totalCheckIns}</div>
           </div>
         </div>
         <div className="aura-module-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-            <Star className="w-5 h-5 text-harmony" />
-          </div>
+          <IconBadge icon={Star} variant="teal" />
           <div>
             <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Total XP</div>
             <div className="aura-highlight-number tabular-nums">{stats.totalXp}</div>
@@ -161,7 +154,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
       <section className="aura-module-card p-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-[#8C52FF]">Mood-adaptive session</div>
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-accent-secondary)]">Mood-adaptive session</div>
           <h3 className="text-lg font-bold text-white">{session.title} · {session.minutes} min · {session.language}</h3>
           <p className="text-sm text-slate-400 leading-[1.6] mt-1">{session.script}</p>
         </div>
@@ -179,17 +172,17 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
             <AreaChart data={history}>
               <defs>
                 <linearGradient id="adherenceGlow" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22D3EE" stopOpacity={0.45} />
-                  <stop offset="95%" stopColor="#22D3EE" stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--color-harmony)" stopOpacity={0.45} />
+                  <stop offset="95%" stopColor="var(--color-harmony)" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+              <CartesianGrid stroke="rgba(255,255,255,0.1)" strokeDasharray="3 6" />
               <XAxis dataKey="day" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis hide domain={[0, 100]} />
+              <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} domain={[0, 100]} width={32} axisLine={false} tickLine={false} />
               <Tooltip
                 contentStyle={{ background: '#0B192C', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, color: '#fff' }}
               />
-              <Area type="monotone" dataKey="adherence" stroke="#F59E0B" strokeWidth={2} fill="url(#adherenceGlow)" />
+              <Area type="monotone" dataKey="adherence" stroke="var(--color-accent-secondary)" strokeWidth={2} fill="url(#adherenceGlow)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -251,11 +244,11 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
             />
             <div className="mt-4 flex flex-wrap gap-3">
               <button onClick={() => onNavigateTab('wheel')} className="btn-ghost">
-                <Sparkles className="w-4 h-4 text-sunlight" />
+                <Sparkles className="w-4 h-4 text-[var(--color-harmony)]" />
                 Open Rewards Hub
               </button>
               <button onClick={onOpenCheckin} className="btn-primary">
-                <Coins className="w-4 h-4" />
+                <Calendar className="w-4 h-4" />
                 Daily Check-In
               </button>
             </div>

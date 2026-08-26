@@ -41,7 +41,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <span className="inline-flex items-center gap-2 text-xs text-emerald-300 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-3 py-1 capitalize">
             Plan: {planLabel}
           </span>
-          <button type="button" onClick={onOpenPremium} className="text-xs font-semibold text-[#FFB800] underline">
+          <button type="button" onClick={onOpenPremium} className="text-xs font-semibold text-[var(--color-harmony)] underline">
             Change plan
           </button>
         </div>
@@ -83,7 +83,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               type="checkbox"
               checked={item.value}
               onChange={(e) => item.set(e.target.checked)}
-              className="h-4 w-4 accent-[#F59E0B]"
+              className="h-4 w-4 accent-[var(--color-primary)]"
             />
           </label>
         ))}

@@ -33,7 +33,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
           <X className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-5 h-5 text-[#FFB800]" />
+          <Sparkles className="w-5 h-5 text-[var(--color-accent-secondary)]" />
           <h2 className="text-xl font-bold text-white">Upgrade to AuraHealth Premium</h2>
         </div>
         <p className="text-sm text-slate-300 leading-[1.6] mb-4">{VALUE_PROPS.culturalRelevance}</p>
@@ -41,14 +41,14 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
         <div className="grid grid-cols-2 bg-white/5 p-1 rounded-xl border border-white/10 text-xs font-bold mb-4">
           <button
             type="button"
-            className={`py-2 rounded-lg ${tab === 'personal' ? 'bg-[#FFB800] text-navy' : 'text-slate-400'}`}
+            className={`py-2 rounded-lg ${tab === 'personal' ? 'bg-primary text-[var(--color-primary-foreground)]' : 'text-slate-400'}`}
             onClick={() => setTab('personal')}
           >
             Personal
           </button>
           <button
             type="button"
-            className={`py-2 rounded-lg ${tab === 'corporate' ? 'bg-[#FFB800] text-navy' : 'text-slate-400'}`}
+            className={`py-2 rounded-lg ${tab === 'corporate' ? 'bg-primary text-[var(--color-primary-foreground)]' : 'text-slate-400'}`}
             onClick={() => setTab('corporate')}
           >
             Teams
@@ -62,7 +62,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                 key={tier.id}
                 type="button"
                 onClick={() => (tier.id === 'monthly' ? onStartTrial() : onCheckout(tier.id))}
-                className="w-full text-left aura-card p-4 border border-[#242E42] hover:border-[#FFB800]/50"
+                className="w-full text-left aura-card p-4 border border-[#242E42] hover:border-[var(--color-primary)]/50"
               >
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="font-bold text-white">{tier.name}</span>

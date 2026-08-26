@@ -179,8 +179,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {userAccount.photoURL ? (
                 <img src={userAccount.photoURL} alt={userAccount.name} className="w-8 h-8 rounded-full object-cover" />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-[#FFB800] flex items-center justify-center">
-                  <User className="w-4 h-4 text-[#0B0F17]" />
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                  <User className="w-4 h-4 text-[var(--color-primary-foreground)]" />
                 </div>
               )}
               {!isCollapsed && (
@@ -212,7 +212,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             data-tooltip={isCollapsed ? 'Upgrade to Premium' : undefined}
           >
             <div className={`flex items-center gap-2 ${isCollapsed ? 'justify-center' : ''}`}>
-              <Zap className="w-4 h-4 text-[#FFB800]" />
+              <Zap className="w-4 h-4 text-[var(--color-harmony)]" />
               {!isCollapsed && (
                 <div>
                   <div className="text-xs font-bold text-white">{isProMode ? 'Premium Active' : 'Upgrade to Premium'}</div>
