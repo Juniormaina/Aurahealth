@@ -3,6 +3,8 @@ import { AuraLogo } from './AuraLogo';
 import { Hero } from './landing/Hero';
 import { Proof } from './landing/Proof';
 import { Features } from './landing/Features';
+import { Rewards } from './landing/Rewards';
+import { Pricing } from './landing/Pricing';
 import { Cta } from './landing/Cta';
 import {
   ShieldCheck,
@@ -101,9 +103,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   return (
     <div className="min-h-screen flex flex-col justify-between bg-canvas text-white">
       <header className="sticky top-0 z-40 navbar-gradient">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <AuraLogo size="md" inverted />
-          <div className="flex items-center gap-2">
+          <nav className="hidden md:flex items-center gap-6" aria-label="Page">
+            {[
+              { href: '#features', label: 'Features' },
+              { href: '#proof', label: 'Proof' },
+              { href: '#rewards', label: 'Rewards' },
+              { href: '#pricing', label: 'Pricing' },
+            ].map((link) => (
+              <a key={link.href} href={link.href} className="landing-nav-link">
+                {link.label}
+              </a>
+            ))}
+          </nav>
+          <div className="flex items-center gap-2 shrink-0">
             {(userAccount || isDemoMode) && onEnterDashboard ? (
               <>
                 <button type="button" onClick={onEnterDashboard} className="btn-primary text-xs">
@@ -114,7 +128,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <button
                     type="button"
                     onClick={onSignOut}
-                    className="text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 flex items-center gap-1"
+                    className="btn-ghost text-xs"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Sign Out</span>
@@ -122,18 +136,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 )}
               </>
             ) : (
-              <button
-                type="button"
-                onClick={onRealGoogleSignIn}
-                disabled={isLoggingIn}
-                className="btn-ghost text-xs px-4 py-2"
-              >
-                <GoogleMark />
-                {isLoggingIn ? 'Connecting...' : 'Sign In'}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={onRealGoogleSignIn}
+                  disabled={isLoggingIn}
+                  className="btn-ghost text-xs px-4 py-2"
+                >
+                  <GoogleMark />
+                  {isLoggingIn ? 'Connecting...' : 'Sign In'}
+                </button>
+                <button type="button" onClick={onOpenPremium} className="btn-primary text-xs hidden sm:inline-flex">
+                  Start Free Trial
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </>
             )}
           </div>
         </div>
+        <nav className="md:hidden flex items-center gap-4 overflow-x-auto px-4 pb-3" aria-label="Page">
+          {[
+            { href: '#features', label: 'Features' },
+            { href: '#proof', label: 'Proof' },
+            { href: '#rewards', label: 'Rewards' },
+            { href: '#pricing', label: 'Pricing' },
+          ].map((link) => (
+            <a key={link.href} href={link.href} className="landing-nav-link whitespace-nowrap">
+              {link.label}
+            </a>
+          ))}
+        </nav>
       </header>
 
       <main className="hero-gradient max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-14 flex-1 w-full">
@@ -148,8 +180,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         )}
 
         <Hero onStartTrial={onOpenPremium} />
-        <Proof />
         <Features />
+        <Proof />
+        <Rewards />
+        <Pricing onStartTrial={onOpenPremium} />
         <Cta onUpgrade={onOpenPremium} />
 
         {!(userAccount || isDemoMode) && (

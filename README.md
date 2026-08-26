@@ -13,22 +13,29 @@ to try the product without an account.
 Copy lives in [`src/content/valueProps.ts`](src/content/valueProps.ts) and is
 shown in the UI, not only in marketing docs:
 
-1. **Hero:** Aura Health helps professionals reduce stress in 5 minutes a day
-   with AI-guided micro-sessions in natural language. Subtext: start today —
-   free trial available. CTA: **Start Free Trial**.
+1. **Hero headline:** Reduce Stress in 5 Minutes a Day (36–48px). **Subhead:**
+   AI-guided micro-sessions in natural language built for busy professionals
+   (`#9CA3AF`). CTA: **Start Free Trial**. Astra preview is a glass card with
+   a pulsing aura and typewriter prompts (`src/components/landing/Hero.tsx`).
 2. **Proof:** culturally relevant tools for sleep and focus within 7 days;
-   mood-adaptive anxiety reduction in two weeks — plus a Recharts sleep vs
-   anxiety chart (`GET /api/metrics/proof`).
-3. **Paywall:** same 7-day sleep/focus line in [`PremiumModal`](src/components/PremiumModal.tsx).
+   mood-adaptive anxiety reduction in two weeks — sparkline metric cards
+   (e.g. **−50% Anxiety in 14 Days**) plus a Recharts sleep vs anxiety chart
+   (`GET /api/metrics/proof`).
+3. **Paywall / Pricing:** same 7-day sleep/focus line in
+   [`PremiumModal`](src/components/PremiumModal.tsx) and the landing **Pricing**
+   section (`src/components/landing/Pricing.tsx`).
 
-Landing: **Hero → Proof → Features → CTA**. Firebase Sign In stays in the
-header. Cowries / Loot Wheel details stay on the in-app **Rewards** tab.
+Landing flow: **Hero → Features → Proof → Rewards → Pricing → CTA**. Header
+nav is **Features**, **Proof**, **Rewards**, **Pricing** (smooth-scroll).
+**Sign In** is a ghost pill; **Start Free Trial** is the solid gold CTA.
+Cowries count-up and Loot Wheel teaser sit on the landing **Rewards** block;
+full wheel / marketplace stay on the in-app Rewards tab.
 
 ## Product
 
 | Surface | What it does |
 |---|---|
-| **Landing** | Hero, proof chart, features, Upgrade to Premium; compact Firebase auth |
+| **Landing** | Nav + ghost Sign In / trial CTA; hero + Astra glass; 2×2 features; proof sparklines; Cowries / Loot Wheel; pricing; Firebase auth |
 | **Companion** | Astra-first dashboard, mood-adaptive 5-min session, anxiety impact chart, habit cards, quick log |
 | **AI Coach** | Astra chat in the user’s session language; mood-adapted micro-sessions |
 | **Rewards** | Cowries balance, loot-wheel modal, community ticker, voucher marketplace |
@@ -90,11 +97,15 @@ Theme is locked to dark (no light/dark switcher). `theme-color` is `#0B0F17`.
 - Fonts: **Inter** (UI) + **Space Grotesk** (display), loaded in `index.html`.
   Counters use tabular numerals.
 - Cards: `rounded-2xl`, ~`p-6`, `#242E42` borders.
-- Primary CTAs: gold→orange gradient (`#FFB800` → `#FF7A00`) with orange glow.
+- Primary CTAs: gold→orange gradient (`#FFB800` → `#FF7A00`), **pill** radius,
+  orange glow. Header Sign In uses `.btn-ghost`.
 - Progress: teal→mint energy bars (segmented 10-cell `.energy-bar`).
-- Astra hero: violet radial glow on `#141A26`.
+- Astra hero: glassmorphism (`rgba(255,255,255,0.03)` + `backdrop-blur`) and a
+  4s ambient pulse behind the avatar.
 
-Motion on the logo is disabled when `prefers-reduced-motion` is set.
+Landing motion uses [`motion/react`](https://motion.dev/) for scroll fade-ups,
+plus CSS hover lift / Loot Wheel tilt. Logo and landing motion are disabled
+when `prefers-reduced-motion` is set.
 
 ## Brand mark
 

@@ -97,6 +97,7 @@ html {
   font-size: 16px;
   line-height: 1.6;
   font-variant-numeric: tabular-nums;
+  scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -188,10 +189,10 @@ p, li, label {
   color: #0B0F17;
   font-weight: 700;
   padding: 0.625rem 1.25rem;
-  border-radius: var(--radius-card);
+  border-radius: 9999px;
   border: none;
   cursor: pointer;
-  transition: filter 0.2s ease, box-shadow 0.2s ease;
+  transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   box-shadow: 0px 4px 14px rgba(255, 122, 0, 0.35);
   display: inline-flex;
   align-items: center;
@@ -237,7 +238,7 @@ p, li, label {
   color: #94A3B8;
   font-weight: 500;
   padding: 0.5rem 1rem;
-  border-radius: var(--radius-card);
+  border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
@@ -413,6 +414,76 @@ p, li, label {
   0%, 14% { opacity: 0; transform: scale(0.4); }
   22% { opacity: 1; transform: scale(1.35); }
   40%, 100% { opacity: 0; transform: scale(0.6); }
+}
+
+.astra-glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.astra-ambient {
+  animation: astra-ambient-pulse 4s ease-in-out infinite;
+}
+
+@keyframes astra-ambient-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.1); }
+}
+
+.landing-feature-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.landing-feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(140, 82, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.loot-wheel-card {
+  transform-style: preserve-3d;
+  perspective: 800px;
+}
+
+.loot-wheel-card:hover {
+  transform: translateY(-4px) rotateY(-8deg) rotateX(3deg);
+  box-shadow: 0 18px 44px rgba(255, 184, 0, 0.22);
+  border-color: rgba(255, 184, 0, 0.35);
+}
+
+.loot-wheel-sheen {
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.16) 50%, transparent 65%);
+  background-size: 220% 100%;
+  animation: loot-sheen 4.5s ease-in-out infinite;
+}
+
+@keyframes loot-sheen {
+  0% { background-position: 120% 0; }
+  100% { background-position: -20% 0; }
+}
+
+.metric-pill {
+  box-shadow: 0 0 18px rgba(0, 255, 194, 0.28);
+}
+
+.metric-pill-violet {
+  box-shadow: 0 0 18px rgba(140, 82, 255, 0.32);
+}
+
+.landing-nav-link {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 0.25rem 0;
+  border-bottom: 2px solid transparent;
+}
+
+.landing-nav-link:hover {
+  color: #FFFFFF;
+  border-bottom-color: #FFB800;
 }
 
 @media (prefers-reduced-motion: reduce) {
