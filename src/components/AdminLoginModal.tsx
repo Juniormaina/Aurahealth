@@ -39,7 +39,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="aura-card w-full max-w-md p-6 relative">
+      <div className="aura-card w-full max-w-md p-5 sm:p-6 relative modal-sheet">
         <button type="button" onClick={onClose} className="absolute top-4 right-4 text-muted hover:text-white text-sm">
           <X className="w-4 h-4" />
         </button>

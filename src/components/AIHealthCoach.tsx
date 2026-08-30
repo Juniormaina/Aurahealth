@@ -90,9 +90,9 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, languag
   ];
 
   return (
-    <div className="aura-card-gradient p-6 relative overflow-hidden max-w-4xl mx-auto flex flex-col h-[600px]">
+    <div className="aura-card-gradient p-4 sm:p-6 relative overflow-hidden max-w-4xl mx-auto flex flex-col h-[min(70dvh,600px)] min-h-[28rem]">
       {/* Header */}
-      <div className="flex items-center gap-3 pb-4 border-b border-line">
+      <div className="flex items-start sm:items-center gap-3 pb-4 border-b border-line min-w-0">
         <div className="relative">
           <img
             src={companion.imageUrl}
@@ -101,9 +101,9 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, languag
           />
           <span className="absolute bottom-0 right-0 w-3 h-3 bg-harmony border-2 border-peach rounded-full" />
         </div>
-        <div>
-          <h3 className="text-lg font-bold text-navy flex items-center gap-2">
-            Astra AI Health Coach <Sparkles className="w-4 h-4 text-gold" />
+        <div className="min-w-0">
+          <h3 className="text-base sm:text-lg font-bold text-navy flex items-center gap-2 flex-wrap">
+            Astra AI Health Coach <Sparkles className="w-4 h-4 text-gold shrink-0" />
           </h3>
           <p className="text-xs text-muted leading-[1.6]">
             Gemini AI + live web search • Not a substitute for professional medical advice • Stage: {companion.stage} (Level {companion.level})

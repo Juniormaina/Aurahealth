@@ -41,7 +41,7 @@ export const Features: React.FC = () => (
         <motion.article
           key={item.title}
           variants={fadeUp}
-          className="aura-card landing-feature-card p-5 rounded-2xl border border-[#242E42] flex gap-3"
+          className="aura-card landing-feature-card p-5 rounded-2xl border border-[#242E42] flex gap-3 min-w-0"
         >
           <IconBadge icon={item.icon} variant={item.variant} />
           <div>

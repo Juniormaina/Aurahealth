@@ -35,7 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0 flex-wrap justify-end">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 justify-end">
             {onOpenSearch && (
               <button
                 type="button"

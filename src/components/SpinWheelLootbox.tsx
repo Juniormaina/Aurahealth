@@ -55,16 +55,16 @@ export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onWinPrize, 
   };
 
   return (
-    <div className="aura-card-gradient gold-panel p-6 space-y-4">
+    <div className="aura-card-gradient gold-panel p-4 sm:p-6 space-y-4 min-w-0">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <div className="inline-flex items-center gap-2 bg-amber-400/10 text-amber-300 text-xs font-semibold px-3 py-1 rounded-full border border-amber-400/30 mb-2">
             <Gift className="w-3.5 h-3.5" /> Loot Wheel
           </div>
-          <h2 className="text-2xl font-bold text-white">Adherence Wheel of Health</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-white">Adherence Wheel of Health</h2>
           <p className="text-xs text-slate-400 mt-1">Spin after daily logs for Cowries, XP, and partner vouchers.</p>
         </div>
-        <button type="button" onClick={() => setIsOpen(true)} className="btn-primary justify-center">
+        <button type="button" onClick={() => setIsOpen(true)} className="btn-primary justify-center w-full sm:w-auto">
           <Sparkles className="w-4 h-4" />
           Open Loot Wheel
         </button>
@@ -78,7 +78,7 @@ export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onWinPrize, 
 
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="aura-card w-full max-w-lg p-6 relative shadow-[0_0_60px_rgba(245,158,11,0.25)]">
+          <div className="aura-card w-full max-w-lg p-4 sm:p-6 relative shadow-[0_0_60px_rgba(245,158,11,0.25)] modal-sheet">
             <button
               type="button"
               onClick={() => !isSpinning && setIsOpen(false)}
@@ -89,7 +89,7 @@ export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onWinPrize, 
             </button>
             <div className="text-center space-y-5">
               <h3 className="text-xl font-bold text-white">Spin for rewards</h3>
-              <div className="relative w-72 h-72 sm:w-80 sm:h-80 mx-auto flex items-center justify-center">
+              <div className="relative w-[min(18rem,calc(100vw-5rem))] h-[min(18rem,calc(100vw-5rem))] sm:w-80 sm:h-80 mx-auto flex items-center justify-center">
                 <div className="absolute -top-4 z-20 w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[24px] border-t-amber-400 drop-shadow-[0_0_12px_rgba(245,158,11,0.8)]" />
                 <div
                   className="w-full h-full rounded-full border-4 border-amber-400/70 shadow-[0_0_40px_rgba(34,211,238,0.25)] relative overflow-hidden transition-all duration-[4000ms]"

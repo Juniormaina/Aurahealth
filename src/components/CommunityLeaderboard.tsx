@@ -383,7 +383,7 @@ export const CommunityLeaderboard: React.FC<CommunityLeaderboardProps> = ({
             <span className="text-xs text-slate-400 font-semibold">{teamChallenges.length} Active Cooperative Squads</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {teamChallenges.map((tc) => {
               const IconComp = tc.icon;
               const percent = Math.round((tc.currentProgress / tc.targetGoal) * 100);

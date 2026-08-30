@@ -176,7 +176,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
   };
 
   return (
-    <div className="aura-card-gradient gold-panel p-6 relative overflow-hidden space-y-6">
+    <div className="aura-card-gradient gold-panel p-4 sm:p-6 relative overflow-hidden space-y-6 min-w-0">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-line pb-5">
         <div>
@@ -186,7 +186,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
             </span>
             <span className="text-xs text-muted">Verifiable Health Value</span>
           </div>
-          <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h3 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 flex-wrap">
             <span>AuraHealth Rewards Hub</span>
             <span className="text-2xl">🐚</span>
           </h3>
@@ -195,7 +195,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
           </p>
         </div>
 
-        <div className="astra-frame p-3 flex items-center gap-4 shrink-0">
+        <div className="astra-frame p-3 flex items-center gap-3 sm:gap-4 shrink-0 w-full md:w-auto">
           <div>
             <div className="text-[10px] font-bold text-muted uppercase">Your Balance</div>
             <div className="text-base font-bold text-gold font-mono flex items-center gap-1">
@@ -214,7 +214,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
       </div>
 
       {/* Mode Sub-Tabs */}
-      <div className="flex items-center justify-start gap-2 border-b border-line pb-3">
+      <div className="flex items-center justify-start gap-2 border-b border-line pb-3 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveTab('conversion')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -224,7 +224,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
           }`}
         >
           <TrendingUp className="w-4 h-4" />
-          <span>Cowries Conversion Calculator</span>
+          <span className="whitespace-nowrap">Conversion</span>
         </button>
 
         <button
@@ -236,7 +236,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
           }`}
         >
           <Trophy className="w-4 h-4" />
-          <span>XP & Level Milestones</span>
+          <span className="whitespace-nowrap">Milestones</span>
         </button>
 
         <button
@@ -248,7 +248,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
           }`}
         >
           <Gift className="w-4 h-4" />
-          <span>Redeem Real Benefits</span>
+          <span className="whitespace-nowrap">Redeem</span>
         </button>
       </div>
 

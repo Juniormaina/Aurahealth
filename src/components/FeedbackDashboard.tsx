@@ -136,7 +136,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
           {/* Question 1: Where am I going? */}
           <div className="aura-module-card p-5 relative overflow-hidden flex flex-col justify-between">
             <div>
@@ -317,7 +317,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
         </div>
 
         {/* Quick Summary Metric Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <div className="aura-module-card p-3.5">
             <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Average Check-in Score</div>
             <div className="text-xl font-black text-rose-500 font-mono mt-0.5">{avgScore}/100</div>

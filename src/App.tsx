@@ -3,6 +3,7 @@ import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { GlobalSearch } from './components/GlobalSearch';
 import { LandingPage } from './components/LandingPage';
+import { AuthPage } from './components/AuthPage';
 import { DashboardHome } from './components/DashboardHome';
 import { AdminDashboard } from './components/AdminDashboard';
 import { SpinWheelLootbox } from './components/SpinWheelLootbox';
@@ -67,6 +68,7 @@ import { Compass, Home, Search, MessageSquare, Award } from 'lucide-react';
 
 export default function App() {
   const [isLanding, setIsLanding] = useState<boolean>(true);
+  const [showAuth, setShowAuth] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [userAccount, setUserAccount] = useState<{ name: string; email: string; isGoogle: boolean; uid?: string; photoURL?: string } | null>(null);
@@ -90,12 +92,14 @@ export default function App() {
   };
 
   const handleAdminLogin = () => {
+    setShowAuth(false);
     setIsAdmin(true);
     setIsLanding(false);
   };
 
   const handleAdminBackToLanding = () => {
     setIsAdmin(false);
+    setShowAuth(false);
     setIsLanding(true);
   };
 
@@ -192,6 +196,7 @@ export default function App() {
       });
       // Session starts on landing page; user clicks Enter Dashboard to proceed
       setIsDemoMode(false);
+      setShowAuth(false);
 
       // Every real account starts from a clean slate — no leftover mock/demo
       // numbers. Real progress comes only from what's saved in Firestore.
@@ -307,6 +312,7 @@ export default function App() {
     const fakeUid = 'custom_' + email.replace(/[^a-zA-Z0-9]/g, '_');
     setUserAccount({ name, email, isGoogle: true, uid: fakeUid });
     setIsLanding(false);
+    setShowAuth(false);
     setIsDemoMode(false);
     setStats({
       cowriesBalance: 0,
@@ -334,16 +340,19 @@ export default function App() {
     setUserAccount(null);
     setIsAdmin(false);
     setIsLanding(true);
+    setShowAuth(false);
     showToast('Signed out of AuraHealth.');
   };
 
   const handleStartDemo = () => {
+    setShowAuth(false);
     setIsLanding(false);
     setIsDemoMode(true);
     showToast('Guided Demo Mode active! Explore Astra Companion, Check-ins & Sponsor Grants.');
   };
 
   const handleBackToLanding = () => {
+    setShowAuth(false);
     setIsLanding(true);
   };
 
@@ -637,22 +646,30 @@ export default function App() {
     showToast('Corporate wellness request sent. We will follow up with a package quote.');
   };
 
+  if (showAuth) {
+    return (
+      <AuthPage
+        onGoogleSignIn={handleGoogleSignIn}
+        onRealGoogleSignIn={handleRealGoogleSignIn}
+        onEmailSignIn={handleEmailSignIn}
+        onEmailSignUp={handleEmailSignUp}
+        onStartDemo={handleStartDemo}
+        onBack={() => setShowAuth(false)}
+        isLoggingIn={isLoggingIn}
+      />
+    );
+  }
+
   if (isLanding) {
     return (
       <div className="min-h-screen bg-canvas text-white">
         <LandingPage
-          onGoogleSignIn={handleGoogleSignIn}
-          onRealGoogleSignIn={handleRealGoogleSignIn}
-          onEmailSignIn={handleEmailSignIn}
-          onEmailSignUp={handleEmailSignUp}
-          onStartDemo={handleStartDemo}
-          isLoggingIn={isLoggingIn}
+          onOpenAuth={() => setShowAuth(true)}
           userAccount={userAccount}
           isDemoMode={isDemoMode}
           onEnterDashboard={() => setIsLanding(false)}
           onSignOut={handleLogout}
           onAdminLogin={handleAdminLogin}
-          onOpenPremium={() => setPremiumOpen(true)}
         />
         <PremiumModal
           isOpen={premiumOpen}
@@ -735,14 +752,14 @@ export default function App() {
 
       {/* Notification Toast */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-navy border border-line text-[#FFFAF4] text-xs font-bold px-4 py-3 rounded-[4px] flex items-center gap-2">
+        <div className="fixed z-50 app-toast bg-navy border border-line text-[#FFFAF4] text-xs font-bold px-4 py-3 rounded-[4px] flex items-center gap-2">
           <span className="text-base">🎉</span>
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* Main Content Viewport */}
-      <main className="flex-1 max-w-7xl w-full min-w-0 mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24 lg:pb-6">
+      <main className="flex-1 max-w-7xl w-full min-w-0 mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-28 lg:pb-6">
         {activeTab === 'companion' && (
           <DashboardHome
             companion={companion}

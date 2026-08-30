@@ -28,7 +28,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="aura-card w-full max-w-lg p-6 relative rounded-2xl border border-[#242E42]">
+      <div className="aura-card w-full max-w-lg p-5 sm:p-6 relative rounded-2xl border border-[#242E42] modal-sheet">
         <button type="button" onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white">
           <X className="w-5 h-5" />
         </button>

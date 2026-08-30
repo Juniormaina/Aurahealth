@@ -68,14 +68,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     <div className="min-h-screen flex flex-col font-sans selection:bg-rose-500/40 bg-canvas text-white admin-shell">
       {/* Admin Header */}
       <header className="border-b border-slate-800/80 bg-gradient-to-r from-slate-900 via-rose-950/40 to-slate-900 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center justify-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3 min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center justify-center shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <div>
-              <h1 className="text-base font-black text-white leading-tight">AuraHealth Admin</h1>
-              <p className="text-[11px] text-slate-400">Sponsors • Analytics • Contracts Control Center</p>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-base font-black text-white leading-tight">AuraHealth Admin</h1>
+              <p className="text-[11px] text-slate-400 hidden sm:block">Sponsors • Analytics • Contracts Control Center</p>
             </div>
           </div>
 

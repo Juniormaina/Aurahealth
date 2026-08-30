@@ -83,7 +83,7 @@ export const ProofChart: React.FC = () => {
 
   if (status === 'loading') {
     return (
-      <div className="h-64 w-full min-w-0 rounded-xl border border-[#242E42] bg-white/[0.03] p-4" aria-busy="true">
+      <div className="h-52 sm:h-64 w-full min-w-0 rounded-xl border border-[#242E42] bg-white/[0.03] p-4" aria-busy="true">
         <div className="h-3 w-40 rounded bg-white/10 animate-pulse mb-6" />
         <div className="space-y-3">
           <div className="h-8 w-full rounded bg-white/[0.06] animate-pulse" />
@@ -98,7 +98,7 @@ export const ProofChart: React.FC = () => {
 
   if (status === 'empty') {
     return (
-      <div className="h-64 w-full min-w-0 rounded-xl border border-[#242E42] bg-white/[0.03] px-4 py-3 flex flex-col justify-between">
+      <div className="h-52 sm:h-64 w-full min-w-0 rounded-xl border border-[#242E42] bg-white/[0.03] px-4 py-3 flex flex-col justify-between">
         <div className="flex justify-between text-[10px] text-slate-500 font-semibold uppercase tracking-wide">
           <span>Score (0–10)</span>
           <span>Sleep · Anxiety</span>
@@ -112,7 +112,7 @@ export const ProofChart: React.FC = () => {
   }
 
   return (
-    <div className="h-64 w-full min-w-0">
+    <div className="h-52 sm:h-64 w-full min-w-0">
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220}>
         <LineChart data={series} margin={{ top: 12, right: 12, left: 4, bottom: 28 }}>
           <CartesianGrid stroke="rgba(255,255,255,0.1)" strokeDasharray="3 6" />

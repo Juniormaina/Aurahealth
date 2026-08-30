@@ -160,7 +160,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
-      <div className="aura-card-gradient w-full max-w-xl rounded-[4px] p-6 relative my-8">
+      <div className="aura-card-gradient w-full max-w-xl rounded-[4px] p-4 sm:p-6 relative my-4 sm:my-8 modal-sheet">
         {/* Close Button */}
         <button
           onClick={onClose}

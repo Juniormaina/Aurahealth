@@ -3,13 +3,13 @@ import { Layers, Coins, ShieldCheck, Trophy, ExternalLink, Sparkles } from 'luci
 
 export const JiweEconomyDiagram: React.FC = () => {
   return (
-    <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl relative overflow-hidden backdrop-blur-sm">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-amber-500/20 text-amber-300 p-2.5 rounded-xl border border-amber-500/30">
+    <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 sm:p-6 shadow-xl relative overflow-hidden backdrop-blur-sm min-w-0">
+      <div className="flex items-start sm:items-center gap-3 mb-6 min-w-0">
+        <div className="bg-amber-500/20 text-amber-300 p-2.5 rounded-xl border border-amber-500/30 shrink-0">
           <Layers className="w-6 h-6" />
         </div>
-        <div>
-          <h2 className="text-2xl font-black text-white">5-Layer Sustainable Circular Health Economy</h2>
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-2xl font-black text-white leading-tight">5-Layer Sustainable Circular Health Economy</h2>
           <p className="text-xs text-slate-400">
             Sustainable ecosystem preventing hyperinflation through sponsor sinks & health utility
           </p>
@@ -23,7 +23,7 @@ export const JiweEconomyDiagram: React.FC = () => {
         </div>
 
         {/* 5 Layer Cards Stack */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
           {[
             {
               layer: 'Layer 1: Progression',

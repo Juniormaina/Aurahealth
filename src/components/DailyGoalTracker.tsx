@@ -223,7 +223,7 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
   };
 
   return (
-    <div className="aura-module-card p-6 relative overflow-hidden">
+    <div className="aura-module-card p-4 sm:p-6 relative overflow-hidden min-w-0">
       {/* Header & Overall Summary */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-5 border-b border-line">
         <div>

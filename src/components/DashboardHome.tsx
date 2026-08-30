@@ -121,29 +121,29 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         </div>
       </section>
 
-      <section aria-label="Quick stats" className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="aura-module-card p-4 flex items-center gap-3">
+      <section aria-label="Quick stats" className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="aura-module-card p-3 sm:p-4 flex items-center gap-3 min-w-0">
           <IconBadge icon={Flame} variant="teal" />
           <div>
             <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Streak</div>
             <div className="aura-highlight-number tabular-nums">{stats.currentStreak}<span className="text-sm font-bold text-slate-400 ml-1">days</span></div>
           </div>
         </div>
-        <div className="aura-module-card p-4 flex items-center gap-3">
+        <div className="aura-module-card p-3 sm:p-4 flex items-center gap-3 min-w-0">
           <IconBadge variant="violet">{MOOD_EMOJI[companion.mood]}</IconBadge>
           <div>
             <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Astra's Mood</div>
             <div className="text-base font-bold text-white capitalize leading-tight">{companion.mood}</div>
           </div>
         </div>
-        <div className="aura-module-card p-4 flex items-center gap-3">
+        <div className="aura-module-card p-3 sm:p-4 flex items-center gap-3 min-w-0">
           <IconBadge icon={Calendar} variant="slate" />
           <div>
             <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Check-ins</div>
             <div className="aura-highlight-number tabular-nums">{companion.totalCheckIns}</div>
           </div>
         </div>
-        <div className="aura-module-card p-4 flex items-center gap-3">
+        <div className="aura-module-card p-3 sm:p-4 flex items-center gap-3 min-w-0">
           <IconBadge icon={Star} variant="teal" />
           <div>
             <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Total XP</div>
@@ -152,10 +152,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         </div>
       </section>
 
-      <section className="aura-module-card p-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-        <div>
+      <section className="aura-module-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between min-w-0">
+        <div className="min-w-0">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-accent-secondary)]">Mood-adaptive session</div>
-          <h3 className="text-lg font-bold text-white">{session.title} · {session.minutes} min · {session.language}</h3>
+          <h3 className="text-base sm:text-lg font-bold text-white">{session.title} · {session.minutes} min · {session.language}</h3>
           <p className="text-sm text-slate-400 leading-[1.6] mt-1">{session.script}</p>
         </div>
         <button type="button" onClick={() => onNavigateTab('coach')} className="btn-primary text-xs shrink-0">
@@ -167,7 +167,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
       <section className="aura-module-card p-5">
         <h3 className="text-sm font-bold text-white mb-4">Habit tracking history</h3>
-        <div className="h-48">
+        <div className="h-44 sm:h-48 w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={history}>
               <defs>

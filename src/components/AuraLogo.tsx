@@ -158,14 +158,14 @@ export const AuraLogo: React.FC<AuraLogoProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-3 select-none ${onClick ? 'cursor-pointer group' : ''} ${className}`}
+      className={`flex items-center gap-2 sm:gap-3 select-none min-w-0 ${onClick ? 'cursor-pointer group' : ''} ${className}`}
     >
       {mark}
 
-      <div className="flex flex-col justify-center">
+      <div className="flex flex-col justify-center min-w-0">
         <div className="flex items-center gap-1.5 leading-none">
           <span
-            className={`font-bold tracking-tight ${titleSizes[size]} ${
+            className={`font-bold tracking-tight truncate ${titleSizes[size]} ${
               inverted ? 'text-[#FFFAF4]' : 'text-navy'
             }`}
           >

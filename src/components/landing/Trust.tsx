@@ -15,7 +15,7 @@ export const Trust: React.FC = () => (
     <motion.h2 variants={fadeUp} className="text-center text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-6">
       Built for calm, not hype
     </motion.h2>
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {BADGES.map((item, i) => (
         <motion.article
           key={item.label}

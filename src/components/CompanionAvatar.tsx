@@ -98,14 +98,14 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
   const currentStageInfo = EVOLUTION_STAGES_INFO.find((s) => s.stage === companion.stage) || EVOLUTION_STAGES_INFO[1];
 
   return (
-    <div className="aura-module-card p-6 relative overflow-hidden">
+    <div className="aura-module-card p-4 sm:p-6 relative overflow-hidden min-w-0">
 
       {/* Header Info */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6 relative z-10">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-2xl">{getStageEmoji(companion.stage)}</span>
-            <h2 className="text-2xl font-bold text-white">{companion.name}</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-white">{companion.name}</h2>
             <span className={`text-xs px-2.5 py-0.5 rounded-full border font-semibold capitalize ${getMoodBadgeColor(companion.mood)}`}>
               {companion.mood}
             </span>
@@ -121,7 +121,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={onOpenCheckin}
-            className="btn-primary text-xs"
+            className="btn-primary text-xs w-full sm:w-auto justify-center"
           >
             <Sparkles className="w-4 h-4" />
             Report Health Log

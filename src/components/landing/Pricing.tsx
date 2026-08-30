@@ -15,7 +15,7 @@ export const Pricing: React.FC<PricingProps> = ({ onStartTrial }) => (
     <motion.p variants={fadeUp} className="text-center text-sm text-slate-400 mb-6 leading-[1.6]">
       Start with a 7-day trial. Upgrade when the 5-minute habit sticks.
     </motion.p>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
       {SUBSCRIPTION_TIERS.map((tier) => {
         const featured = tier.id === 'annual';
         return (
@@ -24,7 +24,7 @@ export const Pricing: React.FC<PricingProps> = ({ onStartTrial }) => (
             variants={fadeUp}
             className={`aura-card landing-feature-card p-6 rounded-2xl border flex flex-col relative ${
               featured
-                ? 'border-[var(--color-primary)] shadow-[0_12px_40px_rgba(47,122,115,0.22)] md:-translate-y-1 md:scale-[1.03] z-10'
+                ? 'border-[var(--color-primary)] shadow-[0_12px_40px_rgba(47,122,115,0.22)] lg:-translate-y-1 z-10 pt-7'
                 : 'border-[#242E42]'
             }`}
           >
@@ -46,7 +46,7 @@ export const Pricing: React.FC<PricingProps> = ({ onStartTrial }) => (
               onClick={onStartTrial}
               className={featured ? 'btn-primary mt-5 justify-center text-xs' : 'btn-ghost mt-5 justify-center text-xs'}
             >
-              Start free trial
+              Get started
             </button>
           </motion.article>
         );
