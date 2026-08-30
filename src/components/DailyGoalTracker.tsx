@@ -51,8 +51,8 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
           name: 'Hydration',
           category: 'hydration',
           current: 0,
-          target: 64,
-          unit: 'oz',
+          target: 8,
+          unit: 'glasses',
           icon: Droplets,
           completed: false,
           xpReward: 50,
@@ -101,9 +101,9 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
         id: 'water',
         name: 'Hydration',
         category: 'hydration',
-        current: 56,
-        target: 64,
-        unit: 'oz',
+        current: 7,
+        target: 8,
+        unit: 'glasses',
         icon: Droplets,
         completed: false,
         xpReward: 50,
@@ -340,10 +340,10 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
                 <div className="flex items-center gap-1.5">
                 {habit.id === 'water' && !habit.completed && (
                   <button
-                    onClick={() => handleIncrement('water', 8)}
+                    onClick={() => handleIncrement('water', 1)}
                     className="bg-ivory hover:bg-peach text-white font-bold px-2.5 py-1 rounded-[4px] border border-line flex items-center gap-1"
                   >
-                    <Plus className="w-3 h-3" /> +8 oz
+                    <Plus className="w-3 h-3" /> +1 glass
                   </button>
                 )}
 

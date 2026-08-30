@@ -43,7 +43,7 @@ const CustomTooltip = ({ active, payload }: any) => {
           </div>
           <div className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block"></span>
-            <span>Water: <strong>{data.water} oz</strong></span>
+            <span>Water: <strong>{data.water} L</strong></span>
           </div>
           <div className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
@@ -76,23 +76,23 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
   // Generate trend dataset merging real checkIns with weekly time series baseline
   const generateChartData = () => {
     const days7 = [
-      { day: 'Mon', date: 'Jul 19', score: 82, sleep: 6.8, water: 54, activity: 25, mood: 4 },
-      { day: 'Tue', date: 'Jul 20', score: 88, sleep: 7.2, water: 64, activity: 30, mood: 4 },
-      { day: 'Wed', date: 'Jul 21', score: 91, sleep: 8.0, water: 72, activity: 40, mood: 5 },
-      { day: 'Thu', date: 'Jul 22', score: 86, sleep: 7.0, water: 60, activity: 25, mood: 4 },
-      { day: 'Fri', date: 'Jul 23', score: 94, sleep: 7.8, water: 68, activity: 45, mood: 5 },
-      { day: 'Sat', date: 'Jul 24', score: 98, sleep: 8.2, water: 80, activity: 50, mood: 5 },
-      { day: 'Sun', date: 'Jul 25', score: 96, sleep: 7.5, water: 76, activity: 35, mood: 5 },
+      { day: 'Mon', date: 'Jul 19', score: 82, sleep: 6.8, water: 1.6, activity: 25, mood: 4 },
+      { day: 'Tue', date: 'Jul 20', score: 88, sleep: 7.2, water: 1.9, activity: 30, mood: 4 },
+      { day: 'Wed', date: 'Jul 21', score: 91, sleep: 8.0, water: 2.1, activity: 40, mood: 5 },
+      { day: 'Thu', date: 'Jul 22', score: 86, sleep: 7.0, water: 1.8, activity: 25, mood: 4 },
+      { day: 'Fri', date: 'Jul 23', score: 94, sleep: 7.8, water: 2.0, activity: 45, mood: 5 },
+      { day: 'Sat', date: 'Jul 24', score: 98, sleep: 8.2, water: 2.4, activity: 50, mood: 5 },
+      { day: 'Sun', date: 'Jul 25', score: 96, sleep: 7.5, water: 2.2, activity: 35, mood: 5 },
     ];
 
     const days14 = [
-      { day: 'W1 M', date: 'Jul 12', score: 75, sleep: 6.2, water: 48, activity: 20, mood: 3 },
-      { day: 'W1 T', date: 'Jul 13', score: 78, sleep: 6.5, water: 52, activity: 25, mood: 3 },
-      { day: 'W1 W', date: 'Jul 14', score: 80, sleep: 7.0, water: 58, activity: 30, mood: 4 },
-      { day: 'W1 T', date: 'Jul 15', score: 84, sleep: 7.1, water: 60, activity: 30, mood: 4 },
-      { day: 'W1 F', date: 'Jul 16', score: 82, sleep: 6.8, water: 55, activity: 25, mood: 4 },
-      { day: 'W1 S', date: 'Jul 17', score: 89, sleep: 7.6, water: 64, activity: 35, mood: 4 },
-      { day: 'W1 S', date: 'Jul 18', score: 87, sleep: 7.4, water: 62, activity: 30, mood: 4 },
+      { day: 'W1 M', date: 'Jul 12', score: 75, sleep: 6.2, water: 1.4, activity: 20, mood: 3 },
+      { day: 'W1 T', date: 'Jul 13', score: 78, sleep: 6.5, water: 1.5, activity: 25, mood: 3 },
+      { day: 'W1 W', date: 'Jul 14', score: 80, sleep: 7.0, water: 1.7, activity: 30, mood: 4 },
+      { day: 'W1 T', date: 'Jul 15', score: 84, sleep: 7.1, water: 1.8, activity: 30, mood: 4 },
+      { day: 'W1 F', date: 'Jul 16', score: 82, sleep: 6.8, water: 1.6, activity: 25, mood: 4 },
+      { day: 'W1 S', date: 'Jul 17', score: 89, sleep: 7.6, water: 1.9, activity: 35, mood: 4 },
+      { day: 'W1 S', date: 'Jul 18', score: 87, sleep: 7.4, water: 1.8, activity: 30, mood: 4 },
       ...days7,
     ];
 
@@ -106,7 +106,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
         if (baseData[targetIdx]) {
           baseData[targetIdx].score = ci.aiAttestationScore || baseData[targetIdx].score;
           baseData[targetIdx].sleep = ci.sleepHours || baseData[targetIdx].sleep;
-          baseData[targetIdx].water = ci.waterOz || baseData[targetIdx].water;
+          baseData[targetIdx].water = ci.waterLiters || baseData[targetIdx].water;
           baseData[targetIdx].activity = ci.activityMinutes || baseData[targetIdx].activity;
           baseData[targetIdx].mood = ci.moodRating || baseData[targetIdx].mood;
         }
@@ -280,7 +280,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <Droplets className="w-3.5 h-3.5" /> Water (oz)
+                <Droplets className="w-3.5 h-3.5" /> Water (L)
               </button>
               <button
                 onClick={() => setMetricMode('activity')}
@@ -335,7 +335,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
           <div className="aura-module-card p-3.5">
             <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Weekly Hydration Avg</div>
             <div className="text-xl font-black text-cyan-500 font-mono mt-0.5">
-              {Math.round(chartData.reduce((a, b) => a + b.water, 0) / chartData.length)} oz
+              {(chartData.reduce((a, b) => a + b.water, 0) / chartData.length).toFixed(1)} L
             </div>
           </div>
         </div>
@@ -401,7 +401,7 @@ export const FeedbackDashboard: React.FC<FeedbackDashboardProps> = ({
                 <Area
                   type="monotone"
                   dataKey="water"
-                  name="Hydration (oz)"
+                  name="Hydration (L)"
                   stroke="#06b6d4"
                   strokeWidth={3}
                   fillOpacity={1}

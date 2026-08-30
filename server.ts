@@ -76,7 +76,22 @@ async function startServer() {
   // AI Health Check-in Verification & Attestation Endpoint
   app.post('/api/verify-checkin', async (req, res) => {
     try {
-      const { waterOz, sleepHours, medicationTaken, moodRating, activityMinutes, notes, imageBase64 } = req.body;
+      const {
+        waterLiters,
+        waterOz,
+        sleepHours,
+        medicationTaken,
+        moodRating,
+        activityMinutes,
+        notes,
+        imageBase64,
+      } = req.body;
+      const hydrationLiters =
+        typeof waterLiters === 'number'
+          ? waterLiters
+          : typeof waterOz === 'number'
+            ? Number((waterOz / 33.814).toFixed(2))
+            : undefined;
 
       let aiAttestationScore = 92;
       let aiFeedback = 'Health log successfully analyzed and verified.';
@@ -87,7 +102,7 @@ async function startServer() {
           const promptParts: any[] = [
             `You are an AI Health Adherence Verifier for the AuraHealth Wellness App.
 Evaluate this user's health report:
-- Hydration: ${waterOz} oz
+- Hydration: ${hydrationLiters ?? 'n/a'} litres
 - Sleep: ${sleepHours} hours
 - Medication Taken: ${medicationTaken ? 'YES' : 'NO'}
 - Mood Rating: ${moodRating}/5

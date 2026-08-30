@@ -22,7 +22,8 @@ export interface HealthCheckIn {
   id: string;
   timestamp: string;
   type: 'daily_full' | 'medication' | 'vital_log' | 'hydration' | 'community_report';
-  waterOz: number;
+  /** Daily hydration in litres */
+  waterLiters: number;
   sleepHours: number;
   medicationTaken: boolean;
   moodRating: number; // 1-5

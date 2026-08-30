@@ -82,11 +82,11 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
     {
       id: 'm2',
       title: 'Mission 2: Log Initial Hydration',
-      description: 'Record your first 8 oz glass of water to build your daily hydration streak.',
+      description: 'Record your first glass of water to build your daily hydration streak.',
       xpReward: 50,
       cowriesReward: 30,
       completed: false,
-      actionText: 'Log Hydration (+8 oz)',
+      actionText: 'Log Hydration (+1 glass)',
       actionType: 'hydrate',
       icon: Droplets,
       accentColor: 'from-cyan-500 to-blue-600',

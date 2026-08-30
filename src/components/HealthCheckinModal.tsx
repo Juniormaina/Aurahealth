@@ -21,7 +21,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
   onShowToast,
   wallet,
 }) => {
-  const [waterOz, setWaterOz] = useState<number>(64);
+  const [waterLiters, setWaterLiters] = useState<number>(2);
   const [sleepHours, setSleepHours] = useState<number>(7.5);
   const [medicationTaken, setMedicationTaken] = useState<boolean>(true);
   const [moodRating, setMoodRating] = useState<number>(5);
@@ -43,7 +43,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
     const metrics = await syncHealthData(source);
     if (metrics) {
       setSleepHours(metrics.sleepDurationHours);
-      setWaterOz(metrics.waterOz);
+      setWaterLiters(metrics.waterLiters);
       setActivityMinutes(metrics.activeMinutes);
       setIsWearablesSynced(true);
       setNotes(`[Fetched via ${metrics.providerName} at ${metrics.fetchedAt}] Step Count: ${metrics.stepCount.toLocaleString()} steps | Sleep: ${metrics.sleepDurationHours} hrs | Heart Rate: ${metrics.heartRateBpm} bpm.`);
@@ -54,7 +54,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
   };
 
   const handleApplyWearablesData = (data: SyncedBiometrics) => {
-    setWaterOz(data.waterOz);
+    setWaterLiters(data.waterLiters);
     setSleepHours(data.sleepHours);
     setActivityMinutes(data.activityMinutes);
     setIsWearablesSynced(true);
@@ -85,7 +85,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          waterOz,
+          waterLiters,
           sleepHours,
           medicationTaken,
           moodRating,
@@ -106,7 +106,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
       console.warn('Backend API connection standard fallback used:', err);
     }
 
-    const proofString = `${waterOz}-${sleepHours}-${medicationTaken}-${moodRating}-${activityMinutes}-${Date.now()}`;
+    const proofString = `${waterLiters}-${sleepHours}-${medicationTaken}-${moodRating}-${activityMinutes}-${Date.now()}`;
     const proofHash = computeKeccakProof(proofString);
 
     let tx;
@@ -130,7 +130,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
       id: `chk-${Date.now()}`,
       timestamp: new Date().toLocaleString(),
       type: 'daily_full',
-      waterOz,
+      waterLiters,
       sleepHours,
       medicationTaken,
       moodRating,
@@ -253,23 +253,23 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
           <div className="astra-frame p-4">
             <div className="flex justify-between items-center mb-2">
               <label className="text-xs font-bold text-navy flex items-center gap-2">
-                <Droplets className="w-4 h-4 text-cyan-400" /> Daily Water Intake (oz)
+                <Droplets className="w-4 h-4 text-cyan-400" /> Daily Water Intake (L)
               </label>
-              <span className="text-cyan-300 font-mono font-bold text-sm">{waterOz} oz</span>
+              <span className="text-cyan-300 font-mono font-bold text-sm">{waterLiters} L</span>
             </div>
             <input
               type="range"
-              min="16"
-              max="128"
-              step="8"
-              value={waterOz}
-              onChange={(e) => setWaterOz(Number(e.target.value))}
+              min="0.5"
+              max="4"
+              step="0.25"
+              value={waterLiters}
+              onChange={(e) => setWaterLiters(Number(e.target.value))}
               className="w-full accent-cyan-400 cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
-              <span>16 oz</span>
-              <span>64 oz (Target)</span>
-              <span>128 oz</span>
+              <span>0.5 L</span>
+              <span>2 L (Target) · ~8 glasses</span>
+              <span>4 L</span>
             </div>
           </div>
 

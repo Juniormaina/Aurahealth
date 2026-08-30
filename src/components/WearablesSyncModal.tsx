@@ -32,7 +32,7 @@ export interface WearableDevice {
 export interface SyncedBiometrics {
   stepsCount: number;
   sleepHours: number;
-  waterOz: number;
+  waterLiters: number;
   heartRateBpm: number;
   activeCalories: number;
   activityMinutes: number;
@@ -101,7 +101,7 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
   const [lastSyncedData, setLastSyncedData] = useState<SyncedBiometrics>({
     stepsCount: 8420,
     sleepHours: 7.8,
-    waterOz: 72,
+    waterLiters: 2.25,
     heartRateBpm: 68,
     activeCalories: 410,
     activityMinutes: 45,
@@ -143,7 +143,7 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
       const freshData: SyncedBiometrics = {
         stepsCount: Math.floor(7500 + Math.random() * 3000),
         sleepHours: Number((7.0 + Math.random() * 1.5).toFixed(1)),
-        waterOz: Math.floor(64 + Math.random() * 32),
+        waterLiters: Number((1.5 + Math.random() * 1.5).toFixed(2)),
         heartRateBpm: Math.floor(64 + Math.random() * 10),
         activeCalories: Math.floor(350 + Math.random() * 150),
         activityMinutes: Math.floor(35 + Math.random() * 25),
@@ -225,7 +225,7 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
               <div className="text-[10px] font-bold text-slate-400 uppercase flex items-center justify-center gap-1">
                 <Droplets className="w-3 h-3 text-cyan-400" /> Water
               </div>
-              <div className="text-sm font-black text-cyan-300">{lastSyncedData.waterOz} oz</div>
+              <div className="text-sm font-black text-cyan-300">{lastSyncedData.waterLiters} L</div>
             </div>
 
             <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
