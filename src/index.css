@@ -720,21 +720,6 @@ p, li, label {
   margin: 0 auto 1.25rem;
 }
 
-.hero-lotus {
-  position: absolute;
-  width: min(42vw, 380px);
-  height: auto;
-  top: -18%;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.38;
-  mix-blend-mode: normal;
-  filter: drop-shadow(0 12px 24px rgba(0, 20, 16, 0.4));
-  animation: hero-lotus-float 7s ease-in-out infinite;
-}
-
 .hero-glass-title {
   position: relative;
   z-index: 1;
@@ -744,29 +729,9 @@ p, li, label {
   font-size: clamp(2.15rem, 7.2vw, 5.6rem);
   line-height: 0.95;
   letter-spacing: -0.02em;
-  transform: rotateX(12deg) translateZ(24px);
-  transform-style: preserve-3d;
-}
-
-.hero-glass-title .face {
-  display: block;
   color: #F7FFFC;
   -webkit-text-fill-color: #F7FFFC;
-  background: none;
-  text-shadow:
-    0 0 1px rgba(255, 255, 255, 0.9),
-    0 1px 0 rgba(12, 40, 32, 0.55),
-    0 8px 22px rgba(4, 12, 10, 0.55);
-}
-
-.hero-glass-title .extrude {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  color: rgba(8, 22, 18, 0.72);
-  -webkit-text-fill-color: rgba(8, 22, 18, 0.72);
-  transform: translate3d(0, 6px, -18px);
-  text-shadow: 0 10px 20px rgba(0, 12, 10, 0.45);
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.85);
 }
 
 .hero-sub {
@@ -782,22 +747,8 @@ p, li, label {
     0 6px 18px rgba(4, 12, 10, 0.65);
 }
 
-@keyframes hero-lotus-float {
-  0%, 100% { transform: translateX(-50%) translateY(0) rotate(-4deg); }
-  50% { transform: translateX(-50%) translateY(-14px) rotate(3deg); }
-}
-
 @media (max-width: 640px) {
-  .hero-lotus {
-    width: min(70vw, 260px);
-    top: -8%;
-    opacity: 0.28;
-  }
   .hero-scene-content { padding-top: 2.5rem; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-lotus { animation: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -6,6 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+.venv-demo/
+aura_health_demo.webm
 
 # Hardhat
 artifacts/

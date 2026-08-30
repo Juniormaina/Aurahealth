@@ -24,12 +24,8 @@ export const Hero: React.FC = () => (
         transition={{ delay: 0.06 }}
         className="hero-title-wrap"
       >
-        <img className="hero-lotus" src="/aura-hero-lotus.png" alt="" aria-hidden />
         <h1 id="hero-title" className="hero-glass-title">
-          <span className="extrude" aria-hidden>
-            {TITLE}
-          </span>
-          <span className="face">{TITLE}</span>
+          {TITLE}
         </h1>
       </motion.div>
       <motion.p
