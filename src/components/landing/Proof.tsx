@@ -5,6 +5,7 @@ import { ProofChart } from './ProofChart';
 import { fadeUp, Reveal } from './Reveal';
 import { IconBadge } from '../ui/IconBadge';
 import { Moon, Activity } from 'lucide-react';
+import { SectionHeading } from './SectionHeading';
 
 const Sparkline: React.FC<{ points: number[]; color: string }> = ({ points, color }) => {
   const max = Math.max(...points);
@@ -53,36 +54,38 @@ const METRICS = [
 ];
 
 export const Proof: React.FC = () => (
-  <Reveal id="proof" className="max-w-5xl mx-auto w-full mb-16 space-y-6 scroll-mt-24">
-    <motion.h2 variants={fadeUp} className="text-center text-xs font-extrabold uppercase tracking-widest text-slate-400">
-      Proof
-    </motion.h2>
+  <Reveal id="proof" className="max-w-5xl mx-auto w-full mb-16 space-y-6 scroll-mt-28">
+    <SectionHeading
+      kicker="Proof"
+      title="Anxiety and sleep, in the open"
+      copy="Trend cards keep axes, gridlines, and labels readable against the landscape."
+    />
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {METRICS.map((metric) => (
         <motion.article
           key={metric.label}
           variants={fadeUp}
-          className="aura-card landing-feature-card p-5 rounded-2xl border border-[#242E42]"
+          className="glass-panel landing-feature-card p-5 rounded-2xl"
         >
           <div className="flex items-center justify-between gap-2 mb-3">
-            <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[#D5E4DC]">
               <IconBadge icon={metric.icon} variant={metric.variant} size="sm" />
               {metric.label}
             </span>
-            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-slate-200">
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-[#F7FFFC]">
               {metric.badge}
             </span>
           </div>
           <Sparkline points={metric.points} color={metric.color} />
-          <div className="mt-3 h-1.5 rounded-full bg-white/8 overflow-hidden">
+          <div className="mt-3 h-1.5 rounded-full bg-white/15 overflow-hidden">
             <div className="h-full rounded-full" style={{ width: `${metric.bar}%`, background: metric.color }} />
           </div>
-          <p className="text-sm text-slate-300 leading-[1.6] mt-3">{metric.copy}</p>
-          <p className="text-[11px] text-slate-500 leading-[1.5] mt-3 border-t border-white/10 pt-2">{metric.footnote}</p>
+          <p className="text-sm text-[#EAF3EE] leading-[1.6] mt-3">{metric.copy}</p>
+          <p className="text-[11px] text-[#C5D5CC] leading-[1.5] mt-3 border-t border-white/15 pt-2">{metric.footnote}</p>
         </motion.article>
       ))}
     </div>
-    <motion.div variants={fadeUp} className="aura-card p-5 rounded-2xl border border-[#242E42]">
+    <motion.div variants={fadeUp} className="glass-panel p-5 rounded-2xl">
       <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-harmony)] mb-3">
         Sleep quality vs anxiety · 14 days
       </div>

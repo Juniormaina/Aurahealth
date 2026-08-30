@@ -15,7 +15,7 @@ type SeriesPoint = { date: string; anxiety: number; sleep: number };
 type ChartStatus = 'loading' | 'empty' | 'ready';
 
 const EmptyIllustration: React.FC = () => (
-  <svg viewBox="0 0 320 140" className="w-full h-28 text-slate-600" aria-hidden>
+  <svg viewBox="0 0 320 140" className="w-full h-28 text-[#D5E4DC]" aria-hidden>
     <rect x="36" y="8" width="272" height="112" fill="none" stroke="currentColor" strokeOpacity="0.35" rx="8" />
     {[0, 1, 2, 3].map((i) => (
       <line
@@ -83,7 +83,7 @@ export const ProofChart: React.FC = () => {
 
   if (status === 'loading') {
     return (
-      <div className="h-52 sm:h-64 w-full min-w-0 rounded-xl border border-[#242E42] bg-white/[0.03] p-4" aria-busy="true">
+      <div className="h-52 sm:h-64 w-full min-w-0 rounded-xl border border-white/15 bg-white/[0.06] p-4" aria-busy="true">
         <div className="h-3 w-40 rounded bg-white/10 animate-pulse mb-6" />
         <div className="space-y-3">
           <div className="h-8 w-full rounded bg-white/[0.06] animate-pulse" />
@@ -98,13 +98,13 @@ export const ProofChart: React.FC = () => {
 
   if (status === 'empty') {
     return (
-      <div className="h-52 sm:h-64 w-full min-w-0 rounded-xl border border-[#242E42] bg-white/[0.03] px-4 py-3 flex flex-col justify-between">
-        <div className="flex justify-between text-[10px] text-slate-500 font-semibold uppercase tracking-wide">
+      <div className="h-52 sm:h-64 w-full min-w-0 rounded-xl border border-white/15 bg-white/[0.06] px-4 py-3 flex flex-col justify-between">
+        <div className="flex justify-between text-[10px] text-[#D5E4DC] font-semibold uppercase tracking-wide">
           <span>Score (0–10)</span>
           <span>Sleep · Anxiety</span>
         </div>
         <EmptyIllustration />
-        <p className="text-sm text-slate-400 text-center leading-[1.5]">
+        <p className="text-sm text-[#D5E4DC] text-center leading-[1.5]">
           Log 2+ days to see your trend. Axis labels and grid stay in place so the chart never looks like a blank box.
         </p>
       </div>
@@ -115,29 +115,29 @@ export const ProofChart: React.FC = () => {
     <div className="h-52 sm:h-64 w-full min-w-0">
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220}>
         <LineChart data={series} margin={{ top: 12, right: 12, left: 4, bottom: 28 }}>
-          <CartesianGrid stroke="rgba(255,255,255,0.1)" strokeDasharray="3 6" />
-          <XAxis dataKey="date" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false}>
-            <Label value="Day" position="insideBottom" offset={-18} fill="#94A3B8" fontSize={11} />
+          <CartesianGrid stroke="rgba(213, 228, 220, 0.42)" strokeDasharray="3 6" />
+          <XAxis dataKey="date" tick={{ fill: '#D5E4DC', fontSize: 11 }} axisLine={{ stroke: '#D5E4DC' }} tickLine={{ stroke: '#D5E4DC' }}>
+            <Label value="Day" position="insideBottom" offset={-18} fill="#D5E4DC" fontSize={11} />
           </XAxis>
-          <YAxis domain={[0, 10]} tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} width={36}>
+          <YAxis domain={[0, 10]} tick={{ fill: '#D5E4DC', fontSize: 11 }} axisLine={{ stroke: '#D5E4DC' }} tickLine={{ stroke: '#D5E4DC' }} width={36}>
             <Label
               value="Score (0–10)"
               angle={-90}
               position="insideLeft"
               offset={10}
-              fill="#94A3B8"
+              fill="#D5E4DC"
               fontSize={11}
             />
           </YAxis>
           <Tooltip
             contentStyle={{
-              background: 'var(--color-peach)',
-              border: '1px solid var(--color-line)',
+              background: '#163528',
+              border: '1px solid rgba(255,255,255,0.22)',
               borderRadius: 12,
-              color: '#fff',
+              color: '#F7FFFC',
             }}
           />
-          <Legend wrapperStyle={{ fontSize: 12, color: '#94A3B8' }} />
+          <Legend wrapperStyle={{ fontSize: 12, color: '#D5E4DC' }} />
           <Line type="monotone" dataKey="sleep" name="Sleep quality" stroke="var(--color-harmony)" strokeWidth={2} dot={false} />
           <Line type="monotone" dataKey="anxiety" name="Anxiety" stroke="var(--color-accent-secondary)" strokeWidth={2} dot={false} />
         </LineChart>

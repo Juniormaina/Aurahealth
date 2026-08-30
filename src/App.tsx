@@ -662,7 +662,7 @@ export default function App() {
 
   if (isLanding) {
     return (
-      <div className="min-h-screen bg-canvas text-white">
+      <div className="min-h-screen landscape-shell">
         <LandingPage
           onOpenAuth={() => setShowAuth(true)}
           userAccount={userAccount}
@@ -705,7 +705,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex font-sans selection:bg-primary selection:text-primary-foreground bg-canvas text-white">
+    <div className="min-h-screen flex font-sans selection:bg-primary selection:text-primary-foreground landscape-shell">
       <Sidebar
         activeTab={activeTab}
         onNavigate={handleNavigateTab}
@@ -810,10 +810,10 @@ export default function App() {
         {/* Tab 2: Rewards Wheel & Hub */}
         {activeTab === 'wheel' && (
           <div className="space-y-6">
-            <header className="rewards-band rounded-2xl p-5">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Rewards</p>
-              <h2 className="text-xl font-bold text-white font-display mt-1">Wellness points & perks</h2>
-              <p className="text-sm text-slate-400 mt-1 leading-[1.6]">
+            <header className="rewards-band glass-panel rounded-2xl p-5">
+              <p className="view-kicker">Rewards</p>
+              <h2 className="view-title !text-2xl mt-1">Wellness points & perks</h2>
+              <p className="view-copy mt-2">
                 This layer is optional. Daily sessions with Astra stay the same whether or not you redeem points.
               </p>
             </header>

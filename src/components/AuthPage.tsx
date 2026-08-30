@@ -83,7 +83,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-canvas text-white flex flex-col">
+    <div className="min-h-screen min-h-[100dvh] landscape-shell flex flex-col">
       <header className="sticky top-0 z-40 navbar-gradient">
         <div className="max-w-lg mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <button type="button" onClick={onBack} className="btn-ghost text-xs">
@@ -96,8 +96,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       </header>
 
       <main className="flex-1 w-full max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <h1 className="text-2xl sm:text-3xl font-bold font-display text-white mb-2">Sign in to Aura Health</h1>
-        <p className="text-sm text-slate-400 leading-[1.6] mb-8">
+        <h1 className="view-title mb-2">Sign in to Aura Health</h1>
+        <p className="view-copy mb-8">
           Choose how you want to continue. Google sign-in uses the same OAuth flow as before.
         </p>
 
@@ -126,7 +126,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         </div>
 
         {showAlternateGoogle && (
-          <form onSubmit={handleCustomGoogleSubmit} className="aura-card p-5 rounded-2xl border border-[#242E42] space-y-4 mb-8">
+          <form onSubmit={handleCustomGoogleSubmit} className="glass-panel p-5 rounded-2xl space-y-4 mb-8">
             <h2 className="text-sm font-bold text-white">Different Google account</h2>
             <div>
               <label className="text-xs font-bold text-ink block mb-1">Your full name</label>
@@ -162,7 +162,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           <span className="flex-1 h-px bg-white/10" />
         </div>
 
-        <div className="aura-card p-5 sm:p-6 rounded-2xl border border-[#242E42]">
+        <div className="glass-panel p-5 sm:p-6 rounded-2xl">
           <div className="grid grid-cols-2 bg-white/5 p-1 rounded-xl border border-white/10 text-xs font-bold mb-5">
             <button
               type="button"

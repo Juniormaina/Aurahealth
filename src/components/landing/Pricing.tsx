@@ -2,19 +2,19 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { SUBSCRIPTION_TIERS } from '../../content/valueProps';
 import { fadeUp, Reveal } from './Reveal';
+import { SectionHeading } from './SectionHeading';
 
 interface PricingProps {
   onStartTrial: () => void;
 }
 
 export const Pricing: React.FC<PricingProps> = ({ onStartTrial }) => (
-  <Reveal id="pricing" className="max-w-5xl mx-auto w-full mb-16 scroll-mt-24">
-    <motion.h2 variants={fadeUp} className="text-center text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">
-      Pricing
-    </motion.h2>
-    <motion.p variants={fadeUp} className="text-center text-sm text-slate-400 mb-6 leading-[1.6]">
-      Start with a 7-day trial. Upgrade when the 5-minute habit sticks.
-    </motion.p>
+  <Reveal id="pricing" className="max-w-5xl mx-auto w-full mb-16 scroll-mt-28">
+    <SectionHeading
+      kicker="Pricing"
+      title="Stay as long as it serves you"
+      copy="Start with a 7-day trial. Upgrade when the 5-minute habit sticks."
+    />
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
       {SUBSCRIPTION_TIERS.map((tier) => {
         const featured = tier.id === 'annual';
@@ -22,10 +22,8 @@ export const Pricing: React.FC<PricingProps> = ({ onStartTrial }) => (
           <motion.article
             key={tier.id}
             variants={fadeUp}
-            className={`aura-card landing-feature-card p-6 rounded-2xl border flex flex-col relative ${
-              featured
-                ? 'border-[var(--color-primary)] shadow-[0_12px_40px_rgba(47,122,115,0.22)] lg:-translate-y-1 z-10 pt-7'
-                : 'border-[#242E42]'
+            className={`glass-panel landing-feature-card p-6 rounded-2xl flex flex-col relative ${
+              featured ? 'pricing-tier-featured lg:-translate-y-1 z-10 pt-7' : ''
             }`}
           >
             {featured && (
@@ -33,19 +31,15 @@ export const Pricing: React.FC<PricingProps> = ({ onStartTrial }) => (
                 Best value
               </span>
             )}
-            <h3 className="text-sm font-bold text-white">{tier.name}</h3>
-            <p className="text-3xl font-bold text-white font-display mt-2 tabular-nums">
+            <h3 className="text-sm font-bold text-[#F7FFFC]">{tier.name}</h3>
+            <p className="text-3xl font-bold text-[#F7FFFC] font-display mt-2 tabular-nums">
               ${tier.priceUsd}
-              <span className="text-sm font-semibold text-slate-400">
+              <span className="text-sm font-semibold text-[#D5E4DC]">
                 {tier.cadence !== 'once' ? `/${tier.cadence === 'month' ? 'mo' : 'yr'}` : ''}
               </span>
             </p>
-            <p className="text-sm text-slate-400 leading-[1.6] mt-2 flex-1">{tier.highlight}</p>
-            <button
-              type="button"
-              onClick={onStartTrial}
-              className={featured ? 'btn-primary mt-5 justify-center text-xs' : 'btn-ghost mt-5 justify-center text-xs'}
-            >
+            <p className="text-sm text-[#D5E4DC] leading-[1.6] mt-2 flex-1">{tier.highlight}</p>
+            <button type="button" onClick={onStartTrial} className="btn-primary mt-5 justify-center text-xs">
               Get started
             </button>
           </motion.article>

@@ -3,6 +3,7 @@ import { Droplets, Sparkles, MessageCircle, Building2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { fadeUp, Reveal } from './Reveal';
 import { IconBadge, IconBadgeVariant } from '../ui/IconBadge';
+import { SectionHeading } from './SectionHeading';
 
 const FEATURES: { icon: typeof Droplets; title: string; copy: string; variant: IconBadgeVariant }[] = [
   {
@@ -32,21 +33,23 @@ const FEATURES: { icon: typeof Droplets; title: string; copy: string; variant: I
 ];
 
 export const Features: React.FC = () => (
-  <Reveal id="features" className="max-w-5xl mx-auto w-full mb-16 scroll-mt-24">
-    <motion.h2 variants={fadeUp} className="text-center text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-6">
-      Features
-    </motion.h2>
+  <Reveal id="features" className="max-w-5xl mx-auto w-full mb-16 scroll-mt-28">
+    <SectionHeading
+      kicker="Features"
+      title="Four ways to stay well"
+      copy="Glass modules for the daily habit, Astra, language-first sessions, and team programs."
+    />
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {FEATURES.map((item) => (
         <motion.article
           key={item.title}
           variants={fadeUp}
-          className="aura-card landing-feature-card p-5 rounded-2xl border border-[#242E42] flex gap-3 min-w-0"
+          className="glass-panel landing-feature-card p-5 rounded-2xl flex gap-3 min-w-0"
         >
           <IconBadge icon={item.icon} variant={item.variant} />
           <div>
-            <h3 className="text-sm font-bold text-white mb-1">{item.title}</h3>
-            <p className="text-sm text-slate-400 leading-[1.6]">{item.copy}</p>
+            <h3 className="text-sm font-bold text-[#F7FFFC] mb-1">{item.title}</h3>
+            <p className="text-sm text-[#D5E4DC] leading-[1.6]">{item.copy}</p>
           </div>
         </motion.article>
       ))}
