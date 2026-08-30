@@ -1,4 +1,10 @@
-<img src="public/aurahealth-logo.svg" alt="Aura Health" width="360" />
+<p align="center">
+  <img src="docs/readme/logo.svg" alt="Aura Health logo" width="360" />
+</p>
+
+<p align="center">
+  <img src="docs/readme/cover.jpg" alt="Aura Health cover — misty green hills at dawn" width="100%" />
+</p>
 
 **Live app:** [aurahealth-delta.vercel.app](https://aurahealth-delta.vercel.app/)
 
@@ -7,6 +13,23 @@ Aura Health is a **dark-only** gamified daily health app: an evolving companion
 — backed by real, verified smart contracts on **Avalanche Fuji testnet**. Sign
 in with Google or email, or use **Continue as Guest** / **Guest Walkthrough**
 to try the product without an account.
+
+## Screenshots
+
+| Landing | Features | Proof |
+|:---:|:---:|:---:|
+| <img src="docs/readme/screenshots/01-landing-hero.jpg" alt="Landing hero" /> | <img src="docs/readme/screenshots/02-features.jpg" alt="Features" /> | <img src="docs/readme/screenshots/03-proof.jpg" alt="Proof analytics" /> |
+
+| Pricing | Companion | AI Coach | Rewards |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/readme/screenshots/05-pricing.jpg" alt="Pricing" /> | <img src="docs/readme/screenshots/06-companion.jpg" alt="Companion dashboard" /> | <img src="docs/readme/screenshots/07-ai-coach.jpg" alt="AI Coach" /> | <img src="docs/readme/screenshots/08-rewards-hub.jpg" alt="Rewards hub" /> |
+
+<details>
+<summary>Landing Rewards section</summary>
+
+<img src="docs/readme/screenshots/04-rewards-landing.jpg" alt="Landing Rewards" width="100%" />
+
+</details>
 
 ## Value propositions (in-product)
 
@@ -109,13 +132,23 @@ when `prefers-reduced-motion` is set.
 
 ## Brand mark
 
+<p align="center">
+  <img src="docs/readme/logo.svg" alt="Aura Health logo" width="280" />
+</p>
+
 The Aura Health logo is a circular health-tech mark: a glowing teal–blue–purple
 ring with a white heartbeat trace (neon-red glow) that pulses to signal vitality.
 It is used as:
 
 - The **favicon** (`public/favicon.svg`) and Apple touch icon
-- The **wordmark lockup** (`public/aurahealth-logo.svg`)
+- The **wordmark lockup** (`public/aurahealth-logo.svg` / `docs/readme/logo.svg`)
 - The in-app / landing glyph (`src/components/AuraLogo.tsx` — `AuraMark`)
+
+README cover and screenshots live in [`docs/readme/`](docs/readme/). Refresh them with:
+
+```bash
+python scripts/capture_readme_screenshots.py
+```
 
 ## Live on-chain deployment
 
