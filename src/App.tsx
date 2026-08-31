@@ -876,7 +876,7 @@ export default function App() {
       <WearablesSyncModal
         isOpen={wearablesOpen}
         onClose={() => setWearablesOpen(false)}
-        onSyncData={() => showToast('Wearable biometrics synced.')}
+        onSyncData={() => showToast('Loaded a simulated wearable sample. Not a live device sync.')}
         onShowToast={showToast}
       />
 

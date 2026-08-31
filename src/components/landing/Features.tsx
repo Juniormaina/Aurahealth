@@ -9,7 +9,7 @@ const FEATURES: { icon: typeof Droplets; title: string; copy: string; variant: I
   {
     icon: Droplets,
     title: 'Track daily wellness',
-    copy: 'Log water, sleep, mood, and medication in seconds — or sync a wearable.',
+    copy: 'Log water, sleep, mood, and medication in seconds. Wearable sync is a simulated preview until HealthKit and Fit ship.',
     variant: 'teal',
   },
   {

@@ -47,9 +47,9 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
       setWaterLiters(metrics.waterLiters);
       setActivityMinutes(metrics.activeMinutes);
       setIsWearablesSynced(true);
-      setNotes(`[Fetched via ${metrics.providerName} at ${metrics.fetchedAt}] Step Count: ${metrics.stepCount.toLocaleString()} steps | Sleep: ${metrics.sleepDurationHours} hrs | Heart Rate: ${metrics.heartRateBpm} bpm.`);
+      setNotes(`[Simulated ${metrics.providerName} preview at ${metrics.fetchedAt}] Step Count: ${metrics.stepCount.toLocaleString()} steps | Sleep: ${metrics.sleepDurationHours} hrs | Heart Rate: ${metrics.heartRateBpm} bpm. Not from HealthKit or Google Fit.`);
       if (onShowToast) {
-        onShowToast(`Synced with ${metrics.providerName}! Updated steps (${metrics.stepCount.toLocaleString()}) & sleep (${metrics.sleepDurationHours} hrs).`);
+        onShowToast(`Loaded a simulated ${metrics.providerName} sample — ${metrics.stepCount.toLocaleString()} steps, ${metrics.sleepDurationHours} hrs sleep. Not a live sync.`);
       }
     }
   };
@@ -59,7 +59,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
     setSleepHours(data.sleepHours);
     setActivityMinutes(data.activityMinutes);
     setIsWearablesSynced(true);
-    setNotes(`[Verified Wearable Sync: ${data.verificationSource}] ${data.stepsCount} steps, ${data.heartRateBpm} bpm, ${data.spo2Percent}% SpO2.`);
+    setNotes(`[Simulated wearable preview: ${data.verificationSource}] ${data.stepsCount} steps, ${data.heartRateBpm} bpm, ${data.spo2Percent}% SpO2. Not from a connected device.`);
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,17 +191,17 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
               </div>
               <div>
                 <div className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <span>Apple Health & Google Fit Sync</span>
+                  <span>Wearable preview</span>
                   {isWearablesSynced && (
-                    <span className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-200 dark:border-emerald-500/30">
-                      Synced ✓
+                    <span className="bg-white/10 text-[#D5E4DC] text-[10px] px-2 py-0.5 rounded-full font-bold border border-white/15">
+                      Simulated
                     </span>
                   )}
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-300">
                   {isWearablesSynced
-                    ? 'Step count and sleep duration auto-populated from health provider'
-                    : 'Auto-fetch step count & sleep duration from health integrations'}
+                    ? 'Sample steps and sleep filled in for demo — not from HealthKit or Google Fit'
+                    : 'HealthKit and Google Fit are not connected yet. Load a simulated sample if you want to try the flow.'}
                 </p>
               </div>
             </div>
@@ -212,7 +212,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
                 disabled={isHealthFetching}
                 onClick={() => handleFetchExternalHealthData('apple_health')}
                 className="btn-ghost text-[11px] flex items-center gap-1"
-                title="Fetch daily steps & sleep from Apple Health"
+                title="Load a simulated Apple Health sample"
               >
                 {isHealthFetching && activeHealthSource === 'apple_health' ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-500" />
@@ -227,7 +227,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
                 disabled={isHealthFetching}
                 onClick={() => handleFetchExternalHealthData('google_fit')}
                 className="btn-ghost text-[11px] flex items-center gap-1"
-                title="Fetch daily steps & sleep from Google Fit"
+                title="Load a simulated Google Fit sample"
               >
                 {isHealthFetching && activeHealthSource === 'google_fit' ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-500" />
@@ -241,7 +241,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
                 type="button"
                 onClick={() => setIsWearablesModalOpen(true)}
                 className="btn-primary text-[11px] flex items-center gap-1"
-                title="Open detailed Wearable Hardware Sensor Hub"
+                title="Open simulated wearable preview"
               >
                 <Watch className="w-3.5 h-3.5" />
                 <span>More</span>

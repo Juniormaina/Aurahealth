@@ -16,7 +16,6 @@ import {
   Link2,
   Lock
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 export interface WearableDevice {
   id: string;
@@ -57,12 +56,12 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
   const [devices, setDevices] = useState<WearableDevice[]>([
     {
       id: 'dev-gfit',
-      name: 'Google Fit API',
+      name: 'Google Fit',
       provider: 'google_fit',
       icon: '🌐',
-      connected: true,
-      lastSynced: '10 mins ago',
-      accuracyRating: '99% Verified',
+      connected: false,
+      lastSynced: 'Not connected',
+      accuracyRating: 'Simulated preview',
       accentColor: 'from-blue-500 to-emerald-500',
     },
     {
@@ -72,27 +71,27 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
       icon: '⌚',
       connected: false,
       lastSynced: 'Not connected',
-      accuracyRating: '99.5% Hardware Verified',
+      accuracyRating: 'Simulated preview',
       accentColor: 'from-rose-500 to-indigo-600',
     },
     {
       id: 'dev-fitbit',
-      name: 'Fitbit OS Sync',
+      name: 'Fitbit',
       provider: 'fitbit',
       icon: '⌚',
       connected: false,
       lastSynced: 'Not connected',
-      accuracyRating: '98% Sensor Logged',
+      accuracyRating: 'Simulated preview',
       accentColor: 'from-teal-500 to-cyan-600',
     },
     {
       id: 'dev-garmin',
-      name: 'Garmin Connect',
+      name: 'Garmin',
       provider: 'garmin',
       icon: '🏃',
       connected: false,
       lastSynced: 'Not connected',
-      accuracyRating: '99% GPS & Heart Rate',
+      accuracyRating: 'Simulated preview',
       accentColor: 'from-amber-500 to-orange-600',
     },
   ]);
@@ -107,7 +106,7 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
     activityMinutes: 45,
     spo2Percent: 99,
     timestamp: 'Just now',
-    verificationSource: 'Google Fit Health API',
+    verificationSource: 'Simulated preview',
   });
 
   if (!isOpen) return null;
@@ -118,18 +117,12 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
         if (d.id === id) {
           const nextState = !d.connected;
           if (nextState) {
-            confetti({
-              particleCount: 40,
-              spread: 50,
-              origin: { y: 0.6 },
-              colors: ['#10b981', '#38bdf8'],
-            });
-            if (onShowToast) onShowToast(`Connected ${d.name} Health API successfully!`);
+            if (onShowToast) onShowToast(`${d.name} preview enabled. No live API is connected.`);
           }
           return {
             ...d,
             connected: nextState,
-            lastSynced: nextState ? 'Just connected' : 'Not connected',
+            lastSynced: nextState ? 'Using simulated sample' : 'Not connected',
           };
         }
         return d;
@@ -149,21 +142,14 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
         activityMinutes: Math.floor(35 + Math.random() * 25),
         spo2Percent: 98 + Math.floor(Math.random() * 2),
         timestamp: 'Just now',
-        verificationSource: 'Wearable Hardware Sensors',
+        verificationSource: 'Simulated preview',
       };
 
       setLastSyncedData(freshData);
       setIsSyncing(false);
       onSyncData(freshData);
 
-      confetti({
-        particleCount: 60,
-        spread: 70,
-        origin: { y: 0.5 },
-        colors: ['#10b981', '#38bdf8', '#fbbf24'],
-      });
-
-      if (onShowToast) onShowToast('Biometric telemetry synced & verified via Wearable Hardware!');
+      if (onShowToast) onShowToast('Loaded a simulated wearable sample. HealthKit and Fit are not connected.');
     }, 1200);
   };
 
@@ -185,13 +171,13 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-black text-white">Wearables & Health API Sync</h3>
-              <span className="bg-emerald-500/20 text-emerald-300 font-bold text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/30">
-                Verifiable Data
+              <h3 className="text-xl font-black text-white">Wearable preview</h3>
+              <span className="bg-white/10 text-[#D5E4DC] font-bold text-[10px] px-2 py-0.5 rounded-full border border-white/15">
+                Simulated
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              Eliminate manual self-reporting by connecting Fitbit, Apple Watch, Google Fit, or Apple Health.
+              HealthKit, Google Fit, Fitbit, and Garmin are not wired yet. Numbers below are demo samples.
             </p>
           </div>
         </div>
@@ -201,7 +187,7 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-bold text-white">
               <Activity className="w-4 h-4 text-emerald-400" />
-              <span>Latest Verified Sensor Readings</span>
+              <span>Latest simulated readings</span>
             </div>
             <button
               onClick={handleSyncTelemetry}
@@ -209,7 +195,7 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
               className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black px-3.5 py-1.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 hover:scale-105 active:scale-95 disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Syncing Hardware...' : 'Sync Now'}</span>
+              <span>{isSyncing ? 'Loading sample…' : 'Load sample'}</span>
             </button>
           </div>
 
@@ -240,7 +226,7 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
         {/* Connected Health API Services */}
         <div className="space-y-3">
           <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-            Available Health Data Integrations
+            Available previews
           </h4>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -273,7 +259,7 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
                       : 'bg-indigo-600 hover:bg-indigo-500 text-white border-transparent'
                   }`}
                 >
-                  {dev.connected ? 'Connected ✓' : 'Connect API'}
+                  {dev.connected ? 'Preview on' : 'Use preview'}
                 </button>
               </div>
             ))}
@@ -284,7 +270,7 @@ export const WearablesSyncModal: React.FC<WearablesSyncModalProps> = ({
         <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
           <span className="flex items-center gap-1.5">
             <Lock className="w-3.5 h-3.5 text-emerald-400" />
-            End-to-End Encrypted Telemetry
+            Demo data only — HealthKit and Google Fit are not connected.
           </span>
           <button
             onClick={onClose}

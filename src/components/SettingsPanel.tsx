@@ -129,10 +129,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <h2 className="text-lg font-bold text-white">Wearables</h2>
         </div>
         <p className="text-sm text-slate-400 leading-[1.6]">
-          Connect Fitbit, Apple Watch / Apple Health, or Google Fit so Astra can adapt sessions to real sleep and heart-rate data.
+          Wearable connections are a simulated preview until HealthKit and Health Connect ship. Astra cannot read live sleep or heart-rate from a device yet.
         </p>
         <button type="button" onClick={onOpenWearables} className="btn-ghost text-xs">
-          Connect Fitbit or Apple Watch
+          Open wearable preview
         </button>
       </section>
 

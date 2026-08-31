@@ -10,7 +10,11 @@ export interface FetchedHealthMetrics {
   heartRateBpm: number;
   providerName: string;
   fetchedAt: string;
+  simulated: true;
 }
+
+/** Until HealthKit / Health Connect are wired, every fetch is a local sample. */
+export const WEARABLES_ARE_SIMULATED = true;
 
 const MOCK_SOURCE_DATA: Record<HealthSource, () => FetchedHealthMetrics> = {
   apple_health: () => ({
@@ -19,8 +23,9 @@ const MOCK_SOURCE_DATA: Record<HealthSource, () => FetchedHealthMetrics> = {
     waterLiters: 2.25,
     activeMinutes: 45,
     heartRateBpm: 68,
-    providerName: 'Apple Health',
+    providerName: 'Apple Health (simulated)',
     fetchedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    simulated: true,
   }),
   google_fit: () => ({
     stepCount: 9150 + Math.floor(Math.random() * 600),
@@ -28,8 +33,9 @@ const MOCK_SOURCE_DATA: Record<HealthSource, () => FetchedHealthMetrics> = {
     waterLiters: 2.5,
     activeMinutes: 50,
     heartRateBpm: 72,
-    providerName: 'Google Fit',
+    providerName: 'Google Fit (simulated)',
     fetchedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    simulated: true,
   }),
   fitbit: () => ({
     stepCount: 7890 + Math.floor(Math.random() * 500),
@@ -37,8 +43,9 @@ const MOCK_SOURCE_DATA: Record<HealthSource, () => FetchedHealthMetrics> = {
     waterLiters: 2,
     activeMinutes: 35,
     heartRateBpm: 70,
-    providerName: 'Fitbit OS',
+    providerName: 'Fitbit (simulated)',
     fetchedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    simulated: true,
   }),
   garmin: () => ({
     stepCount: 10420 + Math.floor(Math.random() * 1000),
@@ -46,14 +53,15 @@ const MOCK_SOURCE_DATA: Record<HealthSource, () => FetchedHealthMetrics> = {
     waterLiters: 3,
     activeMinutes: 65,
     heartRateBpm: 64,
-    providerName: 'Garmin Connect',
+    providerName: 'Garmin (simulated)',
     fetchedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    simulated: true,
   }),
 };
 
 /**
- * Service function to simulate fetching daily step counts and sleep duration
- * from an external health source API like Apple Health or Google Fit.
+ * Returns a local sample that looks like Apple Health / Google Fit.
+ * Not a real HealthKit, Health Connect, or vendor API call.
  */
 export async function fetchExternalHealthData(
   source: HealthSource = 'apple_health'
