@@ -13,7 +13,10 @@ service cloud.firestore {
     //   - displayName: string (optional, <= 200)
     //   - photoURL: string (optional, <= 2048)
     //   - cowriesBalance, totalXp, currentStreak, longestStreak: number
-    //   - lastCheckInDate: string | null (optional, <= 32)
+    //     (client-frozen after create; create must be 0. Server Admin SDK only.)
+    //   - lastCheckInDate: string | null (optional, <= 32, client-frozen)
+    //   - completedRewardKeys: list of strings (optional, <= 4000, client-frozen)
+    //   - habitClaims: map string->string (optional, <= 20 keys, client-frozen)
     //   - updatedAt: timestamp (optional)
     //
     // Collection: companion
@@ -78,6 +81,27 @@ service cloud.firestore {
       return !(key in data) || (data[key] is list && data[key].size() <= maxItems);
     }
 
+    function optMap(data, key, maxKeys) {
+      return !(key in data) || (data[key] is map && data[key].size() <= maxKeys);
+    }
+
+    function rewardFieldsUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'cowriesBalance', 'totalXp', 'currentStreak', 'longestStreak',
+        'lastCheckInDate', 'completedRewardKeys', 'habitClaims'
+      ]);
+    }
+
+    function isInitialRewards(data) {
+      return data.cowriesBalance == 0
+        && data.totalXp == 0
+        && data.currentStreak == 0
+        && data.longestStreak == 0
+        && (!('lastCheckInDate' in data) || data.lastCheckInDate == null)
+        && (!('completedRewardKeys' in data) || data.completedRewardKeys.size() == 0)
+        && (!('habitClaims' in data) || data.habitClaims.size() == 0);
+    }
+
     function uidMatchesAuth(data) {
       return 'uid' in data && isString(data.uid, 128) && data.uid == request.auth.uid;
     }
@@ -91,7 +115,7 @@ service cloud.firestore {
       return data.keys().hasOnly([
           'uid', 'email', 'displayName', 'photoURL',
           'cowriesBalance', 'totalXp', 'currentStreak', 'longestStreak',
-          'lastCheckInDate', 'updatedAt'
+          'lastCheckInDate', 'completedRewardKeys', 'habitClaims', 'updatedAt'
         ])
         && uidMatchesAuth(data)
         && optString(data, 'email', 320)
@@ -102,6 +126,8 @@ service cloud.firestore {
         && optNumber(data, 'currentStreak', 0, 100000)
         && optNumber(data, 'longestStreak', 0, 100000)
         && optString(data, 'lastCheckInDate', 32)
+        && optStringList(data, 'completedRewardKeys', 4000)
+        && optMap(data, 'habitClaims', 20)
         && optTimestamp(data, 'updatedAt');
     }
 
@@ -153,8 +179,8 @@ service cloud.firestore {
         && optString(data, 'proofHash', 128)
         && optString(data, 'txHash', 128)
         && optNumber(data, 'blockNumber', 0, 100000000000)
-        && optNumber(data, 'cowriesEarned', 0, 100000)
-        && optNumber(data, 'xpEarned', 0, 100000)
+        && optNumber(data, 'cowriesEarned', 0, 200)
+        && optNumber(data, 'xpEarned', 0, 500)
         && optNumber(data, 'aiAttestationScore', 0, 100)
         && optString(data, 'aiFeedback', 2000)
         && optTimestamp(data, 'createdAt');
@@ -162,9 +188,14 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isOwner(userId);
-      allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if isOwner(userId) && uidNotModified() && isValidUser(request.resource.data);
-      allow delete: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && isValidUser(request.resource.data)
+        && isInitialRewards(request.resource.data);
+      allow update: if isOwner(userId)
+        && uidNotModified()
+        && isValidUser(request.resource.data)
+        && rewardFieldsUnchanged();
+      allow delete: if false;
     }
 
     match /companion/{userId} {

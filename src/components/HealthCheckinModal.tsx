@@ -5,6 +5,7 @@ import { computeKeccakProof, checkInOnChain, WalletState } from '../services/ava
 import { WearablesSyncModal, SyncedBiometrics } from './WearablesSyncModal';
 import { useHealthData, HealthSource } from '../services/healthDataService';
 import { authorizedFetch } from '../services/commerce';
+import { checkinPayout } from '../server/rewardsCatalog';
 import confetti from 'canvas-confetti';
 
 interface HealthCheckinModalProps {
@@ -122,8 +123,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
       setAiStatus('Saving check-in in the app. Connect a Fuji wallet to record StreakTracker on-chain.');
     }
 
-    const cowriesAwarded = medicationTaken ? 120 : 80;
-    const xpAwarded = 150 + Math.floor(activityMinutes * 1.5);
+    const payout = checkinPayout(medicationTaken, activityMinutes);
 
     const newCheckIn: HealthCheckIn = {
       id: `chk-${Date.now()}`,
@@ -139,8 +139,8 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
       proofHash,
       txHash: onChainTx?.hash,
       blockNumber: onChainTx?.blockNumber,
-      cowriesEarned: cowriesAwarded,
-      xpEarned: xpAwarded,
+      cowriesEarned: payout.cowries,
+      xpEarned: payout.xp,
       aiAttestationScore,
       aiFeedback,
     };

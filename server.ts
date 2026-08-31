@@ -26,6 +26,7 @@ import {
   requireAuth,
   uidKey,
 } from './src/server/auth';
+import { applyCheckinRewards, applyGrant, applySpend, RewardsError } from './src/server/rewards';
 
 // This project's env vars (GEMINI_API_KEY, PRIVATE_KEY, etc.) live in
 // src/.env, not a root .env — load that explicitly, with a plain
@@ -51,6 +52,15 @@ async function startServer() {
   const leadLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 8, key: ipKey('lead') });
   const funnelLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 60, key: uidKey('funnel') });
   const adminLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 30, key: uidKey('admin') });
+  const rewardsLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 40, key: uidKey('rewards') });
+
+  const sendRewardsError = (res: express.Response, err: unknown) => {
+    if (err instanceof RewardsError) {
+      return res.status(err.status).json({ error: err.message, code: err.code });
+    }
+    console.warn('Rewards ledger error:', err);
+    return res.status(500).json({ error: 'Rewards ledger failed', code: 'ledger_error' });
+  };
 
   // Real web search via Tavily (free tier, no billing required) — used to
   // ground Astra's factual/medical answers instead of Gemini's native
@@ -185,6 +195,48 @@ Response MUST be valid JSON string only.`,
       });
     } catch {
       res.status(500).json({ success: false, error: 'Verification failed' });
+    }
+  });
+
+  app.post('/api/rewards/checkin', requireAuth, rewardsLimit, async (req, res) => {
+    try {
+      const body = req.body || {};
+      const result = await applyCheckinRewards(req.user!.uid, req.user!.email, {
+        medicationTaken: body.medicationTaken === true,
+        activityMinutes: Number(body.activityMinutes),
+      });
+      res.json(result);
+    } catch (err) {
+      sendRewardsError(res, err);
+    }
+  });
+
+  app.post('/api/rewards/grant', requireAuth, rewardsLimit, async (req, res) => {
+    try {
+      const { kind, id } = req.body || {};
+      if (kind !== 'mission' && kind !== 'habit') {
+        return res.status(400).json({ error: 'kind must be mission or habit', code: 'invalid_kind' });
+      }
+      if (typeof id !== 'string' || !id || id.length > 64) {
+        return res.status(400).json({ error: 'id required', code: 'invalid_id' });
+      }
+      const result = await applyGrant(req.user!.uid, req.user!.email, kind, id);
+      res.json(result);
+    } catch (err) {
+      sendRewardsError(res, err);
+    }
+  });
+
+  app.post('/api/rewards/spend', requireAuth, rewardsLimit, async (req, res) => {
+    try {
+      const benefitId = String(req.body?.benefitId || '');
+      if (!benefitId || benefitId.length > 64) {
+        return res.status(400).json({ error: 'benefitId required', code: 'invalid_id' });
+      }
+      const result = await applySpend(req.user!.uid, req.user!.email, benefitId);
+      res.json(result);
+    } catch (err) {
+      sendRewardsError(res, err);
     }
   });
 

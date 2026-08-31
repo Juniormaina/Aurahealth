@@ -18,7 +18,9 @@ import { UpgradePrompt } from './components/UpgradePrompt';
 import { WearablesSyncModal } from './components/WearablesSyncModal';
 import { SESSION_LANGUAGES, SessionLanguageId } from './content/valueProps';
 import { checkout, fetchPlan, logMetric, requestCorporatePackage, startTrial, trackFunnel } from './services/commerce';
+import { persistCheckinRewards, persistGrant, persistSpend, RewardsApiError } from './services/rewards';
 import { fetchAdminSession } from './services/adminAuth';
+import { checkinPayout, nextStreak, utcToday, MISSION_REWARDS, HABIT_REWARDS, BENEFIT_COSTS, type LedgerSnapshot } from './server/rewardsCatalog';
 import type { PlanInterval, UserPlan } from './server/commerceStore';
 
 import {
@@ -58,7 +60,6 @@ import {
   getAuthErrorMessage,
   logoutUser,
   syncUserProfile,
-  updateUserCowries,
   saveHealthLogToFirestore,
   getUserHealthLogsFromFirestore,
   getCompanionFromFirestore,
@@ -68,6 +69,30 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 
 import confetti from 'canvas-confetti';
 import { Compass, Home, Search, MessageSquare, Award } from 'lucide-react';
+
+function applyLedger(prev: EconomyStats, ledger: LedgerSnapshot): EconomyStats {
+  return {
+    ...prev,
+    cowriesBalance: ledger.cowriesBalance,
+    totalXp: ledger.totalXp,
+    currentStreak: ledger.currentStreak,
+    longestStreak: ledger.longestStreak,
+    lastCheckInDate: ledger.lastCheckInDate,
+  };
+}
+
+function rewardErrorToast(err: unknown): string {
+  if (err instanceof RewardsApiError && err.status === 503) {
+    return 'Rewards ledger is not configured on the server. Progress is local to this session.';
+  }
+  if (err instanceof RewardsApiError && err.code === 'already_claimed') {
+    return 'Already claimed.';
+  }
+  if (err instanceof RewardsApiError && err.code === 'insufficient_cowries') {
+    return 'Insufficient Cowries.';
+  }
+  return 'Could not persist Cowries. Progress is local to this session.';
+}
 
 export default function App() {
   const [isLanding, setIsLanding] = useState<boolean>(true);
@@ -134,6 +159,7 @@ export default function App() {
     rank: 'Sentinel Initiate',
     communityContributionScore: 88,
   });
+  const [rewardKeys, setRewardKeys] = useState<string[]>([]);
 
   const [isCheckinModalOpen, setIsCheckinModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -228,6 +254,7 @@ export default function App() {
         rank: 'Health Newcomer',
         communityContributionScore: 0,
       });
+      setRewardKeys(profile.completedRewardKeys ?? []);
 
       // Badges aren't persisted per-account yet, so start locked rather than
       // showing the demo seed's already-unlocked ones.
@@ -375,90 +402,100 @@ export default function App() {
   };
 
   // Submit check-in success
-  const handleCheckinSuccess = (newCheckIn: HealthCheckIn) => {
-    setCheckIns((prev) => [newCheckIn, ...prev]);
+  const handleCheckinSuccess = async (newCheckIn: HealthCheckIn) => {
+    let awarded = newCheckIn;
+    let ledgerApplied = false;
 
-    // Save to Firestore if authenticated
     if (userAccount?.uid) {
-      saveHealthLogToFirestore(userAccount.uid, newCheckIn).catch(console.error);
+      try {
+        const ledger = await persistCheckinRewards({
+          medicationTaken: newCheckIn.medicationTaken,
+          activityMinutes: newCheckIn.activityMinutes,
+        });
+        awarded = {
+          ...newCheckIn,
+          cowriesEarned: ledger.cowriesEarned,
+          xpEarned: ledger.xpEarned,
+        };
+        setStats((prev) => applyLedger(prev, ledger));
+        setRewardKeys(ledger.completedRewardKeys);
+        setCompanion((prev) => {
+          const newXp = prev.xp + ledger.xpEarned;
+          let newLevel = prev.level;
+          let newStage = prev.stage;
+          if (newXp >= prev.xpToNextLevel) {
+            newLevel += 1;
+            if (newLevel >= 5 && prev.stage === 'Hatchling') newStage = 'Spark Companion';
+          }
+          const updated = {
+            ...prev,
+            totalCheckIns: prev.totalCheckIns + 1,
+            streakDays: ledger.currentStreak,
+            xp: newXp,
+            level: newLevel,
+            stage: newStage,
+            health: 100,
+            vitality: Math.min(100, prev.vitality + 10),
+          };
+          saveCompanionToFirestore(userAccount.uid!, updated).catch(console.error);
+          return updated;
+        });
+        ledgerApplied = true;
+      } catch (err) {
+        showToast(rewardErrorToast(err));
+      }
+      saveHealthLogToFirestore(userAccount.uid, awarded).catch(console.error);
     }
 
-    // Real day-based streak: first-ever check-in is day 1, consecutive
-    // calendar days increment it, and missing a day resets back to 1 —
-    // instead of incrementing forever regardless of actual consistency.
-    const today = new Date().toISOString().slice(0, 10);
-    let newStreak: number;
-    if (!stats.lastCheckInDate) {
-      newStreak = 1;
-    } else {
-      const diffDays = Math.round(
-        (new Date(today).getTime() - new Date(stats.lastCheckInDate).getTime()) / 86400000
-      );
-      if (diffDays <= 0) newStreak = Math.max(1, stats.currentStreak); // already checked in today
-      else if (diffDays === 1) newStreak = stats.currentStreak + 1; // consecutive day
-      else newStreak = 1; // missed a day (or more) — streak resets
-    }
-    const newLongestStreak = Math.max(stats.longestStreak, newStreak);
+    setCheckIns((prev) => [awarded, ...prev]);
 
-    // Update Economy stats
-    setStats((prev) => {
-      const newCowries = prev.cowriesBalance + newCheckIn.cowriesEarned;
-      const newXp = prev.totalXp + newCheckIn.xpEarned;
-      if (userAccount?.uid) {
-        updateUserCowries(userAccount.uid, newCowries, newXp, {
-          currentStreak: newStreak,
-          longestStreak: newLongestStreak,
+    if (!ledgerApplied) {
+      const today = utcToday();
+      const payout = checkinPayout(newCheckIn.medicationTaken, newCheckIn.activityMinutes);
+      awarded = { ...awarded, cowriesEarned: payout.cowries, xpEarned: payout.xp };
+      setStats((prev) => {
+        const streak = nextStreak(prev.lastCheckInDate, today, prev.currentStreak);
+        const longest = Math.max(prev.longestStreak, streak);
+        return {
+          ...prev,
+          cowriesBalance: prev.cowriesBalance + payout.cowries,
+          totalXp: prev.totalXp + payout.xp,
+          currentStreak: streak,
+          longestStreak: longest,
           lastCheckInDate: today,
-        }).catch(console.error);
-      }
-      return {
-        ...prev,
-        cowriesBalance: newCowries,
-        totalXp: newXp,
-        currentStreak: newStreak,
-        longestStreak: newLongestStreak,
-        lastCheckInDate: today,
-      };
-    });
-
-    // Update Companion
-    setCompanion((prev) => {
-      const updatedTotal = prev.totalCheckIns + 1;
-      const newXp = prev.xp + newCheckIn.xpEarned;
-      let newLevel = prev.level;
-      let newStage = prev.stage;
-
-      if (newXp >= prev.xpToNextLevel) {
-        newLevel += 1;
-        if (newLevel >= 5 && prev.stage === 'Hatchling') {
-          newStage = 'Spark Companion';
+        };
+      });
+      setCompanion((prev) => {
+        const newXp = prev.xp + payout.xp;
+        let newLevel = prev.level;
+        let newStage = prev.stage;
+        if (newXp >= prev.xpToNextLevel) {
+          newLevel += 1;
+          if (newLevel >= 5 && prev.stage === 'Hatchling') newStage = 'Spark Companion';
         }
-      }
+        const updated = {
+          ...prev,
+          totalCheckIns: prev.totalCheckIns + 1,
+          streakDays: nextStreak(stats.lastCheckInDate, today, prev.streakDays),
+          xp: newXp,
+          level: newLevel,
+          stage: newStage,
+          health: 100,
+          vitality: Math.min(100, prev.vitality + 10),
+        };
+        if (userAccount?.uid) {
+          saveCompanionToFirestore(userAccount.uid, updated).catch(console.error);
+        }
+        return updated;
+      });
+    }
 
-      const updatedCompanion = {
-        ...prev,
-        totalCheckIns: updatedTotal,
-        streakDays: newStreak,
-        xp: newXp,
-        level: newLevel,
-        stage: newStage,
-        health: 100,
-        vitality: Math.min(100, prev.vitality + 10),
-      };
-
-      if (userAccount?.uid) {
-        saveCompanionToFirestore(userAccount.uid, updatedCompanion).catch(console.error);
-      }
-
-      return updatedCompanion;
-    });
-
-    if (newCheckIn.txHash && newCheckIn.blockNumber != null) {
+    if (awarded.txHash && awarded.blockNumber != null) {
       setTxLogs((prev) => [
         {
-          hash: newCheckIn.txHash!,
-          blockNumber: newCheckIn.blockNumber,
-          timestamp: newCheckIn.timestamp,
+          hash: awarded.txHash!,
+          blockNumber: awarded.blockNumber,
+          timestamp: awarded.timestamp,
           from: wallet.isSandbox ? 'wallet' : wallet.address,
           to: CONTRACT_ADDRESSES.StreakTracker,
           contractName: 'StreakTracker.sol',
@@ -466,8 +503,8 @@ export default function App() {
           status: 'Confirmed',
           gasUsed: '—',
           nAvaxFee: 'AVAX',
-          eventEmitted: `CheckedIn(score:${newCheckIn.aiAttestationScore})`,
-          explorersUrl: `${EXPLORER_BASE}/tx/${newCheckIn.txHash}`,
+          eventEmitted: `CheckedIn(score:${awarded.aiAttestationScore})`,
+          explorersUrl: `${EXPLORER_BASE}/tx/${awarded.txHash}`,
           onChain: true,
         },
         ...prev,
@@ -476,16 +513,20 @@ export default function App() {
       setTxLogs((prev) => [
         createOffChainActivityRecord(
           'Daily check-in',
-          `+${newCheckIn.cowriesEarned} cowries · not submitted on-chain`
+          `+${awarded.cowriesEarned} cowries · not submitted on-chain`
         ),
         ...prev,
       ]);
     }
 
-    showToast(`Adherence record verified & saved to database! +${newCheckIn.cowriesEarned} 🐚 & +${newCheckIn.xpEarned} XP!`);
+    if (ledgerApplied && awarded.cowriesEarned === 0 && awarded.xpEarned === 0) {
+      showToast('Check-in saved. Daily Cowries were already awarded today.');
+    } else if (ledgerApplied || !userAccount?.uid) {
+      showToast(`Adherence record verified & saved to database! +${awarded.cowriesEarned} 🐚 & +${awarded.xpEarned} XP!`);
+    }
     persistMetric(
-      newCheckIn.moodRating,
-      newCheckIn.anxietyLevel ?? Math.max(1, 11 - newCheckIn.moodRating * 2),
+      awarded.moodRating,
+      awarded.anxietyLevel ?? Math.max(1, 11 - awarded.moodRating * 2),
       'checkin'
     );
     if (userPlan?.plan === 'free') {
@@ -495,51 +536,70 @@ export default function App() {
   };
 
   // Handle Onboarding Tutorial Mission Completed
-  const handleMissionCompleted = (addedXp: number, addedCowries: number, missionId: string) => {
-    setStats((prev) => {
-      const newCowries = prev.cowriesBalance + addedCowries;
-      const newXp = prev.totalXp + addedXp;
-      if (userAccount?.uid) {
-        updateUserCowries(userAccount.uid, newCowries, newXp).catch(console.error);
-      }
-      return {
-        ...prev,
-        cowriesBalance: newCowries,
-        totalXp: newXp,
-        currentStreak: Math.max(1, prev.currentStreak),
-      };
-    });
-
+  const applyCompanionXp = (
+    addedXp: number,
+    extras?: (prev: HealthCompanion) => Partial<HealthCompanion>
+  ) => {
     setCompanion((prev) => {
       let nextStage = prev.stage;
       let nextLevel = prev.level;
-      let newXp = prev.xp + addedXp;
-
+      const newXp = prev.xp + addedXp;
       if (newXp >= prev.xpToNextLevel) {
         nextLevel += 1;
-        if (nextLevel >= 2 && prev.stage === 'Egg') {
-          nextStage = 'Hatchling';
-        }
+        if (nextLevel >= 2 && prev.stage === 'Egg') nextStage = 'Hatchling';
+        if (nextLevel >= 5 && prev.stage === 'Hatchling') nextStage = 'Spark Companion';
       }
-
       const updated = {
         ...prev,
+        ...(extras ? extras(prev) : {}),
         xp: newXp,
         level: nextLevel,
         stage: nextStage,
-        health: Math.min(100, prev.health + 10),
-        vitality: Math.min(100, prev.vitality + 10),
-        streakDays: Math.max(1, prev.streakDays),
       };
-
       if (userAccount?.uid) {
         saveCompanionToFirestore(userAccount.uid, updated).catch(console.error);
       }
-
       return updated;
     });
+  };
 
-    showToast(`First-Day Mission Completed! +${addedXp} XP & +${addedCowries} 🐚 Cowries unlocked!`);
+  const handleMissionCompleted = async (_addedXp: number, _addedCowries: number, missionId: string) => {
+    const catalog = MISSION_REWARDS[missionId];
+    if (!catalog) return;
+
+    const missionExtras = (prev: HealthCompanion) => ({
+      health: Math.min(100, prev.health + 10),
+      vitality: Math.min(100, prev.vitality + 10),
+      streakDays: Math.max(1, prev.streakDays),
+    });
+
+    if (userAccount?.uid) {
+      try {
+        const ledger = await persistGrant('mission', missionId);
+        setStats((prev) => applyLedger(prev, ledger));
+        setRewardKeys(ledger.completedRewardKeys);
+        applyCompanionXp(ledger.xpEarned, missionExtras);
+        showToast(`First-Day Mission Completed! +${ledger.xpEarned} XP & +${ledger.cowriesEarned} 🐚 Cowries unlocked!`);
+        return;
+      } catch (err) {
+        if (err instanceof RewardsApiError && err.code === 'already_claimed') {
+          showToast('Mission already claimed.');
+          return;
+        }
+        showToast(rewardErrorToast(err));
+      }
+    }
+
+    setStats((prev) => ({
+      ...prev,
+      cowriesBalance: prev.cowriesBalance + catalog.cowries,
+      totalXp: prev.totalXp + catalog.xp,
+      currentStreak: Math.max(1, prev.currentStreak),
+    }));
+    applyCompanionXp(catalog.xp, missionExtras);
+    if (!userAccount?.uid) {
+      showToast(`First-Day Mission Completed! +${catalog.xp} XP & +${catalog.cowries} 🐚 Cowries unlocked!`);
+    }
   };
 
   // Win Spin Wheel Prize
@@ -585,18 +645,70 @@ export default function App() {
   };
 
   // Claim Benefit from Rewards Hub
-  const handleClaimBenefit = (cost: number, benefitTitle: string) => {
-    setStats((prev) => {
-      const newCowries = Math.max(0, prev.cowriesBalance - cost);
-      if (userAccount?.uid) {
-        updateUserCowries(userAccount.uid, newCowries, prev.totalXp).catch(console.error);
+  const handleClaimBenefit = async (benefitId: string): Promise<boolean> => {
+    const benefit = BENEFIT_COSTS[benefitId];
+    if (!benefit) return false;
+
+    if (userAccount?.uid) {
+      try {
+        const ledger = await persistSpend(benefitId);
+        setStats((prev) => applyLedger(prev, ledger));
+        setRewardKeys(ledger.completedRewardKeys);
+        showToast(`Redeemed "${ledger.title}" for ${ledger.cowriesSpent} 🐚! Benefit code saved to wallet.`);
+        return true;
+      } catch (err) {
+        showToast(rewardErrorToast(err));
+        return err instanceof RewardsApiError && err.code === 'already_claimed';
       }
-      return {
-        ...prev,
-        cowriesBalance: newCowries,
-      };
+    }
+
+    if (stats.cowriesBalance < benefit.cowriesCost) {
+      showToast(`Insufficient Cowries! You need ${benefit.cowriesCost} 🐚.`);
+      return false;
+    }
+    setStats((prev) => ({
+      ...prev,
+      cowriesBalance: Math.max(0, prev.cowriesBalance - benefit.cowriesCost),
+    }));
+    showToast(`Redeemed "${benefit.title}" for ${benefit.cowriesCost} 🐚! Benefit code saved to wallet.`);
+    return true;
+  };
+
+  const handleGoalUpdated = async (habitId: string) => {
+    const catalog = HABIT_REWARDS[habitId];
+    if (!catalog) return;
+
+    const habitExtras = (prev: HealthCompanion) => ({
+      health: Math.min(100, prev.health + 2),
+      vitality: Math.min(100, prev.vitality + 3),
     });
-    showToast(`Redeemed "${benefitTitle}" for ${cost} 🐚! Benefit code saved to wallet.`);
+
+    if (userAccount?.uid) {
+      try {
+        const ledger = await persistGrant('habit', habitId);
+        setStats((prev) => applyLedger(prev, ledger));
+        setRewardKeys(ledger.completedRewardKeys);
+        applyCompanionXp(ledger.xpEarned, habitExtras);
+        showToast(`Habit Milestone Completed! +${ledger.xpEarned} XP & +${ledger.cowriesEarned} 🐚 earned.`);
+        return;
+      } catch (err) {
+        if (err instanceof RewardsApiError && err.code === 'already_claimed') {
+          showToast('Already claimed for today.');
+          return;
+        }
+        showToast(rewardErrorToast(err));
+      }
+    }
+
+    setStats((prev) => ({
+      ...prev,
+      cowriesBalance: prev.cowriesBalance + catalog.cowries,
+      totalXp: prev.totalXp + catalog.xp,
+    }));
+    applyCompanionXp(catalog.xp, habitExtras);
+    if (!userAccount?.uid) {
+      showToast(`Habit Milestone Completed! +${catalog.xp} XP & +${catalog.cowries} 🐚 earned.`);
+    }
   };
 
   // Claim Sponsor Pool Reward
@@ -807,33 +919,7 @@ export default function App() {
             showUpgrade={!isPaidPlan}
             onUpgrade={() => setPremiumOpen(true)}
             sessionLanguage={sessionLanguage}
-            onGoalUpdated={(xp, cowries) => {
-              setStats((prev) => {
-                const newCowries = prev.cowriesBalance + cowries;
-                const newXp = prev.totalXp + xp;
-                if (userAccount?.uid) {
-                  updateUserCowries(userAccount.uid, newCowries, newXp).catch(console.error);
-                }
-                return {
-                  ...prev,
-                  cowriesBalance: newCowries,
-                  totalXp: newXp,
-                };
-              });
-              setCompanion((prev) => {
-                const updated = {
-                  ...prev,
-                  xp: prev.xp + xp,
-                  health: Math.min(100, prev.health + 2),
-                  vitality: Math.min(100, prev.vitality + 3),
-                };
-                if (userAccount?.uid) {
-                  saveCompanionToFirestore(userAccount.uid, updated).catch(console.error);
-                }
-                return updated;
-              });
-              showToast(`Habit Milestone Completed! +${xp} XP & +${cowries} 🐚 earned.`);
-            }}
+            onGoalUpdated={handleGoalUpdated}
           />
         )}
 
@@ -854,6 +940,9 @@ export default function App() {
               currentStreak={companion.streakDays}
               onShowToast={showToast}
               onClaimBenefit={handleClaimBenefit}
+              claimedBenefitIds={rewardKeys
+                .filter((k) => k.startsWith('benefit:'))
+                .map((k) => k.slice('benefit:'.length))}
             />
 
             <SpinWheelLootbox

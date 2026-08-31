@@ -17,14 +17,11 @@ import {
   doc,
   getDoc,
   setDoc,
-  updateDoc,
   collection,
   addDoc,
   getDocs,
   query,
   where,
-  orderBy,
-  onSnapshot,
   serverTimestamp
 } from 'firebase/firestore';
 
@@ -140,6 +137,8 @@ export interface UserProfileData {
   currentStreak: number;
   longestStreak: number;
   lastCheckInDate: string | null;
+  completedRewardKeys?: string[];
+  habitClaims?: Record<string, string>;
   updatedAt?: any;
 }
 
@@ -154,6 +153,8 @@ export async function syncUserProfile(user: User): Promise<UserProfileData> {
       currentStreak: 0,
       longestStreak: 0,
       lastCheckInDate: null,
+      completedRewardKeys: [],
+      habitClaims: {},
       ...data,
     };
   } else {
@@ -167,30 +168,13 @@ export async function syncUserProfile(user: User): Promise<UserProfileData> {
       currentStreak: 0,
       longestStreak: 0,
       lastCheckInDate: null,
+      completedRewardKeys: [],
+      habitClaims: {},
       updatedAt: serverTimestamp()
     };
     await setDoc(userRef, newProfile);
     return newProfile;
   }
-}
-
-export async function updateUserCowries(
-  uid: string,
-  cowriesBalance: number,
-  totalXp: number,
-  streak?: { currentStreak: number; longestStreak: number; lastCheckInDate: string }
-) {
-  const userRef = doc(db, 'users', uid);
-  await updateDoc(userRef, {
-    cowriesBalance,
-    totalXp,
-    ...(streak ? {
-      currentStreak: streak.currentStreak,
-      longestStreak: streak.longestStreak,
-      lastCheckInDate: streak.lastCheckInDate,
-    } : {}),
-    updatedAt: serverTimestamp()
-  });
 }
 
 // Health Log Helper
