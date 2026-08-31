@@ -4,6 +4,9 @@ import {
   BENEFIT_COSTS,
   HABIT_REWARDS,
   MISSION_REWARDS,
+  QUICK_LOG_REWARDS,
+  WHEEL_MAX_SPINS_PER_DAY,
+  WHEEL_REWARDS,
   checkinPayout,
   nextStreak,
   utcToday,
@@ -142,21 +145,26 @@ export async function applyCheckinRewards(
 export async function applyGrant(
   uid: string,
   email: string | undefined,
-  kind: 'mission' | 'habit',
+  kind: 'mission' | 'habit' | 'quicklog',
   id: string
 ) {
-  const catalog = kind === 'mission' ? MISSION_REWARDS : HABIT_REWARDS;
-  const reward = catalog[id];
+  const catalogs = {
+    mission: MISSION_REWARDS,
+    habit: HABIT_REWARDS,
+    quicklog: QUICK_LOG_REWARDS,
+  } as const;
+  const reward = catalogs[kind][id];
   if (!reward) {
     throw new RewardsError(400, 'unknown_reward', 'Unknown reward');
   }
   const today = utcToday();
   return withUserLedger(uid, email, (row) => {
-    if (kind === 'habit') {
-      if (row.habitClaims[id] === today) {
+    if (kind === 'habit' || kind === 'quicklog') {
+      const claimKey = kind === 'quicklog' ? `quick:${id}` : id;
+      if (row.habitClaims[claimKey] === today) {
         throw new RewardsError(409, 'already_claimed', 'Already claimed today');
       }
-      row.habitClaims[id] = today;
+      row.habitClaims[claimKey] = today;
     } else {
       const key = `mission:${id}`;
       if (row.completedRewardKeys.includes(key)) {
@@ -173,6 +181,42 @@ export async function applyGrant(
       ...snapshot(row),
       cowriesEarned: reward.cowries,
       xpEarned: reward.xp,
+    };
+  });
+}
+
+function pickWheelPrizeId(): string {
+  const ids = Object.keys(WHEEL_REWARDS);
+  return ids[Math.floor(Math.random() * ids.length)]!;
+}
+
+export async function applyWheelSpin(uid: string, email: string | undefined) {
+  const today = utcToday();
+  const prefix = `wheel:${today}:`;
+  return withUserLedger(uid, email, (row) => {
+    const spinsToday = row.completedRewardKeys.filter((k) => k.startsWith(prefix)).length;
+    if (spinsToday >= WHEEL_MAX_SPINS_PER_DAY) {
+      throw new RewardsError(429, 'spin_limit', 'Daily spin limit reached');
+    }
+    if (row.completedRewardKeys.length >= 4000) {
+      throw new RewardsError(429, 'ledger_full', 'Reward history is full');
+    }
+    const prizeId = pickWheelPrizeId();
+    const prize = WHEEL_REWARDS[prizeId];
+    if (!prize) {
+      throw new RewardsError(500, 'wheel_empty', 'Wheel catalog is empty');
+    }
+    row.completedRewardKeys.push(`${prefix}${spinsToday + 1}:${prizeId}`);
+    row.cowriesBalance += prize.cowries;
+    row.totalXp += prize.xp;
+    return {
+      ...snapshot(row),
+      prizeId,
+      label: prize.label,
+      type: prize.type,
+      cowriesEarned: prize.cowries,
+      xpEarned: prize.xp,
+      spinsRemaining: WHEEL_MAX_SPINS_PER_DAY - spinsToday - 1,
     };
   });
 }

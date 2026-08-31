@@ -36,13 +36,26 @@ export async function persistCheckinRewards(input: {
   );
 }
 
-export async function persistGrant(kind: 'mission' | 'habit', id: string) {
+export async function persistGrant(kind: 'mission' | 'habit' | 'quicklog', id: string) {
   return parse<LedgerSnapshot & { cowriesEarned: number; xpEarned: number }>(
     await authorizedFetch('/api/rewards/grant', {
       method: 'POST',
       body: JSON.stringify({ kind, id }),
     })
   );
+}
+
+export async function persistWheelSpin() {
+  return parse<
+    LedgerSnapshot & {
+      prizeId: string;
+      label: string;
+      type: string;
+      cowriesEarned: number;
+      xpEarned: number;
+      spinsRemaining: number;
+    }
+  >(await authorizedFetch('/api/rewards/spin', { method: 'POST', body: JSON.stringify({}) }));
 }
 
 export async function persistSpend(benefitId: string) {

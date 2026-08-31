@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { HealthCompanion } from '../types';
 import { authorizedFetch } from '../services/commerce';
-import { MessageSquare, Send, Sparkles, Bot, Loader2, Heart, Flame, ExternalLink, Search } from 'lucide-react';
+import { CRISIS_REPLY, CRISIS_RESOURCES, looksLikeCrisis } from '../content/crisisSupport';
+import { MessageSquare, Send, Sparkles, Bot, Loader2, Heart, Flame, ExternalLink, Search, Phone } from 'lucide-react';
 
 interface AIHealthCoachProps {
   companion: HealthCompanion;
@@ -41,6 +42,16 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, languag
     setInputMessage('');
     setIsLoading(true);
 
+    const crisisCard = () => {
+      setMessages((prev) => [...prev, { sender: 'astra', text: CRISIS_REPLY, time }]);
+      setIsLoading(false);
+    };
+
+    if (looksLikeCrisis(userText)) {
+      crisisCard();
+      return;
+    }
+
     try {
       const response = await authorizedFetch('/api/ai-coach', {
         method: 'POST',
@@ -60,7 +71,10 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, languag
 
       if (response.ok) {
         const data = await response.json();
-        setMessages((prev) => [...prev, { sender: 'astra', text: data.reply, time, sources: data.sources }]);
+        setMessages((prev) => [
+          ...prev,
+          { sender: 'astra', text: data.crisis ? CRISIS_REPLY : data.reply, time, sources: data.crisis ? undefined : data.sources },
+        ]);
       } else {
         throw new Error('Coach API error');
       }
@@ -106,8 +120,29 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, languag
             Astra AI Health Coach <Sparkles className="w-4 h-4 text-gold shrink-0" />
           </h3>
           <p className="text-xs text-muted leading-[1.6]">
-            Gemini AI + live web search • Not a substitute for professional medical advice • Stage: {companion.stage} (Level {companion.level})
+            Gemini AI + live web search • Not a clinician or emergency service • Stage: {companion.stage} (Level {companion.level})
           </p>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2.5 space-y-2">
+        <p className="text-[11px] text-rose-100 leading-[1.5]">
+          If you are in crisis or might hurt yourself, get help now. Astra cannot keep you safe in an emergency.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {CRISIS_RESOURCES.map((resource) => (
+            <a
+              key={resource.href}
+              href={resource.href}
+              target={resource.href.startsWith('http') ? '_blank' : undefined}
+              rel={resource.href.startsWith('http') ? 'noreferrer' : undefined}
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-rose-50 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 rounded-full px-2.5 py-1"
+            >
+              {resource.href.startsWith('tel:') ? <Phone className="w-3 h-3" /> : <ExternalLink className="w-3 h-3" />}
+              {resource.name}
+              <span className="text-rose-200/80 font-normal">{resource.detail}</span>
+            </a>
+          ))}
         </div>
       </div>
 

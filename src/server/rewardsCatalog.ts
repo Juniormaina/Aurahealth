@@ -24,6 +24,26 @@ export const HABIT_REWARDS: Record<string, { xp: number; cowries: number }> = {
   movement: { xp: 70, cowries: 45 },
 };
 
+export const QUICK_LOG_REWARDS: Record<string, { xp: number; cowries: number }> = {
+  hydration: { xp: 8, cowries: 5 },
+  medication: { xp: 8, cowries: 5 },
+  sleep: { xp: 8, cowries: 5 },
+  mood: { xp: 8, cowries: 5 },
+};
+
+export const WHEEL_MAX_SPINS_PER_DAY = 3;
+
+export const WHEEL_REWARDS: Record<string, { label: string; type: 'cowries' | 'xp' | 'boost' | 'avax_ticket' | 'cosmetic'; cowries: number; xp: number }> = {
+  '1': { label: '100 Cowries', type: 'cowries', cowries: 100, xp: 0 },
+  '2': { label: '250 XP', type: 'xp', cowries: 0, xp: 250 },
+  '3': { label: 'Care Pass', type: 'boost', cowries: 0, xp: 0 },
+  '4': { label: '50 Cowries', type: 'cowries', cowries: 50, xp: 0 },
+  '5': { label: 'Raffle Ticket', type: 'avax_ticket', cowries: 0, xp: 0 },
+  '6': { label: 'Aether Aura', type: 'cosmetic', cowries: 0, xp: 0 },
+  '7': { label: '500 XP Surge', type: 'xp', cowries: 0, xp: 500 },
+  '8': { label: 'Mystery Box', type: 'cowries', cowries: 200, xp: 0 },
+};
+
 export const BENEFIT_COSTS: Record<string, { cowriesCost: number; title: string }> = {
   'b-1': { cowriesCost: 250, title: '$2.50 Clinic Medication Voucher' },
   'b-2': { cowriesCost: 250, title: '1.25 GB Mobile Health Data Top-Up' },

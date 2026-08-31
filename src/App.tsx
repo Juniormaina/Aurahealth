@@ -18,9 +18,9 @@ import { UpgradePrompt } from './components/UpgradePrompt';
 import { WearablesSyncModal } from './components/WearablesSyncModal';
 import { SESSION_LANGUAGES, SessionLanguageId } from './content/valueProps';
 import { checkout, fetchPlan, logMetric, requestCorporatePackage, startTrial, trackFunnel } from './services/commerce';
-import { persistCheckinRewards, persistGrant, persistSpend, RewardsApiError } from './services/rewards';
+import { persistCheckinRewards, persistGrant, persistSpend, persistWheelSpin, RewardsApiError } from './services/rewards';
 import { fetchAdminSession } from './services/adminAuth';
-import { checkinPayout, nextStreak, utcToday, MISSION_REWARDS, HABIT_REWARDS, BENEFIT_COSTS, type LedgerSnapshot } from './server/rewardsCatalog';
+import { checkinPayout, nextStreak, utcToday, MISSION_REWARDS, HABIT_REWARDS, BENEFIT_COSTS, QUICK_LOG_REWARDS, type LedgerSnapshot } from './server/rewardsCatalog';
 import type { PlanInterval, UserPlan } from './server/commerceStore';
 
 import {
@@ -30,6 +30,7 @@ import {
   INITIAL_BADGES,
   INITIAL_CHECKINS,
   INITIAL_TX_LOGS,
+  WHEEL_PRIZES,
 } from './data/initialData';
 
 import {
@@ -90,6 +91,9 @@ function rewardErrorToast(err: unknown): string {
   }
   if (err instanceof RewardsApiError && err.code === 'insufficient_cowries') {
     return 'Insufficient Cowries.';
+  }
+  if (err instanceof RewardsApiError && err.code === 'spin_limit') {
+    return 'Daily loot-wheel spins are used up. Come back tomorrow.';
   }
   return 'Could not persist Cowries. Progress is local to this session.';
 }
@@ -234,7 +238,7 @@ export default function App() {
       setUserAccount({
         name: profile.displayName,
         email: profile.email,
-        isGoogle: true,
+        isGoogle: user.providerData.some((p) => p.providerId === 'google.com'),
         uid: user.uid,
         photoURL: user.photoURL || '',
       });
@@ -602,45 +606,101 @@ export default function App() {
     }
   };
 
-  // Win Spin Wheel Prize
-  const handleWinPrize = (prize: WheelPrize) => {
-    if (prize.type === 'cowries') {
-      const amt = typeof prize.amount === 'number' ? prize.amount : 100;
-      setStats((prev) => ({ ...prev, cowriesBalance: prev.cowriesBalance + amt }));
-    } else if (prize.type === 'xp') {
-      const amt = typeof prize.amount === 'number' ? prize.amount : 200;
-      setCompanion((prev) => ({ ...prev, xp: prev.xp + amt }));
-    } else if (prize.type === 'boost') {
-      setStats((prev) => ({ ...prev, avaxEarned: prev.avaxEarned + 0.05 }));
+  const handleRequestSpin = async (): Promise<WheelPrize> => {
+    if (userAccount?.uid) {
+      try {
+        const ledger = await persistWheelSpin();
+        setStats((prev) => applyLedger(prev, ledger));
+        setRewardKeys(ledger.completedRewardKeys);
+        if (ledger.xpEarned > 0) applyCompanionXp(ledger.xpEarned);
+        const prize =
+          WHEEL_PRIZES.find((p) => p.id === ledger.prizeId) || {
+            id: ledger.prizeId,
+            label: ledger.label,
+            type: (ledger.type as WheelPrize['type']) || 'cowries',
+            amount: ledger.cowriesEarned || ledger.xpEarned,
+            color: '#38bdf8',
+            icon: '🐚',
+          };
+        if (prize.type === 'boost') {
+          setStats((prev) => ({ ...prev, avaxEarned: prev.avaxEarned + 0.05 }));
+        }
+        setTxLogs((prev) => [
+          createOffChainActivityRecord('Loot wheel', `Prize: ${ledger.label} · not on-chain`),
+          ...prev,
+        ]);
+        showToast(`Wheel Prize Claimed: ${ledger.label}!`);
+        return prize;
+      } catch (err) {
+        showToast(rewardErrorToast(err));
+        throw err;
+      }
     }
 
-    const tx = createOffChainActivityRecord('Loot wheel', `Prize: ${prize.label} · not on-chain`);
-    setTxLogs((prev) => [tx, ...prev]);
-
-    showToast(`Wheel Prize Claimed: ${prize.label}!`);
+    const won = WHEEL_PRIZES[Math.floor(Math.random() * WHEEL_PRIZES.length)];
+    if (won.type === 'cowries') {
+      const amt = typeof won.amount === 'number' ? won.amount : 100;
+      setStats((prev) => ({ ...prev, cowriesBalance: prev.cowriesBalance + amt }));
+    } else if (won.type === 'xp') {
+      const amt = typeof won.amount === 'number' ? won.amount : 200;
+      applyCompanionXp(amt);
+    } else if (won.type === 'boost') {
+      setStats((prev) => ({ ...prev, avaxEarned: prev.avaxEarned + 0.05 }));
+    }
+    setTxLogs((prev) => [
+      createOffChainActivityRecord('Loot wheel', `Prize: ${won.label} · not on-chain`),
+      ...prev,
+    ]);
+    showToast(`Wheel Prize Claimed: ${won.label}!`);
+    return won;
   };
 
-  const handleQuickLog = (kind: QuickLogKind) => {
+  const handleQuickLog = async (kind: QuickLogKind) => {
     const labels: Record<QuickLogKind, string> = {
       hydration: '+ Water 💧',
       medication: 'Meds logged',
       sleep: 'Rest boost',
       mood: 'Feeling good',
     };
+    const catalog = QUICK_LOG_REWARDS[kind];
+    const extras = (prev: HealthCompanion) => ({
+      vitality: Math.min(100, prev.vitality + 4),
+      mood: (kind === 'mood' ? 'joyful' : kind === 'sleep' ? 'sleepy' : 'energetic') as HealthCompanion['mood'],
+    });
     setAstraReaction(labels[kind]);
     window.setTimeout(() => setAstraReaction(null), 1200);
-    setCompanion((prev) => ({
-      ...prev,
-      vitality: Math.min(100, prev.vitality + 4),
-      xp: prev.xp + 8,
-      mood: kind === 'mood' ? 'joyful' : kind === 'sleep' ? 'sleepy' : 'energetic',
-    }));
+
+    if (userAccount?.uid && catalog) {
+      try {
+        const ledger = await persistGrant('quicklog', kind);
+        setStats((prev) => applyLedger(prev, ledger));
+        setRewardKeys(ledger.completedRewardKeys);
+        applyCompanionXp(ledger.xpEarned, extras);
+        showToast(`${labels[kind]} · +${ledger.cowriesEarned} 🐚 & +${ledger.xpEarned} XP`);
+        if (kind === 'mood') persistMetric(4, Math.max(1, latestAnxiety - 1), 'quick_log');
+        return;
+      } catch (err) {
+        if (err instanceof RewardsApiError && err.code === 'already_claimed') {
+          setCompanion((prev) => ({ ...prev, ...extras(prev) }));
+          showToast(`${labels[kind]} · already counted today`);
+          if (kind === 'mood') persistMetric(4, Math.max(1, latestAnxiety - 1), 'quick_log');
+          return;
+        }
+        showToast(rewardErrorToast(err));
+      }
+    }
+
+    const xp = catalog?.xp ?? 8;
+    const cowries = catalog?.cowries ?? 5;
+    applyCompanionXp(xp, extras);
     setStats((prev) => ({
       ...prev,
-      cowriesBalance: prev.cowriesBalance + 5,
-      totalXp: prev.totalXp + 8,
+      cowriesBalance: prev.cowriesBalance + cowries,
+      totalXp: prev.totalXp + xp,
     }));
-    showToast(`${labels[kind]} · Astra gained XP`);
+    if (!userAccount?.uid) {
+      showToast(`${labels[kind]} · Astra gained XP`);
+    }
     if (kind === 'mood') persistMetric(4, Math.max(1, latestAnxiety - 1), 'quick_log');
   };
 
@@ -946,7 +1006,7 @@ export default function App() {
             />
 
             <SpinWheelLootbox
-              onWinPrize={handleWinPrize}
+              onRequestSpin={handleRequestSpin}
               cowriesBalance={stats.cowriesBalance}
             />
           </div>

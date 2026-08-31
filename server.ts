@@ -18,6 +18,7 @@ import {
   PUBLIC_PROOF_USER_ID,
 } from './src/server/commerceStore';
 import { CORPORATE_PACKAGES, SUBSCRIPTION_TIERS, VALUE_PROPS } from './src/content/valueProps';
+import { CRISIS_REPLY, CRISIS_RESOURCES, looksLikeCrisis } from './src/content/crisisSupport';
 import {
   clientIp,
   ipKey,
@@ -26,7 +27,7 @@ import {
   requireAuth,
   uidKey,
 } from './src/server/auth';
-import { applyCheckinRewards, applyGrant, applySpend, RewardsError } from './src/server/rewards';
+import { applyCheckinRewards, applyGrant, applySpend, applyWheelSpin, RewardsError } from './src/server/rewards';
 
 // This project's env vars (GEMINI_API_KEY, PRIVATE_KEY, etc.) live in
 // src/.env, not a root .env — load that explicitly, with a plain
@@ -227,13 +228,22 @@ Response MUST be valid JSON string only.`,
   app.post('/api/rewards/grant', requireAuth, rewardsLimit, async (req, res) => {
     try {
       const { kind, id } = req.body || {};
-      if (kind !== 'mission' && kind !== 'habit') {
-        return res.status(400).json({ error: 'kind must be mission or habit', code: 'invalid_kind' });
+      if (kind !== 'mission' && kind !== 'habit' && kind !== 'quicklog') {
+        return res.status(400).json({ error: 'kind must be mission, habit, or quicklog', code: 'invalid_kind' });
       }
       if (typeof id !== 'string' || !id || id.length > 64) {
         return res.status(400).json({ error: 'id required', code: 'invalid_id' });
       }
       const result = await applyGrant(req.user!.uid, req.user!.email, kind, id);
+      res.json(result);
+    } catch (err) {
+      sendRewardsError(res, err);
+    }
+  });
+
+  app.post('/api/rewards/spin', requireAuth, rewardsLimit, async (req, res) => {
+    try {
+      const result = await applyWheelSpin(req.user!.uid, req.user!.email);
       res.json(result);
     } catch (err) {
       sendRewardsError(res, err);
@@ -375,6 +385,15 @@ Response MUST be valid JSON string only.`,
       const { userMessage, companionState, history, language, latestAnxiety } = req.body || {};
       const userText = String(userMessage || '').slice(0, 4000);
 
+      if (looksLikeCrisis(userText)) {
+        return res.json({
+          reply: CRISIS_REPLY,
+          crisis: true,
+          resources: CRISIS_RESOURCES,
+          sources: [],
+        });
+      }
+
       if (!process.env.GEMINI_API_KEY) {
         return res.json({
           reply: `Astra (${companionState?.stage || 'Hatchling'}): "Keep up the fantastic work! Stay hydrated and take your daily checks to help me level up!"`,
@@ -395,6 +414,8 @@ You can have real, multi-turn conversations — remember what the user already t
 ${searchResults.length > 0 ? `You've been given live web search results below for the user's latest message. Use them to ground factual/medical/health answers in current, reliable sources, and mention what you found naturally. If the results aren't actually relevant to a casual message, ignore them and just chat normally.` : ''}
 
 Always make clear you are an AI, not a doctor: for anything about diagnosis, medication, dosing, or symptoms that sound serious or urgent, say so plainly and recommend seeing a licensed healthcare professional or emergency services — do not attempt to diagnose or prescribe.
+
+If the user may be in crisis or at risk of harming themselves, drop character immediately. Tell them you are not a clinician, urge them to contact emergency services or a helpline now, and point them to Kenya 999 / 112, Kenya Red Cross 1199, Befrienders Kenya +254 722 178 177, and https://www.iasp.info/suicidalthoughts/. Do not discuss methods.
 
 For everyday chit-chat, streak motivation, or app questions, respond in character as Astra: energetic, encouraging, 2-4 sentences.`;
 
