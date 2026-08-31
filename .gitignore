@@ -9,6 +9,12 @@ coverage/
 .venv-demo/
 aura_health_demo.webm
 
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+pubsub-debug.log
+.firebase/
+
 # Hardhat
 artifacts/
 cache/

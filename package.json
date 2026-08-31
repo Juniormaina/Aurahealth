@@ -10,6 +10,9 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
+    "check:security": "bash scripts/security-check.sh",
+    "test:rules": "npx -y firebase-tools@14 emulators:exec --only firestore --project demo-aurahealth \"npx tsx tests/firestore.rules.test.ts\"",
+    "check": "npm run lint && npm run check:security && npm run test:rules",
     "contracts:compile": "hardhat compile",
     "contracts:deploy:fuji": "hardhat run src/Scripts/deploy-all.cjs --network fuji",
     "contracts:verify:fuji": "node src/Scripts/verify-all.cjs"
@@ -34,6 +37,7 @@
     "vite": "^6.2.3"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@nomicfoundation/hardhat-toolbox": "^6.1.2",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",

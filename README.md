@@ -250,6 +250,9 @@ npm run dev       # starts the Express + Vite dev server
 npm run build      # production build (vite build + esbuild server bundle)
 npm run start      # run the production server
 npm run lint       # tsc --noEmit
+npm run check:security   # unauthenticated API 401/200 checks (starts a temp server if needed)
+npm run test:rules       # Firestore rules against the emulator (needs Java)
+npm run check            # lint + API checks + rules tests
 ```
 
 Dev server: `http://localhost:3000` (`tsx server.ts`).
