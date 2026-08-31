@@ -196,10 +196,20 @@ export async function updateUserCowries(
 // Health Log Helper
 export async function saveHealthLogToFirestore(uid: string, logData: any) {
   const logsRef = collection(db, 'healthLogs');
+  const clip = (value: unknown, max: number) =>
+    typeof value === 'string' ? value.slice(0, max) : value;
   await addDoc(logsRef, {
-    uid,
     ...logData,
-    createdAt: serverTimestamp()
+    id: clip(logData?.id, 128),
+    timestamp: clip(logData?.timestamp, 64),
+    type: clip(logData?.type, 64),
+    notes: clip(logData?.notes, 2000),
+    symptoms: clip(logData?.symptoms, 2000),
+    proofHash: clip(logData?.proofHash, 128),
+    txHash: clip(logData?.txHash, 128),
+    aiFeedback: clip(logData?.aiFeedback, 2000),
+    uid,
+    createdAt: serverTimestamp(),
   });
 }
 
