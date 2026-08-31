@@ -26,7 +26,7 @@ function splitList(raw: string | undefined): string[] {
 }
 
 export function getAdminAllowlist(): string[] {
-  return splitList(process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS);
+  return splitList(process.env.ADMIN_EMAILS);
 }
 
 function bearerToken(req: Request): string | null {

@@ -18,6 +18,7 @@ import { UpgradePrompt } from './components/UpgradePrompt';
 import { WearablesSyncModal } from './components/WearablesSyncModal';
 import { SESSION_LANGUAGES, SessionLanguageId } from './content/valueProps';
 import { checkout, fetchPlan, logMetric, requestCorporatePackage, startTrial, trackFunnel } from './services/commerce';
+import { fetchAdminSession } from './services/adminAuth';
 import type { PlanInterval, UserPlan } from './server/commerceStore';
 
 import {
@@ -140,6 +141,21 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    fetchAdminSession().catch(() => {
+      if (cancelled) return;
+      setIsAdmin(false);
+      setIsLanding(true);
+      setShowAuth(false);
+      showToast('Admin access was denied or the session expired.');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
+
   const commerceUserId = userAccount?.uid || (isDemoMode ? 'demo-guest' : 'anon');
 
   const persistMetric = (moodScore: number, anxietyLevel: number, source: string) => {
@@ -177,6 +193,7 @@ export default function App() {
         await handleFirebaseUserAuthenticated(user);
       } else {
         setUserAccount(null);
+        setIsAdmin(false);
       }
     });
 
@@ -653,6 +670,7 @@ export default function App() {
           onEnterDashboard={() => setIsLanding(false)}
           onSignOut={handleLogout}
           onAdminLogin={handleAdminLogin}
+          isStaffSignedIn={Boolean(auth.currentUser)}
         />
         <PremiumModal
           isOpen={premiumOpen}

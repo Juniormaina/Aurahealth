@@ -49,6 +49,7 @@ async function startServer() {
   const checkinLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, key: uidKey('checkin') });
   const leadLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 8, key: ipKey('lead') });
   const funnelLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 60, key: uidKey('funnel') });
+  const adminLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 30, key: uidKey('admin') });
 
   // Real web search via Tavily (free tier, no billing required) — used to
   // ground Astra's factual/medical answers instead of Gemini's native
@@ -258,6 +259,10 @@ Response MUST be valid JSON string only.`,
     if (!event) return res.status(400).json({ error: 'event required' });
     trackFunnel(req.user!.uid, String(event), meta);
     res.json({ ok: true });
+  });
+
+  app.get('/api/admin/session', requireAuth, adminLimit, requireAdmin, (req, res) => {
+    res.json({ ok: true, email: req.user!.email });
   });
 
   app.get('/api/funnel/summary', requireAuth, requireAdmin, (_req, res) => {
