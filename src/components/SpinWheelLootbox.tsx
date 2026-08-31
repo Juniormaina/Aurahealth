@@ -5,7 +5,7 @@ import { Sparkles, Gift, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface SpinWheelLootboxProps {
-  onWinPrize: (prize: WheelPrize) => void;
+  onRequestSpin: () => Promise<WheelPrize>;
   cowriesBalance: number;
 }
 
@@ -16,7 +16,7 @@ const COMMUNITY_WINS = [
   'Leo spun a Cosmic XP Boost 12m ago',
 ];
 
-export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onWinPrize, cowriesBalance }) => {
+export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onRequestSpin, cowriesBalance }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -30,21 +30,27 @@ export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onWinPrize, 
     return () => window.clearInterval(id);
   }, []);
 
-  const spinWheel = () => {
+  const spinWheel = async () => {
     if (isSpinning) return;
     setIsSpinning(true);
     setSelectedPrize(null);
 
-    const randomIndex = Math.floor(Math.random() * WHEEL_PRIZES.length);
+    let won: WheelPrize;
+    try {
+      won = await onRequestSpin();
+    } catch {
+      setIsSpinning(false);
+      return;
+    }
+
+    const prizeIndex = Math.max(0, WHEEL_PRIZES.findIndex((p) => p.id === won.id));
     const degreesPerSlice = 360 / WHEEL_PRIZES.length;
-    const targetDegree = 360 * 5 + (360 - randomIndex * degreesPerSlice - degreesPerSlice / 2);
+    const targetDegree = 360 * 5 + (360 - prizeIndex * degreesPerSlice - degreesPerSlice / 2);
     setRotation((prev) => prev + targetDegree);
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       setIsSpinning(false);
-      const won = WHEEL_PRIZES[randomIndex];
       setSelectedPrize(won);
-      onWinPrize(won);
       confetti({
         particleCount: 80,
         spread: 90,
@@ -74,7 +80,7 @@ export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onWinPrize, 
         <span className="text-amber-300 font-bold mr-2">Live</span>
         {COMMUNITY_WINS[tickerIndex]}
       </div>
-      <p className="text-[11px] text-slate-500">Balance: {cowriesBalance.toLocaleString()} Cowries · Extra spins 50 🐚</p>
+      <p className="text-[11px] text-slate-500">Balance: {cowriesBalance.toLocaleString()} Cowries · Up to 3 spins per day</p>
 
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">

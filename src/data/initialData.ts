@@ -168,8 +168,6 @@ export const INITIAL_CHECKINS: HealthCheckIn[] = [
     activityMinutes: 35,
     notes: 'Morning jog, took daily multivitamins and blood pressure medication. Hydration target met.',
     proofHash: '0x9d82e171f20a94e82b7c11f0a991b8f411e8a203912a77e112d83b91a0112cef',
-    txHash: '0x7a89b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0',
-    blockNumber: 38910421,
     cowriesEarned: 120,
     xpEarned: 180,
     aiAttestationScore: 98,
@@ -186,8 +184,6 @@ export const INITIAL_CHECKINS: HealthCheckIn[] = [
     activityMinutes: 20,
     notes: 'Evening prescription dose recorded. Slept uninterrupted.',
     proofHash: '0x8127391ab2094c1d2eef409210aa98f71261a8b301a2f9100123ef456ab789cd',
-    txHash: '0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0',
-    blockNumber: 38898120,
     cowriesEarned: 80,
     xpEarned: 100,
     aiAttestationScore: 95,
@@ -195,33 +191,4 @@ export const INITIAL_CHECKINS: HealthCheckIn[] = [
   },
 ];
 
-export const INITIAL_TX_LOGS: TxRecord[] = [
-  {
-    hash: '0x7a89b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0',
-    blockNumber: 38910421,
-    timestamp: '2026-07-24 08:30:12',
-    from: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
-    to: '0x3F91a823f991129bF013098C21a9952085A651d9',
-    contractName: 'ProofOfAdherence.sol',
-    method: 'recordCheckIn(address,bytes32,uint8,uint16,uint256)',
-    status: 'Confirmed',
-    gasUsed: '42,108',
-    nAvaxFee: '0.00105 Credits',
-    eventEmitted: 'CheckInVerified(0x71C7..., 0x9d82..., +120 Cowries, Streak: 5)',
-    explorersUrl: '#tx-0x7a89b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0',
-  },
-  {
-    hash: '0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0',
-    blockNumber: 38898120,
-    timestamp: '2026-07-23 19:15:44',
-    from: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
-    to: '0x789C1a082fB2019c018240992a019e09919102A1',
-    contractName: 'HealthCompanionNFT.sol',
-    method: 'addXP(uint256,uint256)',
-    status: 'Confirmed',
-    gasUsed: '31,500',
-    nAvaxFee: '0.00078 Credits',
-    eventEmitted: 'XPAccrued(Token #1042, +100 XP, Total: 450 XP)',
-    explorersUrl: '#tx-0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0',
-  },
-];
+export const INITIAL_TX_LOGS: TxRecord[] = [];

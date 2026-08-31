@@ -33,7 +33,7 @@ export interface DailyGoalHabit {
 interface DailyGoalTrackerProps {
   onOpenCheckin: () => void;
   streakDays: number;
-  onGoalUpdated?: (addedXp: number, addedCowries: number) => void;
+  onGoalUpdated?: (habitId: string) => void;
   isFreshStart?: boolean;
 }
 
@@ -170,7 +170,7 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
         burst();
         setPopId(id);
         window.setTimeout(() => setPopId(null), 550);
-        if (onGoalUpdated) onGoalUpdated(habit.xpReward, habit.cowriesReward);
+        if (onGoalUpdated) onGoalUpdated(habit.id);
         return { ...habit, current: habit.target, completed: true };
       })
     );
@@ -187,7 +187,7 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
           burst();
           setPopId(id);
           window.setTimeout(() => setPopId(null), 550);
-          if (onGoalUpdated) onGoalUpdated(habit.xpReward, habit.cowriesReward);
+          if (onGoalUpdated) onGoalUpdated(habit.id);
         }
 
         return {
@@ -211,7 +211,7 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
             origin: { y: 0.7 },
             colors: ['#FBAF40', '#009688'],
           });
-          if (onGoalUpdated) onGoalUpdated(h.xpReward, h.cowriesReward);
+          if (onGoalUpdated) onGoalUpdated(h.id);
         }
         return {
           ...h,

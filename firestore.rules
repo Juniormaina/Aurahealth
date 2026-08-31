@@ -1,17 +1,218 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: Firebase Auth uid
+    // Fields:
+    //   - uid: string (required, immutable, == auth.uid, <= 128)
+    //   - email: string (optional, <= 320)
+    //   - displayName: string (optional, <= 200)
+    //   - photoURL: string (optional, <= 2048)
+    //   - cowriesBalance, totalXp, currentStreak, longestStreak: number
+    //     (client-frozen after create; create must be 0. Server Admin SDK only.)
+    //   - lastCheckInDate: string | null (optional, <= 32, client-frozen)
+    //   - completedRewardKeys: list of strings (optional, <= 4000, client-frozen)
+    //   - habitClaims: map string->string (optional, <= 20 keys, client-frozen)
+    //   - updatedAt: timestamp (optional)
+    //
+    // Collection: companion
+    // Document ID: Firebase Auth uid
+    // Fields:
+    //   - uid: string (required, immutable, == auth.uid, <= 128)
+    //   - name, stage, mood, element, imageUrl: string (size-capped)
+    //   - tokenId, level, xp, xpToNextLevel, health, vitality, harmony,
+    //     streakDays, totalCheckIns: number
+    //   - equippedCosmetics: list of strings (optional, <= 50 items)
+    //   - updatedAt: timestamp (optional)
+    //
+    // Collection: healthLogs
+    // Document ID: auto-id
+    // Fields:
+    //   - uid: string (required, immutable, == auth.uid, <= 128)
+    //   - id, timestamp, type, proofHash, txHash: string (optional, size-capped)
+    //   - waterLiters, sleepHours, moodRating, anxietyLevel, activityMinutes,
+    //     blockNumber, cowriesEarned, xpEarned, aiAttestationScore: number
+    //   - medicationTaken: bool
+    //   - symptoms, notes, aiFeedback: string (optional, <= 2000)
+    //   - createdAt: timestamp (optional)
+    // Client query: where('uid', '==', auth.uid)
+    //
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isString(val, maxLen) {
+      return val is string && val.size() <= maxLen;
+    }
+
+    function isNum(val, minVal, maxVal) {
+      return val is number && val >= minVal && val <= maxVal;
+    }
+
+    function optString(data, key, maxLen) {
+      return !(key in data) || data[key] == null || isString(data[key], maxLen);
+    }
+
+    function optNumber(data, key, minVal, maxVal) {
+      return !(key in data) || isNum(data[key], minVal, maxVal);
+    }
+
+    function optBool(data, key) {
+      return !(key in data) || data[key] is bool;
+    }
+
+    function optTimestamp(data, key) {
+      return !(key in data) || data[key] is timestamp;
+    }
+
+    function optStringList(data, key, maxItems) {
+      return !(key in data) || (data[key] is list && data[key].size() <= maxItems);
+    }
+
+    function optMap(data, key, maxKeys) {
+      return !(key in data) || (data[key] is map && data[key].size() <= maxKeys);
+    }
+
+    function rewardFieldsUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'cowriesBalance', 'totalXp', 'currentStreak', 'longestStreak',
+        'lastCheckInDate', 'completedRewardKeys', 'habitClaims'
+      ]);
+    }
+
+    function isInitialRewards(data) {
+      return data.cowriesBalance == 0
+        && data.totalXp == 0
+        && data.currentStreak == 0
+        && data.longestStreak == 0
+        && (!('lastCheckInDate' in data) || data.lastCheckInDate == null)
+        && (!('completedRewardKeys' in data) || data.completedRewardKeys.size() == 0)
+        && (!('habitClaims' in data) || data.habitClaims.size() == 0);
+    }
+
+    function uidMatchesAuth(data) {
+      return 'uid' in data && isString(data.uid, 128) && data.uid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return resource.data.uid == request.resource.data.uid
+        && request.resource.data.uid == request.auth.uid;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasOnly([
+          'uid', 'email', 'displayName', 'photoURL',
+          'cowriesBalance', 'totalXp', 'currentStreak', 'longestStreak',
+          'lastCheckInDate', 'completedRewardKeys', 'habitClaims', 'updatedAt'
+        ])
+        && uidMatchesAuth(data)
+        && optString(data, 'email', 320)
+        && optString(data, 'displayName', 200)
+        && optString(data, 'photoURL', 2048)
+        && optNumber(data, 'cowriesBalance', 0, 100000000)
+        && optNumber(data, 'totalXp', 0, 100000000)
+        && optNumber(data, 'currentStreak', 0, 100000)
+        && optNumber(data, 'longestStreak', 0, 100000)
+        && optString(data, 'lastCheckInDate', 32)
+        && optStringList(data, 'completedRewardKeys', 4000)
+        && optMap(data, 'habitClaims', 20)
+        && optTimestamp(data, 'updatedAt');
+    }
+
+    function isValidCompanion(data) {
+      return data.keys().hasOnly([
+          'uid', 'tokenId', 'name', 'stage', 'level', 'xp', 'xpToNextLevel',
+          'health', 'vitality', 'harmony', 'mood', 'streakDays', 'totalCheckIns',
+          'imageUrl', 'element', 'equippedCosmetics', 'updatedAt'
+        ])
+        && uidMatchesAuth(data)
+        && optNumber(data, 'tokenId', 0, 1000000000)
+        && optString(data, 'name', 80)
+        && optString(data, 'stage', 64)
+        && optNumber(data, 'level', 0, 10000)
+        && optNumber(data, 'xp', 0, 100000000)
+        && optNumber(data, 'xpToNextLevel', 0, 100000000)
+        && optNumber(data, 'health', 0, 100)
+        && optNumber(data, 'vitality', 0, 100)
+        && optNumber(data, 'harmony', 0, 100)
+        && optString(data, 'mood', 32)
+        && optNumber(data, 'streakDays', 0, 100000)
+        && optNumber(data, 'totalCheckIns', 0, 1000000)
+        && optString(data, 'imageUrl', 2048)
+        && optString(data, 'element', 32)
+        && optStringList(data, 'equippedCosmetics', 50)
+        && optTimestamp(data, 'updatedAt');
+    }
+
+    function isValidHealthLog(data) {
+      return data.keys().hasOnly([
+          'uid', 'id', 'timestamp', 'type', 'waterLiters', 'sleepHours',
+          'medicationTaken', 'moodRating', 'anxietyLevel', 'activityMinutes',
+          'symptoms', 'notes', 'proofHash', 'txHash', 'blockNumber',
+          'cowriesEarned', 'xpEarned', 'aiAttestationScore', 'aiFeedback',
+          'createdAt'
+        ])
+        && uidMatchesAuth(data)
+        && optString(data, 'id', 128)
+        && optString(data, 'timestamp', 64)
+        && optString(data, 'type', 64)
+        && optNumber(data, 'waterLiters', 0, 50)
+        && optNumber(data, 'sleepHours', 0, 24)
+        && optBool(data, 'medicationTaken')
+        && optNumber(data, 'moodRating', 1, 5)
+        && optNumber(data, 'anxietyLevel', 1, 10)
+        && optNumber(data, 'activityMinutes', 0, 1440)
+        && optString(data, 'symptoms', 2000)
+        && optString(data, 'notes', 2000)
+        && optString(data, 'proofHash', 128)
+        && optString(data, 'txHash', 128)
+        && optNumber(data, 'blockNumber', 0, 100000000000)
+        && optNumber(data, 'cowriesEarned', 0, 200)
+        && optNumber(data, 'xpEarned', 0, 500)
+        && optNumber(data, 'aiAttestationScore', 0, 100)
+        && optString(data, 'aiFeedback', 2000)
+        && optTimestamp(data, 'createdAt');
+    }
+
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && isValidUser(request.resource.data)
+        && isInitialRewards(request.resource.data);
+      allow update: if isOwner(userId)
+        && uidNotModified()
+        && isValidUser(request.resource.data)
+        && rewardFieldsUnchanged();
+      allow delete: if false;
     }
 
     match /companion/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidCompanion(request.resource.data);
+      allow update: if isOwner(userId) && uidNotModified() && isValidCompanion(request.resource.data);
+      allow delete: if isOwner(userId);
     }
 
     match /healthLogs/{logId} {
-      allow read, update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated() && isValidHealthLog(request.resource.data);
+      allow update: if isAuthenticated()
+        && resource.data.uid == request.auth.uid
+        && uidNotModified()
+        && isValidHealthLog(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
   }
 }

@@ -91,44 +91,31 @@ export const SANDBOX_WALLET: WalletState = {
   isSandbox: true,
 };
 
-// Helper to generate a simulated Verification Tx (used when no real wallet is
-// connected, or for product-economy actions like the reward wheel/sponsor
-// pools that have no on-chain counterpart among the deployed contracts).
-export function createAvalancheTxRecord(
-  contractName: string,
-  method: string,
-  eventEmitted: string,
-  fromAddr: string = SANDBOX_WALLET.address
-): TxRecord {
-  const randomHex = () => Math.floor(Math.random() * 16).toString(16);
-  const hash = '0x' + Array.from({ length: 64 }, randomHex).join('');
-  const blockNumber = 38910000 + Math.floor(Math.random() * 500);
-  const contractAddr = CONTRACT_ADDRESSES[contractName as keyof typeof CONTRACT_ADDRESSES] || CONTRACT_ADDRESSES.LoyaltyPoints;
-  const gas = Math.floor(28000 + Math.random() * 15000);
-
+/**
+ * Local product activity (check-in without a wallet, loot wheel, sponsor UI).
+ * Never looks like a Fuji receipt: no 0x hash, no Confirmed, no explorer URL.
+ */
+export function createOffChainActivityRecord(activity: string, detail: string): TxRecord {
   return {
-    hash,
-    blockNumber,
+    hash: `local-${Date.now().toString(36)}`,
     timestamp: new Date().toLocaleString(),
-    from: fromAddr,
-    to: contractAddr,
-    contractName,
-    method,
-    status: 'Confirmed',
-    gasUsed: gas.toLocaleString(),
-    nAvaxFee: (gas * 0.000000025).toFixed(5) + ' Credits',
-    eventEmitted,
-    explorersUrl: `#tx-${hash}`,
+    from: 'app',
+    to: '—',
+    contractName: activity,
+    method: 'off-chain',
+    status: 'Off-chain',
+    gasUsed: '—',
+    nAvaxFee: '—',
+    eventEmitted: detail,
+    onChain: false,
   };
 }
 
 /**
- * Performs a REAL on-chain daily check-in against StreakTracker.checkIn()
- * using the user's connected wallet. Returns null (never throws) if there is
- * no injected wallet, the user is on the sandbox wallet, or the call reverts
- * (e.g. "Already checked in today" — StreakTracker enforces a real 24h/48h
- * window per address on-chain) — callers should fall back to a simulated
- * record in that case so the product flow never blocks on-chain friction.
+ * Real StreakTracker.checkIn() on Avalanche Fuji. Returns null if there is
+ * no injected wallet, the chain is not Fuji, or the call reverts (including
+ * "already checked in today"). Callers should save the check-in locally
+ * without inventing a transaction hash.
  */
 export async function checkInOnChain(): Promise<TxRecord | null> {
   if (typeof window === 'undefined' || !(window as any).ethereum) return null;
@@ -156,9 +143,10 @@ export async function checkInOnChain(): Promise<TxRecord | null> {
       nAvaxFee: ethers.formatEther(receipt.gasUsed * (receipt.gasPrice ?? 0n)) + ' AVAX',
       eventEmitted: 'CheckedIn',
       explorersUrl: `${EXPLORER_BASE}/tx/${receipt.hash}`,
+      onChain: true,
     };
   } catch (e) {
-    console.warn('On-chain check-in unavailable, using simulated record:', e);
+    console.warn('On-chain check-in unavailable:', e);
     return null;
   }
 }

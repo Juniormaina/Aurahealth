@@ -21,7 +21,7 @@ interface DashboardHomeProps {
   onFeedCompanion: (cost: number, stat: 'health' | 'vitality' | 'harmony') => void;
   onOpenWheel: () => void;
   isFreshStart: boolean;
-  onGoalUpdated: (addedXp: number, addedCowries: number) => void;
+  onGoalUpdated: (habitId: string) => void;
   onQuickLog?: (kind: QuickLogKind) => void;
   astraReaction?: string | null;
   userId: string;

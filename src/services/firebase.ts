@@ -17,14 +17,11 @@ import {
   doc,
   getDoc,
   setDoc,
-  updateDoc,
   collection,
   addDoc,
   getDocs,
   query,
   where,
-  orderBy,
-  onSnapshot,
   serverTimestamp
 } from 'firebase/firestore';
 
@@ -140,6 +137,8 @@ export interface UserProfileData {
   currentStreak: number;
   longestStreak: number;
   lastCheckInDate: string | null;
+  completedRewardKeys?: string[];
+  habitClaims?: Record<string, string>;
   updatedAt?: any;
 }
 
@@ -154,6 +153,8 @@ export async function syncUserProfile(user: User): Promise<UserProfileData> {
       currentStreak: 0,
       longestStreak: 0,
       lastCheckInDate: null,
+      completedRewardKeys: [],
+      habitClaims: {},
       ...data,
     };
   } else {
@@ -167,6 +168,8 @@ export async function syncUserProfile(user: User): Promise<UserProfileData> {
       currentStreak: 0,
       longestStreak: 0,
       lastCheckInDate: null,
+      completedRewardKeys: [],
+      habitClaims: {},
       updatedAt: serverTimestamp()
     };
     await setDoc(userRef, newProfile);
@@ -174,32 +177,23 @@ export async function syncUserProfile(user: User): Promise<UserProfileData> {
   }
 }
 
-export async function updateUserCowries(
-  uid: string,
-  cowriesBalance: number,
-  totalXp: number,
-  streak?: { currentStreak: number; longestStreak: number; lastCheckInDate: string }
-) {
-  const userRef = doc(db, 'users', uid);
-  await updateDoc(userRef, {
-    cowriesBalance,
-    totalXp,
-    ...(streak ? {
-      currentStreak: streak.currentStreak,
-      longestStreak: streak.longestStreak,
-      lastCheckInDate: streak.lastCheckInDate,
-    } : {}),
-    updatedAt: serverTimestamp()
-  });
-}
-
 // Health Log Helper
 export async function saveHealthLogToFirestore(uid: string, logData: any) {
   const logsRef = collection(db, 'healthLogs');
+  const clip = (value: unknown, max: number) =>
+    typeof value === 'string' ? value.slice(0, max) : value;
   await addDoc(logsRef, {
-    uid,
     ...logData,
-    createdAt: serverTimestamp()
+    id: clip(logData?.id, 128),
+    timestamp: clip(logData?.timestamp, 64),
+    type: clip(logData?.type, 64),
+    notes: clip(logData?.notes, 2000),
+    symptoms: clip(logData?.symptoms, 2000),
+    proofHash: clip(logData?.proofHash, 128),
+    txHash: clip(logData?.txHash, 128),
+    aiFeedback: clip(logData?.aiFeedback, 2000),
+    uid,
+    createdAt: serverTimestamp(),
   });
 }
 

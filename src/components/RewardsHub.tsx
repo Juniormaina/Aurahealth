@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Coins,
   Sparkles,
@@ -24,7 +24,8 @@ interface RewardsHubProps {
   totalXp: number;
   currentStreak: number;
   onShowToast?: (msg: string) => void;
-  onClaimBenefit?: (cowriesCost: number, benefitTitle: string) => void;
+  onClaimBenefit?: (benefitId: string) => Promise<boolean> | boolean;
+  claimedBenefitIds?: string[];
 }
 
 export interface BenefitItem {
@@ -54,10 +55,16 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
   currentStreak,
   onShowToast,
   onClaimBenefit,
+  claimedBenefitIds = [],
 }) => {
   const [activeTab, setActiveTab] = useState<'conversion' | 'milestones' | 'redeem'>('conversion');
   const [calculatorCowries, setCalculatorCowries] = useState<number>(cowriesBalance || 250);
-  const [claimedBenefits, setClaimedBenefits] = useState<string[]>([]);
+  const [claimedBenefits, setClaimedBenefits] = useState<string[]>(claimedBenefitIds);
+
+  useEffect(() => {
+    if (!claimedBenefitIds.length) return;
+    setClaimedBenefits((prev) => [...new Set([...prev, ...claimedBenefitIds])]);
+  }, [claimedBenefitIds]);
 
   // Conversion rates calculations
   const usdValue = (calculatorCowries * 0.01).toFixed(2);
@@ -152,12 +159,17 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
     },
   ];
 
-  const handleRedeemBenefit = (item: BenefitItem) => {
+  const handleRedeemBenefit = async (item: BenefitItem) => {
     if (claimedBenefits.includes(item.id)) return;
 
     if (cowriesBalance < item.cowriesCost) {
       if (onShowToast) onShowToast(`Insufficient Cowries! You need ${item.cowriesCost} 🐚 (Current: ${cowriesBalance} 🐚).`);
       return;
+    }
+
+    if (onClaimBenefit) {
+      const ok = await onClaimBenefit(item.id);
+      if (!ok) return;
     }
 
     setClaimedBenefits((prev) => [...prev, item.id]);
@@ -168,9 +180,7 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
       colors: ['#10b981', '#38bdf8', '#fbbf24'],
     });
 
-    if (onClaimBenefit) {
-      onClaimBenefit(item.cowriesCost, item.title);
-    } else if (onShowToast) {
+    if (!onClaimBenefit && onShowToast) {
       onShowToast(`Successfully redeemed "${item.title}"! Voucher code sent to your wallet.`);
     }
   };

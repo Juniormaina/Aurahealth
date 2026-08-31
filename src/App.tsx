@@ -18,6 +18,9 @@ import { UpgradePrompt } from './components/UpgradePrompt';
 import { WearablesSyncModal } from './components/WearablesSyncModal';
 import { SESSION_LANGUAGES, SessionLanguageId } from './content/valueProps';
 import { checkout, fetchPlan, logMetric, requestCorporatePackage, startTrial, trackFunnel } from './services/commerce';
+import { persistCheckinRewards, persistGrant, persistSpend, persistWheelSpin, RewardsApiError } from './services/rewards';
+import { fetchAdminSession } from './services/adminAuth';
+import { checkinPayout, nextStreak, utcToday, MISSION_REWARDS, HABIT_REWARDS, BENEFIT_COSTS, QUICK_LOG_REWARDS, type LedgerSnapshot } from './server/rewardsCatalog';
 import type { PlanInterval, UserPlan } from './server/commerceStore';
 
 import {
@@ -27,6 +30,7 @@ import {
   INITIAL_BADGES,
   INITIAL_CHECKINS,
   INITIAL_TX_LOGS,
+  WHEEL_PRIZES,
 } from './data/initialData';
 
 import {
@@ -43,7 +47,9 @@ import {
   SANDBOX_WALLET,
   connectWeb3Wallet,
   WalletState,
-  createAvalancheTxRecord,
+  createOffChainActivityRecord,
+  CONTRACT_ADDRESSES,
+  EXPLORER_BASE,
 } from './services/avalanche';
 
 import {
@@ -55,7 +61,6 @@ import {
   getAuthErrorMessage,
   logoutUser,
   syncUserProfile,
-  updateUserCowries,
   saveHealthLogToFirestore,
   getUserHealthLogsFromFirestore,
   getCompanionFromFirestore,
@@ -65,6 +70,33 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 
 import confetti from 'canvas-confetti';
 import { Compass, Home, Search, MessageSquare, Award } from 'lucide-react';
+
+function applyLedger(prev: EconomyStats, ledger: LedgerSnapshot): EconomyStats {
+  return {
+    ...prev,
+    cowriesBalance: ledger.cowriesBalance,
+    totalXp: ledger.totalXp,
+    currentStreak: ledger.currentStreak,
+    longestStreak: ledger.longestStreak,
+    lastCheckInDate: ledger.lastCheckInDate,
+  };
+}
+
+function rewardErrorToast(err: unknown): string {
+  if (err instanceof RewardsApiError && err.status === 503) {
+    return 'Rewards ledger is not configured on the server. Progress is local to this session.';
+  }
+  if (err instanceof RewardsApiError && err.code === 'already_claimed') {
+    return 'Already claimed.';
+  }
+  if (err instanceof RewardsApiError && err.code === 'insufficient_cowries') {
+    return 'Insufficient Cowries.';
+  }
+  if (err instanceof RewardsApiError && err.code === 'spin_limit') {
+    return 'Daily loot-wheel spins are used up. Come back tomorrow.';
+  }
+  return 'Could not persist Cowries. Progress is local to this session.';
+}
 
 export default function App() {
   const [isLanding, setIsLanding] = useState<boolean>(true);
@@ -131,6 +163,7 @@ export default function App() {
     rank: 'Sentinel Initiate',
     communityContributionScore: 88,
   });
+  const [rewardKeys, setRewardKeys] = useState<string[]>([]);
 
   const [isCheckinModalOpen, setIsCheckinModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -140,12 +173,26 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    fetchAdminSession().catch(() => {
+      if (cancelled) return;
+      setIsAdmin(false);
+      setIsLanding(true);
+      setShowAuth(false);
+      showToast('Admin access was denied or the session expired.');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
+
   const commerceUserId = userAccount?.uid || (isDemoMode ? 'demo-guest' : 'anon');
 
   const persistMetric = (moodScore: number, anxietyLevel: number, source: string) => {
     setLatestAnxiety(anxietyLevel);
     logMetric({
-      userId: commerceUserId,
       moodScore,
       anxietyLevel,
       sessionDate: new Date().toISOString().slice(0, 10),
@@ -155,8 +202,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    trackFunnel(commerceUserId, 'session_start');
-    fetchPlan(commerceUserId)
+    trackFunnel('session_start');
+    fetchPlan()
       .then((r) => {
         setUserPlan(r.plan);
         setIsProMode(['premium', 'trial', 'lifetime', 'corporate'].includes(r.plan.plan));
@@ -178,6 +225,7 @@ export default function App() {
         await handleFirebaseUserAuthenticated(user);
       } else {
         setUserAccount(null);
+        setIsAdmin(false);
       }
     });
 
@@ -190,7 +238,7 @@ export default function App() {
       setUserAccount({
         name: profile.displayName,
         email: profile.email,
-        isGoogle: true,
+        isGoogle: user.providerData.some((p) => p.providerId === 'google.com'),
         uid: user.uid,
         photoURL: user.photoURL || '',
       });
@@ -210,6 +258,7 @@ export default function App() {
         rank: 'Health Newcomer',
         communityContributionScore: 0,
       });
+      setRewardKeys(profile.completedRewardKeys ?? []);
 
       // Badges aren't persisted per-account yet, so start locked rather than
       // showing the demo seed's already-unlocked ones.
@@ -308,33 +357,6 @@ export default function App() {
     }
   };
 
-  const handleGoogleSignIn = (email: string, name: string) => {
-    const fakeUid = 'custom_' + email.replace(/[^a-zA-Z0-9]/g, '_');
-    setUserAccount({ name, email, isGoogle: true, uid: fakeUid });
-    setIsLanding(false);
-    setShowAuth(false);
-    setIsDemoMode(false);
-    setStats({
-      cowriesBalance: 0,
-      totalXp: 0,
-      avaxEarned: 0,
-      currentStreak: 0,
-      longestStreak: 0,
-      lastCheckInDate: null,
-      rank: 'Health Newcomer',
-      communityContributionScore: 0,
-    });
-    setCompanion(FRESH_USER_COMPANION);
-    setCheckIns([]);
-    showToast(`Welcome ${name}! Starting fresh with 0 Cowries & 0 Streak.`);
-    confetti({
-      particleCount: 90,
-      spread: 80,
-      origin: { y: 0.6 },
-      colors: ['#e11d48', '#38bdf8', '#10b981', '#fbbf24'],
-    });
-  };
-
   const handleLogout = async () => {
     await logoutUser();
     setUserAccount(null);
@@ -384,207 +406,369 @@ export default function App() {
   };
 
   // Submit check-in success
-  const handleCheckinSuccess = (newCheckIn: HealthCheckIn) => {
-    setCheckIns((prev) => [newCheckIn, ...prev]);
+  const handleCheckinSuccess = async (newCheckIn: HealthCheckIn) => {
+    let awarded = newCheckIn;
+    let ledgerApplied = false;
 
-    // Save to Firestore if authenticated
     if (userAccount?.uid) {
-      saveHealthLogToFirestore(userAccount.uid, newCheckIn).catch(console.error);
+      try {
+        const ledger = await persistCheckinRewards({
+          medicationTaken: newCheckIn.medicationTaken,
+          activityMinutes: newCheckIn.activityMinutes,
+        });
+        awarded = {
+          ...newCheckIn,
+          cowriesEarned: ledger.cowriesEarned,
+          xpEarned: ledger.xpEarned,
+        };
+        setStats((prev) => applyLedger(prev, ledger));
+        setRewardKeys(ledger.completedRewardKeys);
+        setCompanion((prev) => {
+          const newXp = prev.xp + ledger.xpEarned;
+          let newLevel = prev.level;
+          let newStage = prev.stage;
+          if (newXp >= prev.xpToNextLevel) {
+            newLevel += 1;
+            if (newLevel >= 5 && prev.stage === 'Hatchling') newStage = 'Spark Companion';
+          }
+          const updated = {
+            ...prev,
+            totalCheckIns: prev.totalCheckIns + 1,
+            streakDays: ledger.currentStreak,
+            xp: newXp,
+            level: newLevel,
+            stage: newStage,
+            health: 100,
+            vitality: Math.min(100, prev.vitality + 10),
+          };
+          saveCompanionToFirestore(userAccount.uid!, updated).catch(console.error);
+          return updated;
+        });
+        ledgerApplied = true;
+      } catch (err) {
+        showToast(rewardErrorToast(err));
+      }
+      saveHealthLogToFirestore(userAccount.uid, awarded).catch(console.error);
     }
 
-    // Real day-based streak: first-ever check-in is day 1, consecutive
-    // calendar days increment it, and missing a day resets back to 1 —
-    // instead of incrementing forever regardless of actual consistency.
-    const today = new Date().toISOString().slice(0, 10);
-    let newStreak: number;
-    if (!stats.lastCheckInDate) {
-      newStreak = 1;
-    } else {
-      const diffDays = Math.round(
-        (new Date(today).getTime() - new Date(stats.lastCheckInDate).getTime()) / 86400000
-      );
-      if (diffDays <= 0) newStreak = Math.max(1, stats.currentStreak); // already checked in today
-      else if (diffDays === 1) newStreak = stats.currentStreak + 1; // consecutive day
-      else newStreak = 1; // missed a day (or more) — streak resets
-    }
-    const newLongestStreak = Math.max(stats.longestStreak, newStreak);
+    setCheckIns((prev) => [awarded, ...prev]);
 
-    // Update Economy stats
-    setStats((prev) => {
-      const newCowries = prev.cowriesBalance + newCheckIn.cowriesEarned;
-      const newXp = prev.totalXp + newCheckIn.xpEarned;
-      if (userAccount?.uid) {
-        updateUserCowries(userAccount.uid, newCowries, newXp, {
-          currentStreak: newStreak,
-          longestStreak: newLongestStreak,
+    if (!ledgerApplied) {
+      const today = utcToday();
+      const payout = checkinPayout(newCheckIn.medicationTaken, newCheckIn.activityMinutes);
+      awarded = { ...awarded, cowriesEarned: payout.cowries, xpEarned: payout.xp };
+      setStats((prev) => {
+        const streak = nextStreak(prev.lastCheckInDate, today, prev.currentStreak);
+        const longest = Math.max(prev.longestStreak, streak);
+        return {
+          ...prev,
+          cowriesBalance: prev.cowriesBalance + payout.cowries,
+          totalXp: prev.totalXp + payout.xp,
+          currentStreak: streak,
+          longestStreak: longest,
           lastCheckInDate: today,
-        }).catch(console.error);
-      }
-      return {
-        ...prev,
-        cowriesBalance: newCowries,
-        totalXp: newXp,
-        currentStreak: newStreak,
-        longestStreak: newLongestStreak,
-        lastCheckInDate: today,
-      };
-    });
-
-    // Update Companion
-    setCompanion((prev) => {
-      const updatedTotal = prev.totalCheckIns + 1;
-      const newXp = prev.xp + newCheckIn.xpEarned;
-      let newLevel = prev.level;
-      let newStage = prev.stage;
-
-      if (newXp >= prev.xpToNextLevel) {
-        newLevel += 1;
-        if (newLevel >= 5 && prev.stage === 'Hatchling') {
-          newStage = 'Spark Companion';
+        };
+      });
+      setCompanion((prev) => {
+        const newXp = prev.xp + payout.xp;
+        let newLevel = prev.level;
+        let newStage = prev.stage;
+        if (newXp >= prev.xpToNextLevel) {
+          newLevel += 1;
+          if (newLevel >= 5 && prev.stage === 'Hatchling') newStage = 'Spark Companion';
         }
-      }
+        const updated = {
+          ...prev,
+          totalCheckIns: prev.totalCheckIns + 1,
+          streakDays: nextStreak(stats.lastCheckInDate, today, prev.streakDays),
+          xp: newXp,
+          level: newLevel,
+          stage: newStage,
+          health: 100,
+          vitality: Math.min(100, prev.vitality + 10),
+        };
+        if (userAccount?.uid) {
+          saveCompanionToFirestore(userAccount.uid, updated).catch(console.error);
+        }
+        return updated;
+      });
+    }
 
-      const updatedCompanion = {
+    if (awarded.txHash && awarded.blockNumber != null) {
+      setTxLogs((prev) => [
+        {
+          hash: awarded.txHash!,
+          blockNumber: awarded.blockNumber,
+          timestamp: awarded.timestamp,
+          from: wallet.isSandbox ? 'wallet' : wallet.address,
+          to: CONTRACT_ADDRESSES.StreakTracker,
+          contractName: 'StreakTracker.sol',
+          method: 'checkIn',
+          status: 'Confirmed',
+          gasUsed: '—',
+          nAvaxFee: 'AVAX',
+          eventEmitted: `CheckedIn(score:${awarded.aiAttestationScore})`,
+          explorersUrl: `${EXPLORER_BASE}/tx/${awarded.txHash}`,
+          onChain: true,
+        },
         ...prev,
-        totalCheckIns: updatedTotal,
-        streakDays: newStreak,
-        xp: newXp,
-        level: newLevel,
-        stage: newStage,
-        health: 100,
-        vitality: Math.min(100, prev.vitality + 10),
-      };
+      ]);
+    } else {
+      setTxLogs((prev) => [
+        createOffChainActivityRecord(
+          'Daily check-in',
+          `+${awarded.cowriesEarned} cowries · not submitted on-chain`
+        ),
+        ...prev,
+      ]);
+    }
 
-      if (userAccount?.uid) {
-        saveCompanionToFirestore(userAccount.uid, updatedCompanion).catch(console.error);
-      }
-
-      return updatedCompanion;
-    });
-
-    // Create Avalanche Tx Log
-    const tx = createAvalancheTxRecord(
-      'ProofOfAdherence.sol',
-      'recordCheckIn',
-      `CheckInVerified(Score:${newCheckIn.aiAttestationScore}, Cowries:+${newCheckIn.cowriesEarned})`
-    );
-    setTxLogs((prev) => [tx, ...prev]);
-
-    showToast(`Adherence record verified & saved to database! +${newCheckIn.cowriesEarned} 🐚 & +${newCheckIn.xpEarned} XP!`);
+    if (ledgerApplied && awarded.cowriesEarned === 0 && awarded.xpEarned === 0) {
+      showToast('Check-in saved. Daily Cowries were already awarded today.');
+    } else if (ledgerApplied || !userAccount?.uid) {
+      showToast(`Adherence record verified & saved to database! +${awarded.cowriesEarned} 🐚 & +${awarded.xpEarned} XP!`);
+    }
     persistMetric(
-      newCheckIn.moodRating,
-      newCheckIn.anxietyLevel ?? Math.max(1, 11 - newCheckIn.moodRating * 2),
+      awarded.moodRating,
+      awarded.anxietyLevel ?? Math.max(1, 11 - awarded.moodRating * 2),
       'checkin'
     );
     if (userPlan?.plan === 'free') {
       setPremiumOpen(true);
-      trackFunnel(commerceUserId, 'upgrade_prompt_shown', { after: 'checkin' });
+      trackFunnel('upgrade_prompt_shown', { after: 'checkin' });
     }
   };
 
   // Handle Onboarding Tutorial Mission Completed
-  const handleMissionCompleted = (addedXp: number, addedCowries: number, missionId: string) => {
-    setStats((prev) => {
-      const newCowries = prev.cowriesBalance + addedCowries;
-      const newXp = prev.totalXp + addedXp;
-      if (userAccount?.uid) {
-        updateUserCowries(userAccount.uid, newCowries, newXp).catch(console.error);
-      }
-      return {
-        ...prev,
-        cowriesBalance: newCowries,
-        totalXp: newXp,
-        currentStreak: Math.max(1, prev.currentStreak),
-      };
-    });
-
+  const applyCompanionXp = (
+    addedXp: number,
+    extras?: (prev: HealthCompanion) => Partial<HealthCompanion>
+  ) => {
     setCompanion((prev) => {
       let nextStage = prev.stage;
       let nextLevel = prev.level;
-      let newXp = prev.xp + addedXp;
-
+      const newXp = prev.xp + addedXp;
       if (newXp >= prev.xpToNextLevel) {
         nextLevel += 1;
-        if (nextLevel >= 2 && prev.stage === 'Egg') {
-          nextStage = 'Hatchling';
-        }
+        if (nextLevel >= 2 && prev.stage === 'Egg') nextStage = 'Hatchling';
+        if (nextLevel >= 5 && prev.stage === 'Hatchling') nextStage = 'Spark Companion';
       }
-
       const updated = {
         ...prev,
+        ...(extras ? extras(prev) : {}),
         xp: newXp,
         level: nextLevel,
         stage: nextStage,
-        health: Math.min(100, prev.health + 10),
-        vitality: Math.min(100, prev.vitality + 10),
-        streakDays: Math.max(1, prev.streakDays),
       };
-
       if (userAccount?.uid) {
         saveCompanionToFirestore(userAccount.uid, updated).catch(console.error);
       }
-
       return updated;
     });
-
-    showToast(`First-Day Mission Completed! +${addedXp} XP & +${addedCowries} 🐚 Cowries unlocked!`);
   };
 
-  // Win Spin Wheel Prize
-  const handleWinPrize = (prize: WheelPrize) => {
-    if (prize.type === 'cowries') {
-      const amt = typeof prize.amount === 'number' ? prize.amount : 100;
-      setStats((prev) => ({ ...prev, cowriesBalance: prev.cowriesBalance + amt }));
-    } else if (prize.type === 'xp') {
-      const amt = typeof prize.amount === 'number' ? prize.amount : 200;
-      setCompanion((prev) => ({ ...prev, xp: prev.xp + amt }));
-    } else if (prize.type === 'boost') {
-      setStats((prev) => ({ ...prev, avaxEarned: prev.avaxEarned + 0.05 }));
+  const handleMissionCompleted = async (_addedXp: number, _addedCowries: number, missionId: string) => {
+    const catalog = MISSION_REWARDS[missionId];
+    if (!catalog) return;
+
+    const missionExtras = (prev: HealthCompanion) => ({
+      health: Math.min(100, prev.health + 10),
+      vitality: Math.min(100, prev.vitality + 10),
+      streakDays: Math.max(1, prev.streakDays),
+    });
+
+    if (userAccount?.uid) {
+      try {
+        const ledger = await persistGrant('mission', missionId);
+        setStats((prev) => applyLedger(prev, ledger));
+        setRewardKeys(ledger.completedRewardKeys);
+        applyCompanionXp(ledger.xpEarned, missionExtras);
+        showToast(`First-Day Mission Completed! +${ledger.xpEarned} XP & +${ledger.cowriesEarned} 🐚 Cowries unlocked!`);
+        return;
+      } catch (err) {
+        if (err instanceof RewardsApiError && err.code === 'already_claimed') {
+          showToast('Mission already claimed.');
+          return;
+        }
+        showToast(rewardErrorToast(err));
+      }
     }
 
-    const tx = createAvalancheTxRecord('RewardSponsorPool.sol', 'claimWheelReward', `PrizeWon(${prize.label})`);
-    setTxLogs((prev) => [tx, ...prev]);
-
-    showToast(`Wheel Prize Claimed: ${prize.label}!`);
+    setStats((prev) => ({
+      ...prev,
+      cowriesBalance: prev.cowriesBalance + catalog.cowries,
+      totalXp: prev.totalXp + catalog.xp,
+      currentStreak: Math.max(1, prev.currentStreak),
+    }));
+    applyCompanionXp(catalog.xp, missionExtras);
+    if (!userAccount?.uid) {
+      showToast(`First-Day Mission Completed! +${catalog.xp} XP & +${catalog.cowries} 🐚 Cowries unlocked!`);
+    }
   };
 
-  const handleQuickLog = (kind: QuickLogKind) => {
+  const handleRequestSpin = async (): Promise<WheelPrize> => {
+    if (userAccount?.uid) {
+      try {
+        const ledger = await persistWheelSpin();
+        setStats((prev) => applyLedger(prev, ledger));
+        setRewardKeys(ledger.completedRewardKeys);
+        if (ledger.xpEarned > 0) applyCompanionXp(ledger.xpEarned);
+        const prize =
+          WHEEL_PRIZES.find((p) => p.id === ledger.prizeId) || {
+            id: ledger.prizeId,
+            label: ledger.label,
+            type: (ledger.type as WheelPrize['type']) || 'cowries',
+            amount: ledger.cowriesEarned || ledger.xpEarned,
+            color: '#38bdf8',
+            icon: '🐚',
+          };
+        if (prize.type === 'boost') {
+          setStats((prev) => ({ ...prev, avaxEarned: prev.avaxEarned + 0.05 }));
+        }
+        setTxLogs((prev) => [
+          createOffChainActivityRecord('Loot wheel', `Prize: ${ledger.label} · not on-chain`),
+          ...prev,
+        ]);
+        showToast(`Wheel Prize Claimed: ${ledger.label}!`);
+        return prize;
+      } catch (err) {
+        showToast(rewardErrorToast(err));
+        throw err;
+      }
+    }
+
+    const won = WHEEL_PRIZES[Math.floor(Math.random() * WHEEL_PRIZES.length)];
+    if (won.type === 'cowries') {
+      const amt = typeof won.amount === 'number' ? won.amount : 100;
+      setStats((prev) => ({ ...prev, cowriesBalance: prev.cowriesBalance + amt }));
+    } else if (won.type === 'xp') {
+      const amt = typeof won.amount === 'number' ? won.amount : 200;
+      applyCompanionXp(amt);
+    } else if (won.type === 'boost') {
+      setStats((prev) => ({ ...prev, avaxEarned: prev.avaxEarned + 0.05 }));
+    }
+    setTxLogs((prev) => [
+      createOffChainActivityRecord('Loot wheel', `Prize: ${won.label} · not on-chain`),
+      ...prev,
+    ]);
+    showToast(`Wheel Prize Claimed: ${won.label}!`);
+    return won;
+  };
+
+  const handleQuickLog = async (kind: QuickLogKind) => {
     const labels: Record<QuickLogKind, string> = {
       hydration: '+ Water 💧',
       medication: 'Meds logged',
       sleep: 'Rest boost',
       mood: 'Feeling good',
     };
+    const catalog = QUICK_LOG_REWARDS[kind];
+    const extras = (prev: HealthCompanion) => ({
+      vitality: Math.min(100, prev.vitality + 4),
+      mood: (kind === 'mood' ? 'joyful' : kind === 'sleep' ? 'sleepy' : 'energetic') as HealthCompanion['mood'],
+    });
     setAstraReaction(labels[kind]);
     window.setTimeout(() => setAstraReaction(null), 1200);
-    setCompanion((prev) => ({
-      ...prev,
-      vitality: Math.min(100, prev.vitality + 4),
-      xp: prev.xp + 8,
-      mood: kind === 'mood' ? 'joyful' : kind === 'sleep' ? 'sleepy' : 'energetic',
-    }));
+
+    if (userAccount?.uid && catalog) {
+      try {
+        const ledger = await persistGrant('quicklog', kind);
+        setStats((prev) => applyLedger(prev, ledger));
+        setRewardKeys(ledger.completedRewardKeys);
+        applyCompanionXp(ledger.xpEarned, extras);
+        showToast(`${labels[kind]} · +${ledger.cowriesEarned} 🐚 & +${ledger.xpEarned} XP`);
+        if (kind === 'mood') persistMetric(4, Math.max(1, latestAnxiety - 1), 'quick_log');
+        return;
+      } catch (err) {
+        if (err instanceof RewardsApiError && err.code === 'already_claimed') {
+          setCompanion((prev) => ({ ...prev, ...extras(prev) }));
+          showToast(`${labels[kind]} · already counted today`);
+          if (kind === 'mood') persistMetric(4, Math.max(1, latestAnxiety - 1), 'quick_log');
+          return;
+        }
+        showToast(rewardErrorToast(err));
+      }
+    }
+
+    const xp = catalog?.xp ?? 8;
+    const cowries = catalog?.cowries ?? 5;
+    applyCompanionXp(xp, extras);
     setStats((prev) => ({
       ...prev,
-      cowriesBalance: prev.cowriesBalance + 5,
-      totalXp: prev.totalXp + 8,
+      cowriesBalance: prev.cowriesBalance + cowries,
+      totalXp: prev.totalXp + xp,
     }));
-    showToast(`${labels[kind]} · Astra gained XP`);
+    if (!userAccount?.uid) {
+      showToast(`${labels[kind]} · Astra gained XP`);
+    }
     if (kind === 'mood') persistMetric(4, Math.max(1, latestAnxiety - 1), 'quick_log');
   };
 
   // Claim Benefit from Rewards Hub
-  const handleClaimBenefit = (cost: number, benefitTitle: string) => {
-    setStats((prev) => {
-      const newCowries = Math.max(0, prev.cowriesBalance - cost);
-      if (userAccount?.uid) {
-        updateUserCowries(userAccount.uid, newCowries, prev.totalXp).catch(console.error);
+  const handleClaimBenefit = async (benefitId: string): Promise<boolean> => {
+    const benefit = BENEFIT_COSTS[benefitId];
+    if (!benefit) return false;
+
+    if (userAccount?.uid) {
+      try {
+        const ledger = await persistSpend(benefitId);
+        setStats((prev) => applyLedger(prev, ledger));
+        setRewardKeys(ledger.completedRewardKeys);
+        showToast(`Redeemed "${ledger.title}" for ${ledger.cowriesSpent} 🐚! Benefit code saved to wallet.`);
+        return true;
+      } catch (err) {
+        showToast(rewardErrorToast(err));
+        return err instanceof RewardsApiError && err.code === 'already_claimed';
       }
-      return {
-        ...prev,
-        cowriesBalance: newCowries,
-      };
+    }
+
+    if (stats.cowriesBalance < benefit.cowriesCost) {
+      showToast(`Insufficient Cowries! You need ${benefit.cowriesCost} 🐚.`);
+      return false;
+    }
+    setStats((prev) => ({
+      ...prev,
+      cowriesBalance: Math.max(0, prev.cowriesBalance - benefit.cowriesCost),
+    }));
+    showToast(`Redeemed "${benefit.title}" for ${benefit.cowriesCost} 🐚! Benefit code saved to wallet.`);
+    return true;
+  };
+
+  const handleGoalUpdated = async (habitId: string) => {
+    const catalog = HABIT_REWARDS[habitId];
+    if (!catalog) return;
+
+    const habitExtras = (prev: HealthCompanion) => ({
+      health: Math.min(100, prev.health + 2),
+      vitality: Math.min(100, prev.vitality + 3),
     });
-    showToast(`Redeemed "${benefitTitle}" for ${cost} 🐚! Benefit code saved to wallet.`);
+
+    if (userAccount?.uid) {
+      try {
+        const ledger = await persistGrant('habit', habitId);
+        setStats((prev) => applyLedger(prev, ledger));
+        setRewardKeys(ledger.completedRewardKeys);
+        applyCompanionXp(ledger.xpEarned, habitExtras);
+        showToast(`Habit Milestone Completed! +${ledger.xpEarned} XP & +${ledger.cowriesEarned} 🐚 earned.`);
+        return;
+      } catch (err) {
+        if (err instanceof RewardsApiError && err.code === 'already_claimed') {
+          showToast('Already claimed for today.');
+          return;
+        }
+        showToast(rewardErrorToast(err));
+      }
+    }
+
+    setStats((prev) => ({
+      ...prev,
+      cowriesBalance: prev.cowriesBalance + catalog.cowries,
+      totalXp: prev.totalXp + catalog.xp,
+    }));
+    applyCompanionXp(catalog.xp, habitExtras);
+    if (!userAccount?.uid) {
+      showToast(`Habit Milestone Completed! +${catalog.xp} XP & +${catalog.cowries} 🐚 earned.`);
+    }
   };
 
   // Claim Sponsor Pool Reward
@@ -593,7 +777,10 @@ export default function App() {
     if (!targetPool) return;
 
     setStats((prev) => ({ ...prev, avaxEarned: prev.avaxEarned + 0.08 }));
-    const tx = createAvalancheTxRecord('RewardSponsorPool.sol', 'claimReward', `RewardClaimed(${targetPool.rewardPerMilestone})`);
+    const tx = createOffChainActivityRecord(
+      'Sponsor reward',
+      `Claimed ${targetPool.rewardPerMilestone} · not on-chain`
+    );
     setTxLogs((prev) => [tx, ...prev]);
 
     confetti({
@@ -609,7 +796,10 @@ export default function App() {
   // Add Sponsor Pool
   const handleAddSponsorPool = (newPool: SponsorPool) => {
     setPools((prev) => [newPool, ...prev]);
-    const tx = createAvalancheTxRecord('RewardSponsorPool.sol', 'createPool', `PoolFunded(${newPool.totalFundAvax} AVAX)`);
+    const tx = createOffChainActivityRecord(
+      'Sponsor pool',
+      `Created ${newPool.title} · not on-chain`
+    );
     setTxLogs((prev) => [tx, ...prev]);
     showToast(`New Sponsor Grant Pool Created: ${newPool.title}`);
   };
@@ -623,14 +813,26 @@ export default function App() {
   };
 
   const handleStartTrial = async () => {
-    const { plan } = await startTrial(commerceUserId, 'monthly');
+    if (!auth.currentUser) {
+      setPremiumOpen(false);
+      setShowAuth(true);
+      showToast('Sign in to start a Premium trial.');
+      return;
+    }
+    const { plan } = await startTrial('monthly');
     applyPlan(plan);
     setIsLanding(false);
     showToast('7-day Premium trial started. Auto-subscribes monthly unless you cancel.');
   };
 
   const handleCheckout = async (interval: PlanInterval) => {
-    const { plan } = await checkout(commerceUserId, interval);
+    if (!auth.currentUser) {
+      setPremiumOpen(false);
+      setShowAuth(true);
+      showToast('Sign in to upgrade to Premium.');
+      return;
+    }
+    const { plan } = await checkout(interval);
     applyPlan(plan);
     showToast(interval === 'lifetime' ? 'Lifetime Premium unlocked.' : `Premium ${interval} is active.`);
   };
@@ -642,15 +844,14 @@ export default function App() {
     packageId: string;
   }) => {
     await requestCorporatePackage(payload);
-    trackFunnel(commerceUserId, 'corporate_lead', payload);
+    trackFunnel('corporate_lead', payload);
     showToast('Corporate wellness request sent. We will follow up with a package quote.');
   };
 
   if (showAuth) {
     return (
       <AuthPage
-        onGoogleSignIn={handleGoogleSignIn}
-        onRealGoogleSignIn={handleRealGoogleSignIn}
+        onGoogleSignIn={handleRealGoogleSignIn}
         onEmailSignIn={handleEmailSignIn}
         onEmailSignUp={handleEmailSignUp}
         onStartDemo={handleStartDemo}
@@ -670,6 +871,7 @@ export default function App() {
           onEnterDashboard={() => setIsLanding(false)}
           onSignOut={handleLogout}
           onAdminLogin={handleAdminLogin}
+          isStaffSignedIn={Boolean(auth.currentUser)}
         />
         <PremiumModal
           isOpen={premiumOpen}
@@ -712,7 +914,7 @@ export default function App() {
         isProMode={isPaidPlan}
         onToggleProMode={() => {
           setPremiumOpen(true);
-          trackFunnel(commerceUserId, 'upgrade_prompt_shown', { from: 'sidebar' });
+          trackFunnel('upgrade_prompt_shown', { from: 'sidebar' });
         }}
         userAccount={userAccount}
         onSignOut={handleLogout}
@@ -777,33 +979,7 @@ export default function App() {
             showUpgrade={!isPaidPlan}
             onUpgrade={() => setPremiumOpen(true)}
             sessionLanguage={sessionLanguage}
-            onGoalUpdated={(xp, cowries) => {
-              setStats((prev) => {
-                const newCowries = prev.cowriesBalance + cowries;
-                const newXp = prev.totalXp + xp;
-                if (userAccount?.uid) {
-                  updateUserCowries(userAccount.uid, newCowries, newXp).catch(console.error);
-                }
-                return {
-                  ...prev,
-                  cowriesBalance: newCowries,
-                  totalXp: newXp,
-                };
-              });
-              setCompanion((prev) => {
-                const updated = {
-                  ...prev,
-                  xp: prev.xp + xp,
-                  health: Math.min(100, prev.health + 2),
-                  vitality: Math.min(100, prev.vitality + 3),
-                };
-                if (userAccount?.uid) {
-                  saveCompanionToFirestore(userAccount.uid, updated).catch(console.error);
-                }
-                return updated;
-              });
-              showToast(`Habit Milestone Completed! +${xp} XP & +${cowries} 🐚 earned.`);
-            }}
+            onGoalUpdated={handleGoalUpdated}
           />
         )}
 
@@ -824,10 +1000,13 @@ export default function App() {
               currentStreak={companion.streakDays}
               onShowToast={showToast}
               onClaimBenefit={handleClaimBenefit}
+              claimedBenefitIds={rewardKeys
+                .filter((k) => k.startsWith('benefit:'))
+                .map((k) => k.slice('benefit:'.length))}
             />
 
             <SpinWheelLootbox
-              onWinPrize={handleWinPrize}
+              onRequestSpin={handleRequestSpin}
               cowriesBalance={stats.cowriesBalance}
             />
           </div>
@@ -875,7 +1054,7 @@ export default function App() {
       <WearablesSyncModal
         isOpen={wearablesOpen}
         onClose={() => setWearablesOpen(false)}
-        onSyncData={() => showToast('Wearable biometrics synced.')}
+        onSyncData={() => showToast('Loaded a simulated wearable sample. Not a live device sync.')}
         onShowToast={showToast}
       />
 

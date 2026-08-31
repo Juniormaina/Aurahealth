@@ -6,7 +6,7 @@
   <img src="docs/readme/cover.jpg" alt="Aura Health cover — misty green hills at dawn" width="100%" />
 </p>
 
-**Live app:** [https://www.aurahealth.co.ke/] [aurahealth-delta.vercel.app](https://aurahealth-delta.vercel.app/)
+**Live app:** [aurahealth.co.ke](https://www.aurahealth.co.ke/) · [aurahealth-delta.vercel.app](https://aurahealth-delta.vercel.app/)
 
 Aura Health is a **dark-only** gamified daily health app: an evolving companion
 (**Astra**), a Health Cowries economy, sponsor rewards, and an AI coach (Astra)
@@ -250,6 +250,9 @@ npm run dev       # starts the Express + Vite dev server
 npm run build      # production build (vite build + esbuild server bundle)
 npm run start      # run the production server
 npm run lint       # tsc --noEmit
+npm run check:security   # unauthenticated API 401/200 checks (starts a temp server if needed)
+npm run test:rules       # Firestore rules against the emulator (needs Java)
+npm run check            # lint + API checks + rules tests
 ```
 
 Dev server: `http://localhost:3000` (`tsx server.ts`).

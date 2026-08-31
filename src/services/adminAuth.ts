@@ -1,24 +1,25 @@
-function splitList(raw: string | undefined): string[] {
-  return (raw || '')
-    .split(',')
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-}
+import { auth } from './firebase';
+import { authorizedFetch } from './commerce';
 
-export function getAdminAllowlist(): string[] {
-  return splitList(import.meta.env.VITE_ADMIN_EMAILS);
-}
+export type AdminSession = {
+  ok: true;
+  email: string;
+};
 
-export function canAccessAdmin(email?: string | null, accessCode?: string): boolean {
-  const allowlist = getAdminAllowlist();
-  const configuredCode = String(import.meta.env.VITE_ADMIN_ACCESS_CODE || '');
-  const normalizedEmail = email?.trim().toLowerCase() || '';
-
-  if (normalizedEmail && allowlist.includes(normalizedEmail)) return true;
-  if (configuredCode && accessCode && accessCode === configuredCode) return true;
-  return false;
-}
-
-export function isAdminAccessConfigured(): boolean {
-  return getAdminAllowlist().length > 0 || Boolean(import.meta.env.VITE_ADMIN_ACCESS_CODE);
+export async function fetchAdminSession(): Promise<AdminSession> {
+  if (!auth.currentUser) {
+    const err = Object.assign(new Error('Sign in required'), { code: 'unauthenticated' as const });
+    throw err;
+  }
+  const res = await authorizedFetch('/api/admin/session');
+  if (res.status === 401) {
+    throw Object.assign(new Error('Sign in required'), { code: 'unauthenticated' as const });
+  }
+  if (res.status === 403) {
+    throw Object.assign(new Error('Not authorized for admin'), { code: 'forbidden' as const });
+  }
+  if (!res.ok) {
+    throw Object.assign(new Error('Admin check failed'), { code: 'failed' as const });
+  }
+  return res.json() as Promise<AdminSession>;
 }

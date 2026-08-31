@@ -15,8 +15,19 @@ import {
   seedDemoMetrics,
   startTrial,
   trackFunnel,
+  PUBLIC_PROOF_USER_ID,
 } from './src/server/commerceStore';
 import { CORPORATE_PACKAGES, SUBSCRIPTION_TIERS, VALUE_PROPS } from './src/content/valueProps';
+import { CRISIS_REPLY, CRISIS_RESOURCES, looksLikeCrisis } from './src/content/crisisSupport';
+import {
+  clientIp,
+  ipKey,
+  rateLimit,
+  requireAdmin,
+  requireAuth,
+  uidKey,
+} from './src/server/auth';
+import { applyCheckinRewards, applyGrant, applySpend, applyWheelSpin, RewardsError } from './src/server/rewards';
 
 // This project's env vars (GEMINI_API_KEY, PRIVATE_KEY, etc.) live in
 // src/.env, not a root .env — load that explicitly, with a plain
@@ -25,11 +36,45 @@ import { CORPORATE_PACKAGES, SUBSCRIPTION_TIERS, VALUE_PROPS } from './src/conte
 dotenv.config({ path: path.join(process.cwd(), 'src', '.env') });
 dotenv.config();
 
+function listenPort(raw: string | undefined, fallback = 3000): number {
+  const n = Number.parseInt(String(raw || ''), 10);
+  if (!Number.isInteger(n) || n < 1 || n > 65535) return fallback;
+  return n;
+}
+
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = listenPort(process.env.PORT);
+  app.set('trust proxy', 1);
 
-  app.use(express.json({ limit: '10mb' }));
+  const jsonDefault = express.json({ limit: '32kb' });
+  const jsonCheckin = express.json({ limit: '1mb' });
+  app.use((req, res, next) => {
+    if (req.path === '/api/verify-checkin') return jsonCheckin(req, res, next);
+    return jsonDefault(req, res, next);
+  });
+
+  const geminiUserLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 30, key: uidKey('gemini') });
+  const geminiIpLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 60, key: ipKey('gemini') });
+  const geminiGlobalLimit = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 300,
+    key: () => 'gemini:global',
+  });
+  const geminiLimit = [geminiUserLimit, geminiIpLimit, geminiGlobalLimit];
+  const checkinLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, key: uidKey('checkin') });
+  const leadLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 8, key: ipKey('lead') });
+  const funnelLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 60, key: uidKey('funnel') });
+  const adminLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 30, key: uidKey('admin') });
+  const rewardsLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 40, key: uidKey('rewards') });
+
+  const sendRewardsError = (res: express.Response, err: unknown) => {
+    if (err instanceof RewardsError) {
+      return res.status(err.status).json({ error: err.message, code: err.code });
+    }
+    console.warn('Rewards ledger error:', err);
+    return res.status(500).json({ error: 'Rewards ledger failed', code: 'ledger_error' });
+  };
 
   // Real web search via Tavily (free tier, no billing required) — used to
   // ground Astra's factual/medical answers instead of Gemini's native
@@ -71,10 +116,10 @@ async function startServer() {
     res.json({ status: 'ok', network: 'AuraHealth Verification Engine' });
   });
 
-  seedDemoMetrics('public-proof');
+  seedDemoMetrics(PUBLIC_PROOF_USER_ID);
 
   // AI Health Check-in Verification & Attestation Endpoint
-  app.post('/api/verify-checkin', async (req, res) => {
+  app.post('/api/verify-checkin', requireAuth, checkinLimit, ...geminiLimit, async (req, res) => {
     try {
       const {
         waterLiters,
@@ -85,13 +130,22 @@ async function startServer() {
         activityMinutes,
         notes,
         imageBase64,
-      } = req.body;
+      } = req.body || {};
       const hydrationLiters =
         typeof waterLiters === 'number'
           ? waterLiters
           : typeof waterOz === 'number'
             ? Number((waterOz / 33.814).toFixed(2))
             : undefined;
+      const sleep = typeof sleepHours === 'number' ? sleepHours : Number(sleepHours);
+      const mood = typeof moodRating === 'number' ? moodRating : Number(moodRating);
+      const activity = typeof activityMinutes === 'number' ? activityMinutes : Number(activityMinutes);
+      const safeNotes = String(notes || '').slice(0, 500);
+      const photo =
+        typeof imageBase64 === 'string' ? imageBase64.replace(/^data:image\/\w+;base64,/, '') : '';
+      if (photo.length > 750_000) {
+        return res.status(413).json({ success: false, error: 'Photo too large' });
+      }
 
       let aiAttestationScore = 92;
       let aiFeedback = 'Health log successfully analyzed and verified.';
@@ -103,11 +157,11 @@ async function startServer() {
             `You are an AI Health Adherence Verifier for the AuraHealth Wellness App.
 Evaluate this user's health report:
 - Hydration: ${hydrationLiters ?? 'n/a'} litres
-- Sleep: ${sleepHours} hours
+- Sleep: ${Number.isFinite(sleep) ? sleep : 'n/a'} hours
 - Medication Taken: ${medicationTaken ? 'YES' : 'NO'}
-- Mood Rating: ${moodRating}/5
-- Activity: ${activityMinutes} minutes
-- User Notes: "${notes || 'No notes provided'}"
+- Mood Rating: ${Number.isFinite(mood) ? mood : 'n/a'}/5
+- Activity: ${Number.isFinite(activity) ? activity : 'n/a'} minutes
+- User Notes: "${safeNotes || 'No notes provided'}"
 
 Provide a JSON object response with:
 1. "score": number between 60 and 100 based on completeness, health consistency, and adherence sincerity.
@@ -118,11 +172,11 @@ Provide a JSON object response with:
 Response MUST be valid JSON string only.`,
           ];
 
-          if (imageBase64) {
+          if (photo) {
             promptParts.push({
               inlineData: {
                 mimeType: 'image/jpeg',
-                data: imageBase64.replace(/^data:image\/\w+;base64,/, ''),
+                data: photo,
               },
             });
           }
@@ -141,9 +195,8 @@ Response MUST be valid JSON string only.`,
           }
         } catch (genErr) {
           console.warn('Gemini AI Verification fallback used:', genErr);
-          // Fallback calculation if key missing or rate-limited
           if (medicationTaken) aiAttestationScore += 5;
-          if (sleepHours >= 7) aiAttestationScore += 3;
+          if (sleep >= 7) aiAttestationScore += 3;
           aiFeedback = 'Daily health log recorded cleanly. Consistency verified!';
         }
       }
@@ -154,8 +207,59 @@ Response MUST be valid JSON string only.`,
         aiFeedback,
         timestamp: new Date().toISOString(),
       });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message || 'Verification failed' });
+    } catch {
+      res.status(500).json({ success: false, error: 'Verification failed' });
+    }
+  });
+
+  app.post('/api/rewards/checkin', requireAuth, rewardsLimit, async (req, res) => {
+    try {
+      const body = req.body || {};
+      const result = await applyCheckinRewards(req.user!.uid, req.user!.email, {
+        medicationTaken: body.medicationTaken === true,
+        activityMinutes: Number(body.activityMinutes),
+      });
+      res.json(result);
+    } catch (err) {
+      sendRewardsError(res, err);
+    }
+  });
+
+  app.post('/api/rewards/grant', requireAuth, rewardsLimit, async (req, res) => {
+    try {
+      const { kind, id } = req.body || {};
+      if (kind !== 'mission' && kind !== 'habit' && kind !== 'quicklog') {
+        return res.status(400).json({ error: 'kind must be mission, habit, or quicklog', code: 'invalid_kind' });
+      }
+      if (typeof id !== 'string' || !id || id.length > 64) {
+        return res.status(400).json({ error: 'id required', code: 'invalid_id' });
+      }
+      const result = await applyGrant(req.user!.uid, req.user!.email, kind, id);
+      res.json(result);
+    } catch (err) {
+      sendRewardsError(res, err);
+    }
+  });
+
+  app.post('/api/rewards/spin', requireAuth, rewardsLimit, async (req, res) => {
+    try {
+      const result = await applyWheelSpin(req.user!.uid, req.user!.email);
+      res.json(result);
+    } catch (err) {
+      sendRewardsError(res, err);
+    }
+  });
+
+  app.post('/api/rewards/spend', requireAuth, rewardsLimit, async (req, res) => {
+    try {
+      const benefitId = String(req.body?.benefitId || '');
+      if (!benefitId || benefitId.length > 64) {
+        return res.status(400).json({ error: 'benefitId required', code: 'invalid_id' });
+      }
+      const result = await applySpend(req.user!.uid, req.user!.email, benefitId);
+      res.json(result);
+    } catch (err) {
+      sendRewardsError(res, err);
     }
   });
 
@@ -175,29 +279,31 @@ Response MUST be valid JSON string only.`,
     });
   });
 
-  app.get('/api/subscriptions/:userId', (req, res) => {
-    res.json({ plan: getOrCreatePlan(req.params.userId) });
+  app.get('/api/subscriptions/me', requireAuth, (req, res) => {
+    res.json({ plan: getOrCreatePlan(req.user!.uid) });
+  });
+  app.get('/api/subscriptions/:userId', requireAuth, (req, res) => {
+    res.json({ plan: getOrCreatePlan(req.user!.uid) });
   });
 
-  app.post('/api/subscriptions/trial', (req, res) => {
-    const { userId, interval } = req.body || {};
-    if (!userId) return res.status(400).json({ error: 'userId required' });
-    res.json({ plan: startTrial(String(userId), interval || 'monthly') });
+  app.post('/api/subscriptions/trial', requireAuth, (req, res) => {
+    const { interval } = req.body || {};
+    res.json({ plan: startTrial(req.user!.uid, interval || 'monthly') });
   });
 
-  app.post('/api/subscriptions/checkout', (req, res) => {
-    const { userId, interval } = req.body || {};
-    if (!userId || !interval) return res.status(400).json({ error: 'userId and interval required' });
-    res.json({ plan: checkout(String(userId), interval) });
+  app.post('/api/subscriptions/checkout', requireAuth, (req, res) => {
+    const { interval } = req.body || {};
+    if (!interval) return res.status(400).json({ error: 'interval required' });
+    res.json({ plan: checkout(req.user!.uid, interval) });
   });
 
-  app.post('/api/metrics', (req, res) => {
-    const { userId, moodScore, anxietyLevel, sessionDate, language, source } = req.body || {};
-    if (!userId || moodScore == null || anxietyLevel == null) {
-      return res.status(400).json({ error: 'userId, moodScore, anxietyLevel required' });
+  app.post('/api/metrics', requireAuth, (req, res) => {
+    const { moodScore, anxietyLevel, sessionDate, language, source } = req.body || {};
+    if (moodScore == null || anxietyLevel == null) {
+      return res.status(400).json({ error: 'moodScore and anxietyLevel required' });
     }
     recordMetric({
-      userId: String(userId),
+      userId: req.user!.uid,
       moodScore: Number(moodScore),
       anxietyLevel: Number(anxietyLevel),
       sessionDate: sessionDate || new Date().toISOString().slice(0, 10),
@@ -208,25 +314,34 @@ Response MUST be valid JSON string only.`,
   });
 
   app.get('/api/metrics/proof', (_req, res) => {
-    res.json(impactSummary('public-proof'));
+    res.json(impactSummary(PUBLIC_PROOF_USER_ID));
   });
 
-  app.get('/api/metrics/:userId', (req, res) => {
-    res.json({ metrics: listMetrics(req.params.userId) });
+  app.get('/api/metrics/me/impact', requireAuth, (req, res) => {
+    res.json(impactSummary(req.user!.uid));
+  });
+  app.get('/api/metrics/:userId/impact', requireAuth, (req, res) => {
+    res.json(impactSummary(req.user!.uid));
+  });
+  app.get('/api/metrics/me', requireAuth, (req, res) => {
+    res.json({ metrics: listMetrics(req.user!.uid) });
+  });
+  app.get('/api/metrics/:userId', requireAuth, (req, res) => {
+    res.json({ metrics: listMetrics(req.user!.uid) });
   });
 
-  app.get('/api/metrics/:userId/impact', (req, res) => {
-    res.json(impactSummary(req.params.userId));
-  });
-
-  app.post('/api/funnel/event', (req, res) => {
-    const { userId, event, meta } = req.body || {};
-    if (!userId || !event) return res.status(400).json({ error: 'userId and event required' });
-    trackFunnel(String(userId), String(event), meta);
+  app.post('/api/funnel/event', requireAuth, funnelLimit, (req, res) => {
+    const { event, meta } = req.body || {};
+    if (!event) return res.status(400).json({ error: 'event required' });
+    trackFunnel(req.user!.uid, String(event), meta);
     res.json({ ok: true });
   });
 
-  app.get('/api/funnel/summary', (_req, res) => {
+  app.get('/api/admin/session', requireAuth, adminLimit, requireAdmin, (req, res) => {
+    res.json({ ok: true, email: req.user!.email });
+  });
+
+  app.get('/api/funnel/summary', requireAuth, requireAdmin, (_req, res) => {
     res.json(funnelSummary());
   });
 
@@ -235,24 +350,28 @@ Response MUST be valid JSON string only.`,
     if (!company || !contactEmail) {
       return res.status(400).json({ error: 'company and contactEmail required' });
     }
-    const lead = addCorporateLead({
-      company,
-      contactEmail,
+    addCorporateLead({
+      company: String(company).slice(0, 200),
+      contactEmail: String(contactEmail).slice(0, 200),
       seats: Number(seats) || 25,
-      packageId: packageId || 'team',
-      notes,
+      packageId: String(packageId || 'team').slice(0, 40),
+      notes: notes != null ? String(notes).slice(0, 500) : undefined,
+      sourceIp: clientIp(req),
     });
-    res.json({ ok: true, lead });
+    res.json({ ok: true });
   };
 
-  app.post('/api/corporate', saveCorporateLead);
-  app.post('/api/corporate/packages', saveCorporateLead);
+  app.post('/api/corporate', leadLimit, saveCorporateLead);
+  app.post('/api/corporate/packages', leadLimit, saveCorporateLead);
 
+  app.get('/api/corporate/leads', requireAuth, requireAdmin, (_req, res) => {
+    res.json({ leads: listCorporateLeads() });
+  });
   app.get('/api/corporate', (_req, res) => {
-    res.json({ packages: CORPORATE_PACKAGES, leads: listCorporateLeads() });
+    res.json({ packages: CORPORATE_PACKAGES });
   });
   app.get('/api/corporate/packages', (_req, res) => {
-    res.json({ packages: CORPORATE_PACKAGES, leads: listCorporateLeads() });
+    res.json({ packages: CORPORATE_PACKAGES });
   });
 
   // AI Companion Chat & Health Coach Endpoint
@@ -261,10 +380,19 @@ Response MUST be valid JSON string only.`,
   // native Google Search grounding tool needs a billing-enabled Google Cloud
   // project, so this does the same job manually against a free search API
   // instead: search, then feed the results in as context.
-  app.post('/api/ai-coach', async (req, res) => {
+  app.post('/api/ai-coach', requireAuth, ...geminiLimit, async (req, res) => {
     try {
-      const { userMessage, companionState, history, language, latestAnxiety } = req.body;
-      const userText = String(userMessage || '');
+      const { userMessage, companionState, history, language, latestAnxiety } = req.body || {};
+      const userText = String(userMessage || '').slice(0, 4000);
+
+      if (looksLikeCrisis(userText)) {
+        return res.json({
+          reply: CRISIS_REPLY,
+          crisis: true,
+          resources: CRISIS_RESOURCES,
+          sources: [],
+        });
+      }
 
       if (!process.env.GEMINI_API_KEY) {
         return res.json({
@@ -287,6 +415,8 @@ ${searchResults.length > 0 ? `You've been given live web search results below fo
 
 Always make clear you are an AI, not a doctor: for anything about diagnosis, medication, dosing, or symptoms that sound serious or urgent, say so plainly and recommend seeing a licensed healthcare professional or emergency services — do not attempt to diagnose or prescribe.
 
+If the user may be in crisis or at risk of harming themselves, drop character immediately. Tell them you are not a clinician, urge them to contact emergency services or a helpline now, and point them to Kenya 999 / 112, Kenya Red Cross 1199, Befrienders Kenya +254 722 178 177, and https://www.iasp.info/suicidalthoughts/. Do not discuss methods.
+
 For everyday chit-chat, streak motivation, or app questions, respond in character as Astra: energetic, encouraging, 2-4 sentences.`;
 
       const userTurnText = searchResults.length > 0
@@ -298,7 +428,7 @@ For everyday chit-chat, streak motivation, or app questions, respond in characte
       const contents = [
         ...(Array.isArray(history) ? history : []).slice(-12).map((m: { sender: string; text: string }) => ({
           role: m.sender === 'user' ? 'user' : 'model',
-          parts: [{ text: m.text }],
+          parts: [{ text: String(m?.text || '').slice(0, 2000) }],
         })),
         { role: 'user', parts: [{ text: userTurnText }] },
       ];

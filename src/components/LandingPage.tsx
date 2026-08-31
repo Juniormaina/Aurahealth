@@ -16,6 +16,7 @@ interface LandingPageProps {
   onEnterDashboard?: () => void;
   onSignOut?: () => void;
   onAdminLogin?: () => void;
+  isStaffSignedIn?: boolean;
 }
 
 const NAV_LINKS = [
@@ -32,6 +33,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onEnterDashboard,
   onSignOut,
   onAdminLogin,
+  isStaffSignedIn = false,
 }) => {
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [activeSection, setActiveSection] = useState('features');
@@ -127,6 +129,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           setShowAdminModal(false);
           onAdminLogin?.();
         }}
+        onNeedSignIn={() => {
+          setShowAdminModal(false);
+          onOpenAuth();
+        }}
+        isSignedIn={isStaffSignedIn}
         signedInEmail={userAccount?.email}
       />
 

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { AuraLogo } from './AuraLogo';
 import {
   ArrowLeft,
-  ArrowRight,
   Play,
   Mail,
   User,
@@ -14,10 +13,9 @@ import {
 } from 'lucide-react';
 
 interface AuthPageProps {
-  onGoogleSignIn: (userEmail: string, userName: string) => void;
-  onRealGoogleSignIn: () => void;
-  onEmailSignIn?: (email: string, pass: string) => void;
-  onEmailSignUp?: (email: string, pass: string, name: string) => void;
+  onGoogleSignIn: () => void;
+  onEmailSignIn: (email: string, pass: string) => void;
+  onEmailSignUp: (email: string, pass: string, name: string) => void;
   onStartDemo: () => void;
   onBack: () => void;
   isLoggingIn?: boolean;
@@ -34,29 +32,18 @@ const GoogleMark = () => (
 
 export const AuthPage: React.FC<AuthPageProps> = ({
   onGoogleSignIn,
-  onRealGoogleSignIn,
   onEmailSignIn,
   onEmailSignUp,
   onStartDemo,
   onBack,
   isLoggingIn = false,
 }) => {
-  const [customEmail, setCustomEmail] = useState('');
-  const [customName, setCustomName] = useState('');
-  const [showAlternateGoogle, setShowAlternateGoogle] = useState(false);
   const [emailTab, setEmailTab] = useState<'signin' | 'signup'>('signin');
   const [emailAddress, setEmailAddress] = useState('');
   const [emailPassword, setEmailPassword] = useState('');
   const [emailName, setEmailName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
-
-  const handleCustomGoogleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!customEmail) return;
-    const derivedName = customName || customEmail.split('@')[0];
-    onGoogleSignIn(customEmail, derivedName);
-  };
 
   const handleEmailAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,15 +57,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       return;
     }
     if (emailTab === 'signup') {
-      if (onEmailSignUp) {
-        onEmailSignUp(emailAddress, emailPassword, emailName || emailAddress.split('@')[0]);
-      } else {
-        onGoogleSignIn(emailAddress, emailName || emailAddress.split('@')[0]);
-      }
-    } else if (onEmailSignIn) {
-      onEmailSignIn(emailAddress, emailPassword);
+      onEmailSignUp(emailAddress, emailPassword, emailName || emailAddress.split('@')[0]);
     } else {
-      onGoogleSignIn(emailAddress, emailAddress.split('@')[0]);
+      onEmailSignIn(emailAddress, emailPassword);
     }
   };
 
@@ -98,13 +79,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       <main className="flex-1 w-full max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <h1 className="view-title mb-2">Sign in to Aura Health</h1>
         <p className="view-copy mb-8">
-          Choose how you want to continue. Google sign-in uses the same OAuth flow as before.
+          Continue with Google, email, or a guest walkthrough.
         </p>
 
         <div className="space-y-3 mb-8">
           <button
             type="button"
-            onClick={onRealGoogleSignIn}
+            onClick={onGoogleSignIn}
             disabled={isLoggingIn}
             className="w-full btn-primary justify-center text-sm py-3"
           >
@@ -115,46 +96,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
             <Play className="w-4 h-4" />
             Continue as Guest
           </button>
-          <button
-            type="button"
-            onClick={() => setShowAlternateGoogle((open) => !open)}
-            className="w-full btn-ghost justify-center text-sm py-3"
-          >
-            <GoogleMark />
-            Use a different Google account
-          </button>
         </div>
-
-        {showAlternateGoogle && (
-          <form onSubmit={handleCustomGoogleSubmit} className="glass-panel p-5 rounded-2xl space-y-4 mb-8">
-            <h2 className="text-sm font-bold text-white">Different Google account</h2>
-            <div>
-              <label className="text-xs font-bold text-ink block mb-1">Your full name</label>
-              <input
-                type="text"
-                placeholder="e.g. Jordan Taylor"
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-                className="aura-input"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-ink block mb-1">Google email</label>
-              <input
-                type="email"
-                placeholder="name@gmail.com"
-                value={customEmail}
-                onChange={(e) => setCustomEmail(e.target.value)}
-                required
-                className="aura-input"
-              />
-            </div>
-            <button type="submit" className="w-full btn-primary justify-center text-xs py-3">
-              Continue
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </form>
-        )}
 
         <div className="flex items-center gap-3 mb-6">
           <span className="flex-1 h-px bg-white/10" />

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { SponsorPool } from '../types';
 import { Coins, PlusCircle, Building2, Sparkles, Loader2 } from 'lucide-react';
-import { createAvalancheTxRecord } from '../services/avalanche';
 import { CommunityLeaderboard } from './CommunityLeaderboard';
 import confetti from 'canvas-confetti';
 

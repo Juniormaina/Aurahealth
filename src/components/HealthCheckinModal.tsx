@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { X, Sparkles, CheckCircle2, ShieldCheck, Camera, Loader2, Heart, Droplets, Moon, Pill, Activity, Smile, Watch, RefreshCw, Smartphone, Zap } from 'lucide-react';
 import { HealthCheckIn } from '../types';
-import { computeKeccakProof, createAvalancheTxRecord, checkInOnChain, WalletState } from '../services/avalanche';
+import { computeKeccakProof, checkInOnChain, WalletState } from '../services/avalanche';
 import { WearablesSyncModal, SyncedBiometrics } from './WearablesSyncModal';
 import { useHealthData, HealthSource } from '../services/healthDataService';
+import { authorizedFetch } from '../services/commerce';
+import { checkinPayout } from '../server/rewardsCatalog';
 import confetti from 'canvas-confetti';
 
 interface HealthCheckinModalProps {
@@ -46,9 +48,9 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
       setWaterLiters(metrics.waterLiters);
       setActivityMinutes(metrics.activeMinutes);
       setIsWearablesSynced(true);
-      setNotes(`[Fetched via ${metrics.providerName} at ${metrics.fetchedAt}] Step Count: ${metrics.stepCount.toLocaleString()} steps | Sleep: ${metrics.sleepDurationHours} hrs | Heart Rate: ${metrics.heartRateBpm} bpm.`);
+      setNotes(`[Simulated ${metrics.providerName} preview at ${metrics.fetchedAt}] Step Count: ${metrics.stepCount.toLocaleString()} steps | Sleep: ${metrics.sleepDurationHours} hrs | Heart Rate: ${metrics.heartRateBpm} bpm. Not from HealthKit or Google Fit.`);
       if (onShowToast) {
-        onShowToast(`Synced with ${metrics.providerName}! Updated steps (${metrics.stepCount.toLocaleString()}) & sleep (${metrics.sleepDurationHours} hrs).`);
+        onShowToast(`Loaded a simulated ${metrics.providerName} sample — ${metrics.stepCount.toLocaleString()} steps, ${metrics.sleepDurationHours} hrs sleep. Not a live sync.`);
       }
     }
   };
@@ -58,7 +60,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
     setSleepHours(data.sleepHours);
     setActivityMinutes(data.activityMinutes);
     setIsWearablesSynced(true);
-    setNotes(`[Verified Wearable Sync: ${data.verificationSource}] ${data.stepsCount} steps, ${data.heartRateBpm} bpm, ${data.spo2Percent}% SpO2.`);
+    setNotes(`[Simulated wearable preview: ${data.verificationSource}] ${data.stepsCount} steps, ${data.heartRateBpm} bpm, ${data.spo2Percent}% SpO2. Not from a connected device.`);
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,9 +83,8 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
     let aiFeedback = 'Health check-in verified. Water intake & medication schedule match target requirements.';
 
     try {
-      const response = await fetch('/api/verify-checkin', {
+      const response = await authorizedFetch('/api/verify-checkin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           waterLiters,
           sleepHours,
@@ -109,22 +110,20 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
     const proofString = `${waterLiters}-${sleepHours}-${medicationTaken}-${moodRating}-${activityMinutes}-${Date.now()}`;
     const proofHash = computeKeccakProof(proofString);
 
-    let tx;
+    let onChainTx = null;
     if (wallet && !wallet.isSandbox) {
       setAiStatus('Broadcasting checkIn() to StreakTracker on Avalanche Fuji...');
-      tx = await checkInOnChain();
-      if (tx && onShowToast) {
-        onShowToast(`On-chain check-in confirmed — tx ${tx.hash.slice(0, 10)}…`);
+      onChainTx = await checkInOnChain();
+      if (onChainTx && onShowToast) {
+        onShowToast(`On-chain check-in confirmed — tx ${onChainTx.hash.slice(0, 10)}…`);
+      } else if (!onChainTx) {
+        setAiStatus('No Fuji transaction. Saving this check-in in the app only.');
       }
-    }
-    if (!tx) {
-      setAiStatus('Hashing cryptographic attestation proof on secure ledger...');
-      await new Promise((r) => setTimeout(r, 1000));
-      tx = createAvalancheTxRecord('ProofOfAdherence.sol', 'recordCheckIn', `CheckInVerified(score:${aiAttestationScore})`);
+    } else {
+      setAiStatus('Saving check-in in the app. Connect a Fuji wallet to record StreakTracker on-chain.');
     }
 
-    const cowriesAwarded = medicationTaken ? 120 : 80;
-    const xpAwarded = 150 + Math.floor(activityMinutes * 1.5);
+    const payout = checkinPayout(medicationTaken, activityMinutes);
 
     const newCheckIn: HealthCheckIn = {
       id: `chk-${Date.now()}`,
@@ -138,10 +137,10 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
       activityMinutes,
       notes: notes || 'Daily health adherence routine completed.',
       proofHash,
-      txHash: tx.hash,
-      blockNumber: tx.blockNumber,
-      cowriesEarned: cowriesAwarded,
-      xpEarned: xpAwarded,
+      txHash: onChainTx?.hash,
+      blockNumber: onChainTx?.blockNumber,
+      cowriesEarned: payout.cowries,
+      xpEarned: payout.xp,
       aiAttestationScore,
       aiFeedback,
     };
@@ -177,7 +176,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
           <div>
             <h3 className="text-xl font-bold text-navy">Daily Health Check-In</h3>
             <p className="text-xs text-muted leading-[1.6]">
-              Low-friction health reporting with verifiable cryptographic proof
+              Low-friction health reporting. On-chain only if a Fuji wallet submits StreakTracker.checkIn().
             </p>
           </div>
         </div>
@@ -191,17 +190,17 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
               </div>
               <div>
                 <div className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <span>Apple Health & Google Fit Sync</span>
+                  <span>Wearable preview</span>
                   {isWearablesSynced && (
-                    <span className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-200 dark:border-emerald-500/30">
-                      Synced ✓
+                    <span className="bg-white/10 text-[#D5E4DC] text-[10px] px-2 py-0.5 rounded-full font-bold border border-white/15">
+                      Simulated
                     </span>
                   )}
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-300">
                   {isWearablesSynced
-                    ? 'Step count and sleep duration auto-populated from health provider'
-                    : 'Auto-fetch step count & sleep duration from health integrations'}
+                    ? 'Sample steps and sleep filled in for demo — not from HealthKit or Google Fit'
+                    : 'HealthKit and Google Fit are not connected yet. Load a simulated sample if you want to try the flow.'}
                 </p>
               </div>
             </div>
@@ -212,7 +211,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
                 disabled={isHealthFetching}
                 onClick={() => handleFetchExternalHealthData('apple_health')}
                 className="btn-ghost text-[11px] flex items-center gap-1"
-                title="Fetch daily steps & sleep from Apple Health"
+                title="Load a simulated Apple Health sample"
               >
                 {isHealthFetching && activeHealthSource === 'apple_health' ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-500" />
@@ -227,7 +226,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
                 disabled={isHealthFetching}
                 onClick={() => handleFetchExternalHealthData('google_fit')}
                 className="btn-ghost text-[11px] flex items-center gap-1"
-                title="Fetch daily steps & sleep from Google Fit"
+                title="Load a simulated Google Fit sample"
               >
                 {isHealthFetching && activeHealthSource === 'google_fit' ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-500" />
@@ -241,7 +240,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
                 type="button"
                 onClick={() => setIsWearablesModalOpen(true)}
                 className="btn-primary text-[11px] flex items-center gap-1"
-                title="Open detailed Wearable Hardware Sensor Hub"
+                title="Open simulated wearable preview"
               >
                 <Watch className="w-3.5 h-3.5" />
                 <span>More</span>

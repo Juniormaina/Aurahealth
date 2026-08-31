@@ -35,18 +35,21 @@ const metrics: UserMetric[] = [];
 const funnel: FunnelEvent[] = [];
 const corporateLeads: Record<string, unknown>[] = [];
 
+export const PUBLIC_PROOF_USER_ID = 'public-proof';
+
 function isoDate(offsetDays = 0) {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
   return d.toISOString().slice(0, 10);
 }
 
-export function seedDemoMetrics(userId: string) {
-  if (metrics.some((m) => m.userId === userId)) return;
+export function seedDemoMetrics(userId: string = PUBLIC_PROOF_USER_ID) {
+  if (userId !== PUBLIC_PROOF_USER_ID) return;
+  if (metrics.some((m) => m.userId === PUBLIC_PROOF_USER_ID)) return;
   for (let i = 13; i >= 0; i--) {
     const t = i / 13;
     metrics.push({
-      userId,
+      userId: PUBLIC_PROOF_USER_ID,
       moodScore: Math.round(2 + (1 - t) * 2.4),
       anxietyLevel: Math.round(8.4 - (1 - t) * 4.4),
       sleepQuality: Math.round(5.2 + (1 - t) * 3.4),
@@ -132,7 +135,6 @@ export function recordMetric(row: UserMetric) {
 }
 
 export function listMetrics(userId: string): UserMetric[] {
-  seedDemoMetrics(userId);
   return metrics.filter((m) => m.userId === userId).sort((a, b) => a.sessionDate.localeCompare(b.sessionDate));
 }
 
@@ -146,16 +148,23 @@ export function impactSummary(userId: string) {
   const anxietyStart = avg(first3, 'anxietyLevel');
   const anxietyNow = avg(last3, 'anxietyLevel');
   const dropPct = anxietyStart > 0 ? Math.round(((anxietyStart - anxietyNow) / anxietyStart) * 100) : 0;
+  const isPublicProof = userId === PUBLIC_PROOF_USER_ID;
+  const dayCount = Math.min(14, last14.length);
   return {
-    claim: 'Self-reported check-ins in this demo sample trend toward lower anxiety over two weeks — not a clinical result.',
+    claim: isPublicProof
+      ? 'Self-reported check-ins in this demo sample trend toward lower anxiety over two weeks — not a clinical result.'
+      : 'Self-reported check-ins — not a clinical result. Individual trends vary.',
     days: last14.length,
     anxietyStart: Number(anxietyStart.toFixed(1)),
     anxietyNow: Number(anxietyNow.toFixed(1)),
     dropPct,
-    headline:
-      dropPct > 0
-        ? `Your anxiety check-ins dropped ${dropPct}% in ${Math.min(14, last14.length)} days.`
-        : 'Keep logging mood so Astra can prove your 14-day anxiety trend.',
+    headline: isPublicProof
+      ? dropPct > 0
+        ? `Anxiety check-ins dropped ${dropPct}% in ${dayCount} days.`
+        : 'Demo sample of 14-day sleep and anxiety logs.'
+      : dropPct > 0
+        ? `Your anxiety check-ins dropped ${dropPct}% in ${dayCount} days.`
+        : 'Keep logging mood so Astra can show your 14-day anxiety trend.',
     series: last14.map((r) => ({
       date: r.sessionDate,
       anxiety: r.anxietyLevel,
