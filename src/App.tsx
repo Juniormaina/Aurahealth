@@ -145,7 +145,6 @@ export default function App() {
   const persistMetric = (moodScore: number, anxietyLevel: number, source: string) => {
     setLatestAnxiety(anxietyLevel);
     logMetric({
-      userId: commerceUserId,
       moodScore,
       anxietyLevel,
       sessionDate: new Date().toISOString().slice(0, 10),
@@ -155,8 +154,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    trackFunnel(commerceUserId, 'session_start');
-    fetchPlan(commerceUserId)
+    trackFunnel('session_start');
+    fetchPlan()
       .then((r) => {
         setUserPlan(r.plan);
         setIsProMode(['premium', 'trial', 'lifetime', 'corporate'].includes(r.plan.plan));
@@ -478,7 +477,7 @@ export default function App() {
     );
     if (userPlan?.plan === 'free') {
       setPremiumOpen(true);
-      trackFunnel(commerceUserId, 'upgrade_prompt_shown', { after: 'checkin' });
+      trackFunnel('upgrade_prompt_shown', { after: 'checkin' });
     }
   };
 
@@ -623,14 +622,26 @@ export default function App() {
   };
 
   const handleStartTrial = async () => {
-    const { plan } = await startTrial(commerceUserId, 'monthly');
+    if (!auth.currentUser) {
+      setPremiumOpen(false);
+      setShowAuth(true);
+      showToast('Sign in to start a Premium trial.');
+      return;
+    }
+    const { plan } = await startTrial('monthly');
     applyPlan(plan);
     setIsLanding(false);
     showToast('7-day Premium trial started. Auto-subscribes monthly unless you cancel.');
   };
 
   const handleCheckout = async (interval: PlanInterval) => {
-    const { plan } = await checkout(commerceUserId, interval);
+    if (!auth.currentUser) {
+      setPremiumOpen(false);
+      setShowAuth(true);
+      showToast('Sign in to upgrade to Premium.');
+      return;
+    }
+    const { plan } = await checkout(interval);
     applyPlan(plan);
     showToast(interval === 'lifetime' ? 'Lifetime Premium unlocked.' : `Premium ${interval} is active.`);
   };
@@ -642,7 +653,7 @@ export default function App() {
     packageId: string;
   }) => {
     await requestCorporatePackage(payload);
-    trackFunnel(commerceUserId, 'corporate_lead', payload);
+    trackFunnel('corporate_lead', payload);
     showToast('Corporate wellness request sent. We will follow up with a package quote.');
   };
 
@@ -712,7 +723,7 @@ export default function App() {
         isProMode={isPaidPlan}
         onToggleProMode={() => {
           setPremiumOpen(true);
-          trackFunnel(commerceUserId, 'upgrade_prompt_shown', { from: 'sidebar' });
+          trackFunnel('upgrade_prompt_shown', { from: 'sidebar' });
         }}
         userAccount={userAccount}
         onSignOut={handleLogout}

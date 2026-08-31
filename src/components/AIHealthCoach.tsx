@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { HealthCompanion } from '../types';
+import { authorizedFetch } from '../services/commerce';
 import { MessageSquare, Send, Sparkles, Bot, Loader2, Heart, Flame, ExternalLink, Search } from 'lucide-react';
 
 interface AIHealthCoachProps {
@@ -41,9 +42,8 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, languag
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/ai-coach', {
+      const response = await authorizedFetch('/api/ai-coach', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userMessage: userText,
           history,

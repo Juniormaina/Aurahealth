@@ -13,7 +13,7 @@ export const ImpactDashboard: React.FC<ImpactDashboardProps> = ({ userId }) => {
 
   useEffect(() => {
     setLoading(true);
-    fetchImpact(userId)
+    fetchImpact()
       .then(setData)
       .catch(() => setData(null))
       .finally(() => setLoading(false));

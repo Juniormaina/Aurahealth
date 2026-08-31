@@ -4,6 +4,7 @@ import { HealthCheckIn } from '../types';
 import { computeKeccakProof, createAvalancheTxRecord, checkInOnChain, WalletState } from '../services/avalanche';
 import { WearablesSyncModal, SyncedBiometrics } from './WearablesSyncModal';
 import { useHealthData, HealthSource } from '../services/healthDataService';
+import { authorizedFetch } from '../services/commerce';
 import confetti from 'canvas-confetti';
 
 interface HealthCheckinModalProps {
@@ -81,9 +82,8 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
     let aiFeedback = 'Health check-in verified. Water intake & medication schedule match target requirements.';
 
     try {
-      const response = await fetch('/api/verify-checkin', {
+      const response = await authorizedFetch('/api/verify-checkin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           waterLiters,
           sleepHours,
