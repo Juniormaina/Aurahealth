@@ -35,9 +35,15 @@ import { applyCheckinRewards, applyGrant, applySpend, RewardsError } from './src
 dotenv.config({ path: path.join(process.cwd(), 'src', '.env') });
 dotenv.config();
 
+function listenPort(raw: string | undefined, fallback = 3000): number {
+  const n = Number.parseInt(String(raw || ''), 10);
+  if (!Number.isInteger(n) || n < 1 || n > 65535) return fallback;
+  return n;
+}
+
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = listenPort(process.env.PORT);
   app.set('trust proxy', 1);
 
   const jsonDefault = express.json({ limit: '32kb' });
@@ -47,7 +53,14 @@ async function startServer() {
     return jsonDefault(req, res, next);
   });
 
-  const geminiLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 30, key: uidKey('gemini') });
+  const geminiUserLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 30, key: uidKey('gemini') });
+  const geminiIpLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 60, key: ipKey('gemini') });
+  const geminiGlobalLimit = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 300,
+    key: () => 'gemini:global',
+  });
+  const geminiLimit = [geminiUserLimit, geminiIpLimit, geminiGlobalLimit];
   const checkinLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, key: uidKey('checkin') });
   const leadLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 8, key: ipKey('lead') });
   const funnelLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 60, key: uidKey('funnel') });
@@ -105,7 +118,7 @@ async function startServer() {
   seedDemoMetrics(PUBLIC_PROOF_USER_ID);
 
   // AI Health Check-in Verification & Attestation Endpoint
-  app.post('/api/verify-checkin', requireAuth, checkinLimit, async (req, res) => {
+  app.post('/api/verify-checkin', requireAuth, checkinLimit, ...geminiLimit, async (req, res) => {
     try {
       const {
         waterLiters,
@@ -357,7 +370,7 @@ Response MUST be valid JSON string only.`,
   // native Google Search grounding tool needs a billing-enabled Google Cloud
   // project, so this does the same job manually against a free search API
   // instead: search, then feed the results in as context.
-  app.post('/api/ai-coach', requireAuth, geminiLimit, async (req, res) => {
+  app.post('/api/ai-coach', requireAuth, ...geminiLimit, async (req, res) => {
     try {
       const { userMessage, companionState, history, language, latestAnxiety } = req.body || {};
       const userText = String(userMessage || '').slice(0, 4000);
