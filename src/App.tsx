@@ -307,33 +307,6 @@ export default function App() {
     }
   };
 
-  const handleGoogleSignIn = (email: string, name: string) => {
-    const fakeUid = 'custom_' + email.replace(/[^a-zA-Z0-9]/g, '_');
-    setUserAccount({ name, email, isGoogle: true, uid: fakeUid });
-    setIsLanding(false);
-    setShowAuth(false);
-    setIsDemoMode(false);
-    setStats({
-      cowriesBalance: 0,
-      totalXp: 0,
-      avaxEarned: 0,
-      currentStreak: 0,
-      longestStreak: 0,
-      lastCheckInDate: null,
-      rank: 'Health Newcomer',
-      communityContributionScore: 0,
-    });
-    setCompanion(FRESH_USER_COMPANION);
-    setCheckIns([]);
-    showToast(`Welcome ${name}! Starting fresh with 0 Cowries & 0 Streak.`);
-    confetti({
-      particleCount: 90,
-      spread: 80,
-      origin: { y: 0.6 },
-      colors: ['#e11d48', '#38bdf8', '#10b981', '#fbbf24'],
-    });
-  };
-
   const handleLogout = async () => {
     await logoutUser();
     setUserAccount(null);
@@ -660,8 +633,7 @@ export default function App() {
   if (showAuth) {
     return (
       <AuthPage
-        onGoogleSignIn={handleGoogleSignIn}
-        onRealGoogleSignIn={handleRealGoogleSignIn}
+        onGoogleSignIn={handleRealGoogleSignIn}
         onEmailSignIn={handleEmailSignIn}
         onEmailSignUp={handleEmailSignUp}
         onStartDemo={handleStartDemo}
