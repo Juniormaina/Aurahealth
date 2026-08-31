@@ -6,7 +6,7 @@
   <img src="docs/readme/cover.jpg" alt="Aura Health cover — misty green hills at dawn" width="100%" />
 </p>
 
-**Live app:** [https://www.aurahealth.co.ke/] [aurahealth-delta.vercel.app](https://aurahealth-delta.vercel.app/)
+**Live app:** [aurahealth.co.ke](https://www.aurahealth.co.ke/) · [aurahealth-delta.vercel.app](https://aurahealth-delta.vercel.app/)
 
 Aura Health is a **dark-only** gamified daily health app: an evolving companion
 (**Astra**), a Health Cowries economy, sponsor rewards, and an AI coach (Astra)
