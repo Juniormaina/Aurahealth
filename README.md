@@ -252,10 +252,26 @@ npm run start      # run the production server
 npm run lint       # tsc --noEmit
 npm run check:security   # unauthenticated API 401/200 checks (starts a temp server if needed)
 npm run test:rules       # Firestore rules against the emulator (needs Java)
-npm run check            # lint + API checks + rules tests
+npm run check            # lint + production build + bundle API checks + rules tests
 ```
 
-Dev server: `http://localhost:3000` (`tsx server.ts`).
+Dev server: `http://localhost:3000` (`tsx server.ts`). Production: `npm run build && npm start` (`NODE_ENV=production`, `PORT` from the environment).
+
+## CI and Cloud Run
+
+GitHub Actions (`.github/workflows/checks.yml`) on every PR and push: `lint`, `build`, API checks against the **production bundle**, and Firestore rules tests.
+
+On push to `main`, a deploy job runs **only if** the repository variable `GCP_PROJECT_ID` is set:
+
+1. Build and deploy the Dockerfile to Cloud Run (`CLOUD_RUN_SERVICE`, default `aurahealth`).
+2. `firebase deploy --only firestore:rules` to `FIREBASE_PROJECT_ID` (default `aura-health-f478f`).
+3. Smoke the new Cloud Run URL (`/api/health` 200, `/api/ai-coach` 401). If `PRODUCTION_URL` is set (e.g. `https://www.aurahealth.co.ke`), smoke that too — leave it unset until DNS points at Cloud Run.
+
+**GitHub variables:** `GCP_PROJECT_ID`, `GCP_REGION` (default `us-central1`), `CLOUD_RUN_SERVICE`, `FIREBASE_PROJECT_ID`, `PRODUCTION_URL`.
+
+**GitHub secret:** `GCP_SA_KEY` — JSON for a service account with Cloud Run Admin, Cloud Build, Service Account User, and Firebase Rules Admin.
+
+Set `GEMINI_API_KEY`, `ADMIN_EMAILS`, and Firebase Admin credentials on the Cloud Run service (Secret Manager). The workflow only sets `NODE_ENV` and `FIREBASE_PROJECT_ID`; it does not overwrite other service env/secrets. Point `aurahealth.co.ke` at the Cloud Run URL once it serves `/api/health`.
 
 ## Smart contract workflow
 

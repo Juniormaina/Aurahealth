@@ -2,7 +2,7 @@
 # Unauthenticated API checks. Protected routes must 401; public routes must 200.
 # Usage:
 #   BASE_URL=http://127.0.0.1:3000 ./scripts/security-check.sh
-#   ./scripts/security-check.sh          # starts a temp server on PORT 3012 if needed
+#   BUNDLE=1 ./scripts/security-check.sh   # production dist/server.cjs (run npm run build first)
 # Optional: TOKEN=eyJ... also asserts GET /api/corporate/leads is 403 for a non-admin.
 
 set -euo pipefail
@@ -26,7 +26,7 @@ trap cleanup EXIT
 wait_for_health() {
   local url="$1"
   local i
-  for i in $(seq 1 40); do
+  for i in $(seq 1 80); do
     if curl -sf "$url/api/health" >/dev/null; then
       return 0
     fi
@@ -36,18 +36,27 @@ wait_for_health() {
   return 1
 }
 
-if [[ -z "$BASE_URL" ]]; then
-  if curl -sf "http://127.0.0.1:3000/api/health" >/dev/null 2>&1; then
-    BASE_URL="http://127.0.0.1:3000"
-  else
-    echo "Starting temporary server on port $PORT..."
-    PORT="$PORT" ./node_modules/.bin/tsx server.ts >/tmp/aura-security-check-server.log 2>&1 &
-    PID=$!
-    STARTED=1
-    BASE_URL="http://127.0.0.1:${PORT}"
-    wait_for_health "$BASE_URL"
+if [[ -n "$BASE_URL" ]]; then
+  wait_for_health "$BASE_URL"
+elif [[ "${BUNDLE:-}" == "1" ]]; then
+  if [[ ! -f dist/server.cjs ]]; then
+    echo "dist/server.cjs missing. Run npm run build first." >&2
+    exit 1
   fi
+  echo "Starting production bundle on port $PORT..."
+  NODE_ENV=production PORT="$PORT" node dist/server.cjs >/tmp/aura-security-check-server.log 2>&1 &
+  PID=$!
+  STARTED=1
+  BASE_URL="http://127.0.0.1:${PORT}"
+  wait_for_health "$BASE_URL"
+elif curl -sf "http://127.0.0.1:3000/api/health" >/dev/null 2>&1; then
+  BASE_URL="http://127.0.0.1:3000"
 else
+  echo "Starting temporary server on port $PORT..."
+  PORT="$PORT" ./node_modules/.bin/tsx server.ts >/tmp/aura-security-check-server.log 2>&1 &
+  PID=$!
+  STARTED=1
+  BASE_URL="http://127.0.0.1:${PORT}"
   wait_for_health "$BASE_URL"
 fi
 

@@ -6,13 +6,13 @@
   "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
-    "start": "node dist/server.cjs",
+    "start": "NODE_ENV=production node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "check:security": "bash scripts/security-check.sh",
     "test:rules": "npx -y firebase-tools@14 emulators:exec --only firestore --project demo-aurahealth \"npx tsx tests/firestore.rules.test.ts\"",
-    "check": "npm run lint && npm run check:security && npm run test:rules",
+    "check": "npm run lint && npm run build && BUNDLE=1 npm run check:security && npm run test:rules",
     "contracts:compile": "hardhat compile",
     "contracts:deploy:fuji": "hardhat run src/Scripts/deploy-all.cjs --network fuji",
     "contracts:verify:fuji": "node src/Scripts/verify-all.cjs"

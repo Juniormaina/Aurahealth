@@ -1,0 +1,22 @@
+# Cloud Run `--source` upload. Keep Dockerfile, source, and Firebase rules.
+.git
+.github
+.cursor
+node_modules
+dist
+coverage
+.env
+.env.*
+!.env.example
+*.log
+.venv-demo
+docs
+artifacts
+cache
+typechain-types
+.firebase
+.gstack
+aura_health_demo.webm
+tests
+canvases
+agent-transcripts
