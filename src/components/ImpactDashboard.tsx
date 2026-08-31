@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { VALUE_PROPS } from '../content/valueProps';
 import { fetchImpact } from '../services/commerce';
 
 interface ImpactDashboardProps {
@@ -44,7 +43,7 @@ export const ImpactDashboard: React.FC<ImpactDashboardProps> = ({ userId }) => {
     <section className="aura-module-card p-5 space-y-3">
       <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-harmony)]">Proof of impact</div>
       <h3 className="text-lg font-bold text-white leading-snug">{data.headline}</h3>
-      <p className="text-xs text-slate-400 leading-[1.6]">{VALUE_PROPS.realtimeMood}</p>
+      <p className="text-xs text-slate-400 leading-[1.6]">{data.claim}</p>
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="bg-white/5 rounded-xl p-3 border border-[#242E42]">
           <div className="text-[10px] text-slate-400 uppercase">Start</div>

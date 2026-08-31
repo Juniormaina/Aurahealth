@@ -15,6 +15,7 @@ import {
   seedDemoMetrics,
   startTrial,
   trackFunnel,
+  PUBLIC_PROOF_USER_ID,
 } from './src/server/commerceStore';
 import { CORPORATE_PACKAGES, SUBSCRIPTION_TIERS, VALUE_PROPS } from './src/content/valueProps';
 import {
@@ -91,7 +92,7 @@ async function startServer() {
     res.json({ status: 'ok', network: 'AuraHealth Verification Engine' });
   });
 
-  seedDemoMetrics('public-proof');
+  seedDemoMetrics(PUBLIC_PROOF_USER_ID);
 
   // AI Health Check-in Verification & Attestation Endpoint
   app.post('/api/verify-checkin', requireAuth, checkinLimit, async (req, res) => {
@@ -238,7 +239,7 @@ Response MUST be valid JSON string only.`,
   });
 
   app.get('/api/metrics/proof', (_req, res) => {
-    res.json(impactSummary('public-proof'));
+    res.json(impactSummary(PUBLIC_PROOF_USER_ID));
   });
 
   app.get('/api/metrics/me/impact', requireAuth, (req, res) => {
