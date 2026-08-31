@@ -32,8 +32,8 @@ export interface HealthCheckIn {
   symptoms?: string;
   notes?: string;
   proofHash: string;
-  txHash: string;
-  blockNumber: number;
+  txHash?: string;
+  blockNumber?: number;
   cowriesEarned: number;
   xpEarned: number;
   aiAttestationScore: number; // 0-100
@@ -81,17 +81,18 @@ export interface EconomyStats {
 
 export interface TxRecord {
   hash: string;
-  blockNumber: number;
+  blockNumber?: number;
   timestamp: string;
   from: string;
   to: string;
   contractName: string;
   method: string;
-  status: 'Confirmed' | 'Pending' | 'Failed';
+  status: 'Confirmed' | 'Pending' | 'Failed' | 'Off-chain';
   gasUsed: string;
   nAvaxFee: string;
   eventEmitted: string;
-  explorersUrl: string;
+  explorersUrl?: string;
+  onChain?: boolean;
 }
 
 export interface WheelPrize {

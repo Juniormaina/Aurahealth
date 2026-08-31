@@ -72,32 +72,46 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
   const recentLogs = txLogs.slice(0, RECENT_LOG_COUNT);
   const archivedLogs = txLogs.slice(RECENT_LOG_COUNT);
 
-  const renderTxRow = (tx: TxRecord, idx: number) => (
+  const renderTxRow = (tx: TxRecord, idx: number) => {
+    const explorer = tx.explorersUrl?.startsWith('http') ? tx.explorersUrl : null;
+    const onChain = tx.onChain === true && tx.status === 'Confirmed';
+    return (
     <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
       <td className="p-3 font-bold text-cyan-300 truncate max-w-[140px]">{tx.hash}</td>
-      <td className="p-3 text-slate-400">#{tx.blockNumber}</td>
+      <td className="p-3 text-slate-400">{tx.blockNumber != null ? `#${tx.blockNumber}` : '—'}</td>
       <td className="p-3">
         <span className="text-slate-200 font-bold">{tx.contractName}</span>
         <div className="text-[10px] text-slate-500">{tx.method}</div>
       </td>
       <td className="p-3 text-emerald-400">{tx.nAvaxFee}</td>
       <td className="p-3">
-        <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-semibold border border-emerald-500/30">
+        <span
+          className={`px-2 py-0.5 rounded font-semibold border ${
+            onChain
+              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+              : 'bg-white/10 text-slate-300 border-white/15'
+          }`}
+        >
           {tx.status}
         </span>
       </td>
       <td className="p-3">
-        <a
-          href={tx.explorersUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 text-rose-400 hover:text-rose-300 font-bold"
-        >
-          Explorer <ExternalLink className="w-3 h-3" />
-        </a>
+        {explorer ? (
+          <a
+            href={explorer}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-rose-400 hover:text-rose-300 font-bold"
+          >
+            Explorer <ExternalLink className="w-3 h-3" />
+          </a>
+        ) : (
+          <span className="text-slate-500">—</span>
+        )}
       </td>
     </tr>
-  );
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -213,7 +227,7 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
       <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between gap-4">
           <h3 className="text-lg font-black text-white flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-400" /> On-Chain Attestation & Transaction Log
+            <ShieldCheck className="w-5 h-5 text-emerald-400" /> Activity log
           </h3>
           {archivedLogs.length > 0 && (
             <button
@@ -231,16 +245,25 @@ export const SmartContractsViewer: React.FC<SmartContractsViewerProps> = ({ txLo
           <table className="w-full text-left text-xs text-slate-300">
             <thead className="bg-slate-950 text-slate-400 font-mono text-[11px] uppercase border-b border-slate-800">
               <tr>
-                <th className="p-3">Tx Hash</th>
+                <th className="p-3">Id / hash</th>
                 <th className="p-3">Block</th>
-                <th className="p-3">Contract / Method</th>
+                <th className="p-3">Activity</th>
                 <th className="p-3">Gas Fee</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Explorer Link</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
-              {recentLogs.map((tx, idx) => renderTxRow(tx, idx))}
+              {recentLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-4 text-slate-500">
+                    No activity yet. Fuji StreakTracker check-ins show as Confirmed with an explorer link.
+                    App-only check-ins and rewards are labeled Off-chain.
+                  </td>
+                </tr>
+              ) : (
+                recentLogs.map((tx, idx) => renderTxRow(tx, idx))
+              )}
             </tbody>
           </table>
         </div>

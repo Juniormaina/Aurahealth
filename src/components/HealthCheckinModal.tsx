@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Sparkles, CheckCircle2, ShieldCheck, Camera, Loader2, Heart, Droplets, Moon, Pill, Activity, Smile, Watch, RefreshCw, Smartphone, Zap } from 'lucide-react';
 import { HealthCheckIn } from '../types';
-import { computeKeccakProof, createAvalancheTxRecord, checkInOnChain, WalletState } from '../services/avalanche';
+import { computeKeccakProof, checkInOnChain, WalletState } from '../services/avalanche';
 import { WearablesSyncModal, SyncedBiometrics } from './WearablesSyncModal';
 import { useHealthData, HealthSource } from '../services/healthDataService';
 import { authorizedFetch } from '../services/commerce';
@@ -109,18 +109,17 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
     const proofString = `${waterLiters}-${sleepHours}-${medicationTaken}-${moodRating}-${activityMinutes}-${Date.now()}`;
     const proofHash = computeKeccakProof(proofString);
 
-    let tx;
+    let onChainTx = null;
     if (wallet && !wallet.isSandbox) {
       setAiStatus('Broadcasting checkIn() to StreakTracker on Avalanche Fuji...');
-      tx = await checkInOnChain();
-      if (tx && onShowToast) {
-        onShowToast(`On-chain check-in confirmed — tx ${tx.hash.slice(0, 10)}…`);
+      onChainTx = await checkInOnChain();
+      if (onChainTx && onShowToast) {
+        onShowToast(`On-chain check-in confirmed — tx ${onChainTx.hash.slice(0, 10)}…`);
+      } else if (!onChainTx) {
+        setAiStatus('No Fuji transaction. Saving this check-in in the app only.');
       }
-    }
-    if (!tx) {
-      setAiStatus('Hashing cryptographic attestation proof on secure ledger...');
-      await new Promise((r) => setTimeout(r, 1000));
-      tx = createAvalancheTxRecord('ProofOfAdherence.sol', 'recordCheckIn', `CheckInVerified(score:${aiAttestationScore})`);
+    } else {
+      setAiStatus('Saving check-in in the app. Connect a Fuji wallet to record StreakTracker on-chain.');
     }
 
     const cowriesAwarded = medicationTaken ? 120 : 80;
@@ -138,8 +137,8 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
       activityMinutes,
       notes: notes || 'Daily health adherence routine completed.',
       proofHash,
-      txHash: tx.hash,
-      blockNumber: tx.blockNumber,
+      txHash: onChainTx?.hash,
+      blockNumber: onChainTx?.blockNumber,
       cowriesEarned: cowriesAwarded,
       xpEarned: xpAwarded,
       aiAttestationScore,
@@ -177,7 +176,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
           <div>
             <h3 className="text-xl font-bold text-navy">Daily Health Check-In</h3>
             <p className="text-xs text-muted leading-[1.6]">
-              Low-friction health reporting with verifiable cryptographic proof
+              Low-friction health reporting. On-chain only if a Fuji wallet submits StreakTracker.checkIn().
             </p>
           </div>
         </div>

@@ -44,7 +44,9 @@ import {
   SANDBOX_WALLET,
   connectWeb3Wallet,
   WalletState,
-  createAvalancheTxRecord,
+  createOffChainActivityRecord,
+  CONTRACT_ADDRESSES,
+  EXPLORER_BASE,
 } from './services/avalanche';
 
 import {
@@ -451,13 +453,34 @@ export default function App() {
       return updatedCompanion;
     });
 
-    // Create Avalanche Tx Log
-    const tx = createAvalancheTxRecord(
-      'ProofOfAdherence.sol',
-      'recordCheckIn',
-      `CheckInVerified(Score:${newCheckIn.aiAttestationScore}, Cowries:+${newCheckIn.cowriesEarned})`
-    );
-    setTxLogs((prev) => [tx, ...prev]);
+    if (newCheckIn.txHash && newCheckIn.blockNumber != null) {
+      setTxLogs((prev) => [
+        {
+          hash: newCheckIn.txHash!,
+          blockNumber: newCheckIn.blockNumber,
+          timestamp: newCheckIn.timestamp,
+          from: wallet.isSandbox ? 'wallet' : wallet.address,
+          to: CONTRACT_ADDRESSES.StreakTracker,
+          contractName: 'StreakTracker.sol',
+          method: 'checkIn',
+          status: 'Confirmed',
+          gasUsed: '—',
+          nAvaxFee: 'AVAX',
+          eventEmitted: `CheckedIn(score:${newCheckIn.aiAttestationScore})`,
+          explorersUrl: `${EXPLORER_BASE}/tx/${newCheckIn.txHash}`,
+          onChain: true,
+        },
+        ...prev,
+      ]);
+    } else {
+      setTxLogs((prev) => [
+        createOffChainActivityRecord(
+          'Daily check-in',
+          `+${newCheckIn.cowriesEarned} cowries · not submitted on-chain`
+        ),
+        ...prev,
+      ]);
+    }
 
     showToast(`Adherence record verified & saved to database! +${newCheckIn.cowriesEarned} 🐚 & +${newCheckIn.xpEarned} XP!`);
     persistMetric(
@@ -531,7 +554,7 @@ export default function App() {
       setStats((prev) => ({ ...prev, avaxEarned: prev.avaxEarned + 0.05 }));
     }
 
-    const tx = createAvalancheTxRecord('RewardSponsorPool.sol', 'claimWheelReward', `PrizeWon(${prize.label})`);
+    const tx = createOffChainActivityRecord('Loot wheel', `Prize: ${prize.label} · not on-chain`);
     setTxLogs((prev) => [tx, ...prev]);
 
     showToast(`Wheel Prize Claimed: ${prize.label}!`);
@@ -582,7 +605,10 @@ export default function App() {
     if (!targetPool) return;
 
     setStats((prev) => ({ ...prev, avaxEarned: prev.avaxEarned + 0.08 }));
-    const tx = createAvalancheTxRecord('RewardSponsorPool.sol', 'claimReward', `RewardClaimed(${targetPool.rewardPerMilestone})`);
+    const tx = createOffChainActivityRecord(
+      'Sponsor reward',
+      `Claimed ${targetPool.rewardPerMilestone} · not on-chain`
+    );
     setTxLogs((prev) => [tx, ...prev]);
 
     confetti({
@@ -598,7 +624,10 @@ export default function App() {
   // Add Sponsor Pool
   const handleAddSponsorPool = (newPool: SponsorPool) => {
     setPools((prev) => [newPool, ...prev]);
-    const tx = createAvalancheTxRecord('RewardSponsorPool.sol', 'createPool', `PoolFunded(${newPool.totalFundAvax} AVAX)`);
+    const tx = createOffChainActivityRecord(
+      'Sponsor pool',
+      `Created ${newPool.title} · not on-chain`
+    );
     setTxLogs((prev) => [tx, ...prev]);
     showToast(`New Sponsor Grant Pool Created: ${newPool.title}`);
   };
