@@ -75,6 +75,19 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, languag
           ...prev,
           { sender: 'astra', text: data.crisis ? CRISIS_REPLY : data.reply, time, sources: data.crisis ? undefined : data.sources },
         ]);
+      } else if (response.status === 403) {
+        const data = (await response.json().catch(() => ({}))) as { code?: string };
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: 'astra',
+            text:
+              data.code === 'email_unverified'
+                ? 'Confirm the link we sent to your email to unlock Astra chat. You can resend it from the banner or Settings.'
+                : 'Astra could not reply just then. Please try again in a moment.',
+            time,
+          },
+        ]);
       } else {
         throw new Error('Coach API error');
       }

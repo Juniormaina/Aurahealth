@@ -4,6 +4,7 @@ import { Sidebar } from './components/Sidebar';
 import { GlobalSearch } from './components/GlobalSearch';
 import { LandingPage } from './components/LandingPage';
 import { AuthPage } from './components/AuthPage';
+import { EmailVerifyBanner } from './components/EmailVerifyBanner';
 import { DashboardHome } from './components/DashboardHome';
 import { AdminDashboard } from './components/AdminDashboard';
 import { SpinWheelLootbox } from './components/SpinWheelLootbox';
@@ -57,6 +58,9 @@ import {
   signInWithGoogle,
   signInWithEmail,
   signUpWithEmail,
+  requestPasswordReset,
+  resendEmailVerification,
+  refreshAuthUser,
   checkRedirectResult,
   getAuthErrorMessage,
   logoutUser,
@@ -97,15 +101,27 @@ function rewardErrorToast(err: unknown): string {
   if (err instanceof RewardsApiError && err.code === 'spin_limit') {
     return 'Daily loot-wheel spins are used up. Come back tomorrow.';
   }
+  if (err instanceof RewardsApiError && err.code === 'email_unverified') {
+    return 'Confirm your email to earn Cowries and rewards.';
+  }
   return 'Could not persist Cowries. Progress is local to this session.';
 }
+
+type SignedInAccount = {
+  name: string;
+  email: string;
+  isGoogle: boolean;
+  uid?: string;
+  photoURL?: string;
+  emailVerified?: boolean;
+};
 
 export default function App() {
   const [isLanding, setIsLanding] = useState<boolean>(true);
   const [showAuth, setShowAuth] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
-  const [userAccount, setUserAccount] = useState<{ name: string; email: string; isGoogle: boolean; uid?: string; photoURL?: string } | null>(null);
+  const [userAccount, setUserAccount] = useState<SignedInAccount | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const authSyncUidRef = useRef<string | null>(null);
@@ -217,7 +233,68 @@ export default function App() {
       .catch(() => undefined);
   }, [commerceUserId]);
 
-  // Firebase Auth Observer
+  const handleFirebaseUserAuthenticated = async (user: User, opts?: { welcome?: boolean }) => {
+    const run = async () => {
+      try {
+        const profile = await syncUserProfile(user);
+        setUserAccount({
+          name: profile.displayName,
+          email: profile.email,
+          isGoogle: user.providerData.some((p) => p.providerId === 'google.com'),
+          uid: user.uid,
+          photoURL: user.photoURL || '',
+          emailVerified: user.emailVerified,
+        });
+        setIsDemoMode(false);
+        setShowAuth(false);
+        setAuthFormError(null);
+
+        setStats({
+          cowriesBalance: profile.cowriesBalance ?? 0,
+          totalXp: profile.totalXp ?? 0,
+          avaxEarned: 0,
+          currentStreak: profile.currentStreak ?? 0,
+          longestStreak: profile.longestStreak ?? 0,
+          lastCheckInDate: profile.lastCheckInDate ?? null,
+          rank: 'Health Newcomer',
+          communityContributionScore: 0,
+        });
+        setRewardKeys(profile.completedRewardKeys ?? []);
+        setBadges(INITIAL_BADGES.map((b) => ({ ...b, unlockedAt: undefined, tokenId: undefined, txHash: undefined })));
+
+        const firestoreComp = await getCompanionFromFirestore(user.uid);
+        if (firestoreComp) {
+          setCompanion((prev) => ({
+            ...prev,
+            ...firestoreComp,
+          }));
+        } else {
+          await saveCompanionToFirestore(user.uid, FRESH_USER_COMPANION);
+          setCompanion(FRESH_USER_COMPANION);
+        }
+
+        const userLogs = await getUserHealthLogsFromFirestore(user.uid);
+        setCheckIns(userLogs && userLogs.length > 0 ? userLogs : []);
+
+        if (opts?.welcome) {
+          showToast(
+            user.emailVerified
+              ? `Welcome ${profile.displayName}! Authenticated session active.`
+              : `Welcome ${profile.displayName}! Confirm the link we sent to ${profile.email} to unlock Cowries and Astra chat.`
+          );
+        }
+      } catch (err: unknown) {
+        console.error('Failed syncing user profile:', err);
+      }
+    };
+    const next = authSyncChain.current.then(run, run);
+    authSyncChain.current = next.then(
+      () => undefined,
+      () => undefined
+    );
+    return next;
+  };
+
   useEffect(() => {
     checkRedirectResult().catch((err) => {
       console.error('Redirect sign-in failed:', err);
@@ -382,12 +459,44 @@ export default function App() {
     }
   };
 
+  const handleForgotPassword = async (email: string) => {
+    try {
+      await requestPasswordReset(email);
+    } catch (err: any) {
+      if (err?.code === 'auth/user-not-found') return;
+      throw new Error(getAuthErrorMessage(err));
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setVerifyBusy(true);
+    try {
+      await resendEmailVerification();
+      showToast('Verification email sent. Check inbox and spam.');
+    } catch (err: any) {
+      showToast(getAuthErrorMessage(err));
+    } finally {
+      setVerifyBusy(false);
+    }
+  };
+
+  const handleConfirmVerified = async () => {
+    const user = await refreshAuthUser();
+    if (user?.emailVerified) {
+      setUserAccount((prev) => (prev ? { ...prev, emailVerified: true } : prev));
+      showToast('Email confirmed. Cowries and Astra chat are unlocked.');
+    } else {
+      showToast('Not confirmed yet. Open the link in the email, then try again.');
+    }
+  };
+
   const handleLogout = async () => {
     await logoutUser();
     setUserAccount(null);
     setIsAdmin(false);
     setIsLanding(true);
     setShowAuth(false);
+    setAuthFormError(null);
     showToast('Signed out of AuraHealth.');
   };
 
@@ -434,6 +543,7 @@ export default function App() {
   const handleCheckinSuccess = async (newCheckIn: HealthCheckIn) => {
     let awarded = newCheckIn;
     let ledgerApplied = false;
+    let skipLocalLedger = false;
 
     if (userAccount?.uid) {
       try {
@@ -472,13 +582,19 @@ export default function App() {
         ledgerApplied = true;
       } catch (err) {
         showToast(rewardErrorToast(err));
+        if (
+          err instanceof RewardsApiError &&
+          (err.code === 'email_unverified' || err.code === 'already_claimed')
+        ) {
+          skipLocalLedger = true;
+        }
       }
       saveHealthLogToFirestore(userAccount.uid, awarded).catch(console.error);
     }
 
     setCheckIns((prev) => [awarded, ...prev]);
 
-    if (!ledgerApplied) {
+    if (!ledgerApplied && !skipLocalLedger) {
       const today = utcToday();
       const payout = checkinPayout(newCheckIn.medicationTaken, newCheckIn.activityMinutes);
       awarded = { ...awarded, cowriesEarned: payout.cowries, xpEarned: payout.xp };
@@ -616,6 +732,7 @@ export default function App() {
           return;
         }
         showToast(rewardErrorToast(err));
+        if (err instanceof RewardsApiError && err.code === 'email_unverified') return;
       }
     }
 
@@ -712,6 +829,7 @@ export default function App() {
           return;
         }
         showToast(rewardErrorToast(err));
+        if (err instanceof RewardsApiError && err.code === 'email_unverified') return;
       }
     }
 
@@ -782,6 +900,7 @@ export default function App() {
           return;
         }
         showToast(rewardErrorToast(err));
+        if (err instanceof RewardsApiError && err.code === 'email_unverified') return;
       }
     }
 
@@ -844,6 +963,10 @@ export default function App() {
       showToast('Sign in to start a Premium trial.');
       return;
     }
+    if (!auth.currentUser.emailVerified) {
+      showToast('Confirm your email before starting a Premium trial.');
+      return;
+    }
     const { plan } = await startTrial('monthly');
     applyPlan(plan);
     setIsLanding(false);
@@ -855,6 +978,10 @@ export default function App() {
       setPremiumOpen(false);
       setShowAuth(true);
       showToast('Sign in to upgrade to Premium.');
+      return;
+    }
+    if (!auth.currentUser.emailVerified) {
+      showToast('Confirm your email before upgrading to Premium.');
       return;
     }
     const { plan } = await checkout(interval);
@@ -879,6 +1006,8 @@ export default function App() {
         onRealGoogleSignIn={handleRealGoogleSignIn}
         onEmailSignIn={handleEmailSignIn}
         onEmailSignUp={handleEmailSignUp}
+        onForgotPassword={handleForgotPassword}
+        onClearAuthError={() => setAuthFormError(null)}
         onStartDemo={handleStartDemo}
         onBack={() => {
           setAuthError(null);
@@ -962,7 +1091,15 @@ export default function App() {
           onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         />
 
-      {/* Guided Tour Banner when in Demo Mode */}
+      {userAccount && userAccount.emailVerified === false && (
+        <EmailVerifyBanner
+          email={userAccount.email}
+          sending={verifyBusy}
+          onResend={() => void handleResendVerification()}
+          onRefresh={() => void handleConfirmVerified()}
+        />
+      )}
+
       {isDemoMode && (
         <div className="trust-band border-b border-[#FFFAF4]/12 py-2.5 px-4">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
@@ -1055,6 +1192,10 @@ export default function App() {
           <SettingsPanel
             userName={userAccount?.name || 'Health Pioneer'}
             userEmail={userAccount?.email}
+            emailVerified={userAccount?.emailVerified}
+            onResendVerification={() => void handleResendVerification()}
+            onRefreshVerification={() => void handleConfirmVerified()}
+            verifyBusy={verifyBusy}
             sessionLanguage={sessionLanguage}
             onLanguageChange={setSessionLanguage}
             onOpenWearables={() => setWearablesOpen(true)}

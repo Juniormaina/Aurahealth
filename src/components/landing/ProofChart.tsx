@@ -11,6 +11,8 @@ import {
   Label,
 } from 'recharts';
 
+import { getPublicProof } from '../../server/commerceStore';
+
 type SeriesPoint = { date: string; anxiety: number; sleep: number };
 type ChartStatus = 'loading' | 'empty' | 'ready';
 
@@ -55,30 +57,15 @@ export const ProofChart: React.FC = () => {
   const [status, setStatus] = useState<ChartStatus>('loading');
 
   useEffect(() => {
-    let cancelled = false;
-    fetch('/api/metrics/proof')
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelled) return;
-        const rows = Array.isArray(data?.series) ? data.series : [];
-        const mapped: SeriesPoint[] = rows.map(
-          (row: { date: string; anxiety: number; sleep?: number; mood?: number }) => ({
-            date: String(row.date).slice(5),
-            anxiety: Number(row.anxiety),
-            sleep: Number(row.sleep ?? Math.round(10 - row.anxiety * 0.55)),
-          })
-        );
-        setSeries(mapped);
-        setStatus(mapped.length >= 2 ? 'ready' : 'empty');
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setSeries([]);
-        setStatus('empty');
-      });
-    return () => {
-      cancelled = true;
-    };
+    const data = getPublicProof();
+    const rows = Array.isArray(data.series) ? data.series : [];
+    const mapped: SeriesPoint[] = rows.map((row) => ({
+      date: String(row.date).slice(5),
+      anxiety: Number(row.anxiety),
+      sleep: Number(row.sleep ?? Math.round(10 - row.anxiety * 0.55)),
+    }));
+    setSeries(mapped);
+    setStatus(mapped.length >= 2 ? 'ready' : 'empty');
   }, []);
 
   if (status === 'loading') {

@@ -5,6 +5,10 @@ import { SESSION_LANGUAGES, SessionLanguageId, VALUE_PROPS } from '../content/va
 interface SettingsPanelProps {
   userName: string;
   userEmail?: string;
+  emailVerified?: boolean;
+  onResendVerification?: () => void;
+  onRefreshVerification?: () => void;
+  verifyBusy?: boolean;
   sessionLanguage: SessionLanguageId;
   onLanguageChange: (id: SessionLanguageId) => void;
   onOpenWearables: () => void;
@@ -15,6 +19,10 @@ interface SettingsPanelProps {
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   userName,
   userEmail,
+  emailVerified,
+  onResendVerification,
+  onRefreshVerification,
+  verifyBusy = false,
   sessionLanguage,
   onLanguageChange,
   onOpenWearables,
@@ -37,6 +45,25 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Account</div>
         <h2 className="text-lg font-bold text-white">{userName}</h2>
         <p className="text-sm text-slate-400 leading-[1.6]">{userEmail || 'Guest walkthrough session'}</p>
+        {userEmail && emailVerified === false && (
+          <div className="mt-3 text-xs text-amber-200 bg-amber-400/10 border border-amber-400/20 rounded-xl p-3 space-y-2">
+            <p className="font-semibold">Email not confirmed yet.</p>
+            <p className="text-slate-300 leading-[1.6]">
+              Open the link we sent to unlock Cowries, loot rewards, and Astra chat.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={onResendVerification} disabled={verifyBusy} className="btn-ghost text-[11px] py-1 px-3">
+                {verifyBusy ? 'Sending…' : 'Resend email'}
+              </button>
+              <button type="button" onClick={onRefreshVerification} className="btn-primary text-[11px] py-1 px-3">
+                I confirmed
+              </button>
+            </div>
+          </div>
+        )}
+        {userEmail && emailVerified && (
+          <p className="mt-2 text-[11px] text-emerald-300">Email confirmed</p>
+        )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 text-xs text-emerald-300 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-3 py-1 capitalize">
             Plan: {planLabel}

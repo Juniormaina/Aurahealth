@@ -81,6 +81,16 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   next();
 }
 
+export function requireEmailVerified(req: Request, res: Response, next: NextFunction) {
+  if (!req.user?.emailVerified) {
+    return res.status(403).json({
+      error: 'Verify your email to continue',
+      code: 'email_unverified',
+    });
+  }
+  next();
+}
+
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const allowlist = getAdminAllowlist();
   const email = req.user?.email?.trim().toLowerCase();
