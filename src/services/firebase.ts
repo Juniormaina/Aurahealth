@@ -6,12 +6,20 @@ import {
   signInWithRedirect,
   getRedirectResult,
   signOut as firebaseSignOut,
-  onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   User
 } from 'firebase/auth';
+import {
+  isValidEmail,
+  normalizeEmail,
+  passwordIssue,
+  sanitizeDisplayName,
+  signupFieldError,
+} from './authValidation';
 import {
   getFirestore,
   doc,
@@ -73,23 +81,74 @@ export async function checkRedirectResult(): Promise<User | null> {
   }
 }
 
+function continueUrl() {
+  if (typeof window === 'undefined') return undefined;
+  return { url: `${window.location.origin}/`, handleCodeInApp: false as const };
+}
+
 /**
  * Sign in with Email and Password using Firebase Auth.
  */
 export async function signInWithEmail(email: string, pass: string): Promise<User> {
-  const result = await signInWithEmailAndPassword(auth, email, pass);
+  const result = await signInWithEmailAndPassword(auth, normalizeEmail(email), pass);
   return result.user;
 }
 
 /**
- * Sign up with Email and Password using Firebase Auth.
+ * Sign up with Email and Password, then send a verification link.
  */
-export async function signUpWithEmail(email: string, pass: string, name?: string): Promise<User> {
-  const result = await createUserWithEmailAndPassword(auth, email, pass);
-  if (name && result.user) {
-    await updateProfile(result.user, { displayName: name });
+export async function signUpWithEmail(email: string, pass: string, name: string): Promise<User> {
+  const displayName = sanitizeDisplayName(name);
+  const normalizedEmail = normalizeEmail(email);
+  const invalid = signupFieldError({
+    name: displayName,
+    email: normalizedEmail,
+    password: pass,
+    confirmPassword: pass,
+  });
+  if (invalid) {
+    throw Object.assign(new Error(invalid), { code: 'auth/invalid-signup' });
   }
-  return result.user;
+  const weak = passwordIssue(pass);
+  if (weak) {
+    throw Object.assign(new Error(weak), { code: 'auth/weak-password' });
+  }
+
+  const result = await createUserWithEmailAndPassword(auth, normalizedEmail, pass);
+  await updateProfile(result.user, { displayName });
+  try {
+    await sendEmailVerification(result.user, continueUrl());
+  } catch (err) {
+    console.warn('Could not send verification email:', err);
+  }
+  await result.user.reload();
+  return auth.currentUser ?? result.user;
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const normalized = normalizeEmail(email);
+  if (!isValidEmail(normalized)) {
+    throw Object.assign(new Error('Enter a valid email address.'), { code: 'auth/invalid-email' });
+  }
+  await sendPasswordResetEmail(auth, normalized, continueUrl());
+}
+
+export async function resendEmailVerification(): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) {
+    throw Object.assign(new Error('Sign in required'), { code: 'auth/user-not-found' });
+  }
+  if (user.emailVerified) return;
+  await sendEmailVerification(user, continueUrl());
+}
+
+/** Reload the user and mint a fresh ID token so the API sees emailVerified. */
+export async function refreshAuthUser(): Promise<User | null> {
+  const user = auth.currentUser;
+  if (!user) return null;
+  await user.reload();
+  await user.getIdToken(true);
+  return auth.currentUser;
 }
 
 export async function logoutUser(): Promise<void> {
@@ -103,6 +162,8 @@ export async function logoutUser(): Promise<void> {
  */
 export function getAuthErrorMessage(error: any): string {
   switch (error?.code) {
+    case 'auth/invalid-signup':
+      return error?.message || 'Check your name, email, and password and try again.';
     case 'auth/operation-not-allowed':
       return 'Email sign-in isn\'t enabled for this app yet. Please try Google Sign-In or Guest mode, or contact support.';
     case 'auth/unauthorized-domain':
@@ -118,11 +179,18 @@ export function getAuthErrorMessage(error: any): string {
     case 'auth/email-already-in-use':
       return 'Email is already registered. Please Sign In instead.';
     case 'auth/weak-password':
-      return 'Password should be at least 6 characters.';
+      return error?.message || 'Password must be at least 8 characters and include a letter and a number.';
+    case 'auth/invalid-email':
+      return 'Enter a valid email address.';
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Wait a minute and try again.';
     case 'auth/network-request-failed':
       return 'Network error — check your connection and try again.';
+    case 'auth/missing-password':
+    case 'auth/missing-email':
+      return 'Please fill in both email and password.';
     default:
-      return error?.message || 'Something went wrong. Please try again.';
+      return 'Something went wrong. Please try again.';
   }
 }
 
@@ -142,13 +210,31 @@ export interface UserProfileData {
   updatedAt?: any;
 }
 
+function identityFromAuth(user: User, existing?: UserProfileData) {
+  return {
+    email: user.email || existing?.email || '',
+    displayName:
+      sanitizeDisplayName(user.displayName || existing?.displayName || '') ||
+      user.email?.split('@')[0] ||
+      'Aura Member',
+    photoURL: user.photoURL || existing?.photoURL || '',
+  };
+}
+
 export async function syncUserProfile(user: User): Promise<UserProfileData> {
   const userRef = doc(db, 'users', user.uid);
   const snap = await getDoc(userRef);
 
   if (snap.exists()) {
     const data = snap.data() as UserProfileData;
-    // Backfill fields for accounts created before streak tracking existed.
+    const identity = identityFromAuth(user, data);
+    const needsIdentitySync =
+      identity.email !== (data.email || '') ||
+      identity.displayName !== (data.displayName || '') ||
+      identity.photoURL !== (data.photoURL || '');
+    if (needsIdentitySync) {
+      await setDoc(userRef, { ...identity, updatedAt: serverTimestamp() }, { merge: true });
+    }
     return {
       currentStreak: 0,
       longestStreak: 0,
@@ -156,25 +242,25 @@ export async function syncUserProfile(user: User): Promise<UserProfileData> {
       completedRewardKeys: [],
       habitClaims: {},
       ...data,
+      ...identity,
     };
-  } else {
-    const newProfile: UserProfileData = {
-      uid: user.uid,
-      email: user.email || '',
-      displayName: user.displayName || user.email?.split('@')[0] || 'Aura Member',
-      photoURL: user.photoURL || '',
-      cowriesBalance: 0, // Starts at 0 for fresh user
-      totalXp: 0, // Starts at 0 for fresh user
-      currentStreak: 0,
-      longestStreak: 0,
-      lastCheckInDate: null,
-      completedRewardKeys: [],
-      habitClaims: {},
-      updatedAt: serverTimestamp()
-    };
-    await setDoc(userRef, newProfile);
-    return newProfile;
   }
+
+  const identity = identityFromAuth(user);
+  const newProfile: UserProfileData = {
+    uid: user.uid,
+    ...identity,
+    cowriesBalance: 0,
+    totalXp: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    lastCheckInDate: null,
+    completedRewardKeys: [],
+    habitClaims: {},
+    updatedAt: serverTimestamp(),
+  };
+  await setDoc(userRef, newProfile);
+  return newProfile;
 }
 
 // Health Log Helper

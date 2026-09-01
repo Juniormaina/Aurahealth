@@ -11,14 +11,26 @@ import {
   LogIn,
   Lock,
 } from 'lucide-react';
+import {
+  MAX_NAME_LENGTH,
+  MAX_PASSWORD_LENGTH,
+  MIN_PASSWORD_LENGTH,
+  isValidEmail,
+  normalizeEmail,
+  signinFieldError,
+  signupFieldError,
+} from '../services/authValidation';
 
 interface AuthPageProps {
   onGoogleSignIn: () => void;
   onEmailSignIn: (email: string, pass: string) => void;
   onEmailSignUp: (email: string, pass: string, name: string) => void;
+  onForgotPassword: (email: string) => Promise<void> | void;
   onStartDemo: () => void;
   onBack: () => void;
+  onClearAuthError?: () => void;
   isLoggingIn?: boolean;
+  authError?: string | null;
 }
 
 const GoogleMark = () => (
@@ -34,32 +46,68 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   onGoogleSignIn,
   onEmailSignIn,
   onEmailSignUp,
+  onForgotPassword,
   onStartDemo,
   onBack,
+  onClearAuthError,
   isLoggingIn = false,
+  authError = null,
 }) => {
   const [emailTab, setEmailTab] = useState<'signin' | 'signup'>('signin');
   const [emailAddress, setEmailAddress] = useState('');
   const [emailPassword, setEmailPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [emailName, setEmailName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [resetNotice, setResetNotice] = useState<string | null>(null);
+  const [resetBusy, setResetBusy] = useState(false);
+
+  const visibleError = emailError || authError;
 
   const handleEmailAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError(null);
-    if (!emailAddress || !emailPassword) {
-      setEmailError('Please fill in both email and password.');
-      return;
-    }
-    if (emailPassword.length < 6) {
-      setEmailError('Password must be at least 6 characters.');
-      return;
-    }
+    setResetNotice(null);
+    onClearAuthError?.();
     if (emailTab === 'signup') {
-      onEmailSignUp(emailAddress, emailPassword, emailName || emailAddress.split('@')[0]);
+      const invalid = signupFieldError({
+        name: emailName,
+        email: emailAddress,
+        password: emailPassword,
+        confirmPassword,
+      });
+      if (invalid) {
+        setEmailError(invalid);
+        return;
+      }
+      onEmailSignUp(emailAddress, emailPassword, emailName);
     } else {
+      const invalid = signinFieldError(emailAddress, emailPassword);
+      if (invalid) {
+        setEmailError(invalid);
+        return;
+      }
       onEmailSignIn(emailAddress, emailPassword);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setEmailError(null);
+    setResetNotice(null);
+    onClearAuthError?.();
+    if (!isValidEmail(normalizeEmail(emailAddress))) {
+      setEmailError('Enter a valid email address first, then request a reset link.');
+      return;
+    }
+    setResetBusy(true);
+    try {
+      await onForgotPassword(emailAddress);
+      setResetNotice('If an account exists for that email, we sent a reset link. Check your inbox and spam folder.');
+    } catch (err: unknown) {
+      setEmailError(err instanceof Error ? err.message : 'Could not send a reset email.');
+    } finally {
+      setResetBusy(false);
     }
   };
 
@@ -77,7 +125,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       </header>
 
       <main className="flex-1 w-full max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <h1 className="view-title mb-2">Sign in to Aura Health</h1>
+        <h1 className="view-title mb-2">
+          {emailTab === 'signup' ? 'Create your Aura Health account' : 'Sign in to Aura Health'}
+        </h1>
         <p className="view-copy mb-8">
           Continue with Google, email, or a guest walkthrough.
         </p>
@@ -111,6 +161,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               onClick={() => {
                 setEmailTab('signin');
                 setEmailError(null);
+                setResetNotice(null);
+                onClearAuthError?.();
               }}
               className={`py-2 rounded-[4px] flex items-center justify-center gap-1.5 ${
                 emailTab === 'signin' ? 'bg-primary text-[var(--color-primary-foreground)]' : 'text-muted'
@@ -124,6 +176,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               onClick={() => {
                 setEmailTab('signup');
                 setEmailError(null);
+                setResetNotice(null);
+                onClearAuthError?.();
               }}
               className={`py-2 rounded-[4px] flex items-center justify-center gap-1.5 ${
                 emailTab === 'signup' ? 'bg-primary text-[var(--color-primary-foreground)]' : 'text-muted'
@@ -134,60 +188,137 @@ export const AuthPage: React.FC<AuthPageProps> = ({
             </button>
           </div>
 
-          {emailError && (
+          {visibleError && (
             <div className="bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/40 text-[var(--color-danger)] text-xs p-3 rounded-[4px] mb-4 font-semibold leading-[1.6]">
-              {emailError}
+              {visibleError}
+            </div>
+          )}
+          {resetNotice && (
+            <div className="bg-emerald-400/10 border border-emerald-400/30 text-emerald-200 text-xs p-3 rounded-[4px] mb-4 font-semibold leading-[1.6]">
+              {resetNotice}
             </div>
           )}
 
-          <form onSubmit={handleEmailAuthSubmit} className="space-y-4">
+          <form onSubmit={handleEmailAuthSubmit} className="space-y-4" autoComplete="on">
             {emailTab === 'signup' && (
               <div>
-                <label className="text-xs font-bold text-ink block mb-1">Full Name</label>
+                <label className="text-xs font-bold text-ink block mb-1" htmlFor="auth-name">
+                  Full Name
+                </label>
                 <div className="relative">
                   <User className="w-4 h-4 text-muted absolute left-3 top-3" />
                   <input
+                    id="auth-name"
+                    name="name"
                     type="text"
+                    autoComplete="name"
+                    autoCapitalize="words"
                     placeholder="e.g. Alex Morgan"
                     value={emailName}
                     onChange={(e) => setEmailName(e.target.value)}
-                    required={emailTab === 'signup'}
+                    required
+                    minLength={2}
+                    maxLength={MAX_NAME_LENGTH}
                     className="aura-input pl-9"
                   />
                 </div>
               </div>
             )}
             <div>
-              <label className="text-xs font-bold text-ink block mb-1">Email Address</label>
+              <label className="text-xs font-bold text-ink block mb-1" htmlFor="auth-email">
+                Email Address
+              </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-muted absolute left-3 top-3" />
                 <input
+                  id="auth-email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
+                  inputMode="email"
                   placeholder="alex@example.com"
                   value={emailAddress}
                   onChange={(e) => setEmailAddress(e.target.value)}
                   required
+                  maxLength={320}
                   className="aura-input pl-9"
                 />
               </div>
             </div>
             <div>
-              <label className="text-xs font-bold text-ink block mb-1">Password</label>
+              <label className="text-xs font-bold text-ink block mb-1" htmlFor="auth-password">
+                Password
+              </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-muted absolute left-3 top-3" />
                 <input
+                  id="auth-password"
+                  name={emailTab === 'signup' ? 'new-password' : 'current-password'}
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="At least 6 characters"
+                  autoComplete={emailTab === 'signup' ? 'new-password' : 'current-password'}
+                  placeholder={
+                    emailTab === 'signup'
+                      ? `At least ${MIN_PASSWORD_LENGTH} characters, letter + number`
+                      : 'Your password'
+                  }
                   value={emailPassword}
                   onChange={(e) => setEmailPassword(e.target.value)}
                   required
+                  minLength={emailTab === 'signup' ? MIN_PASSWORD_LENGTH : 1}
+                  maxLength={MAX_PASSWORD_LENGTH}
                   className="aura-input pl-9 pr-10"
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-muted">
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-muted"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {emailTab === 'signup' && (
+                <p className="text-[11px] text-slate-500 mt-1.5 leading-[1.5]">
+                  Use {MIN_PASSWORD_LENGTH}–{MAX_PASSWORD_LENGTH} characters with a letter and a number.
+                  We’ll email a confirmation link before Cowries and Astra chat unlock.
+                </p>
+              )}
             </div>
+            {emailTab === 'signup' && (
+              <div>
+                <label className="text-xs font-bold text-ink block mb-1" htmlFor="auth-confirm">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-muted absolute left-3 top-3" />
+                  <input
+                    id="auth-confirm"
+                    name="confirm-password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    placeholder="Re-enter your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={MIN_PASSWORD_LENGTH}
+                    maxLength={MAX_PASSWORD_LENGTH}
+                    className="aura-input pl-9"
+                  />
+                </div>
+              </div>
+            )}
+            {emailTab === 'signin' && (
+              <div className="flex justify-end -mt-1">
+                <button
+                  type="button"
+                  onClick={() => void handleForgotPassword()}
+                  disabled={isLoggingIn || resetBusy}
+                  className="text-[11px] font-semibold text-[var(--color-harmony)] hover:underline"
+                >
+                  {resetBusy ? 'Sending reset link…' : 'Forgot password?'}
+                </button>
+              </div>
+            )}
             <button type="submit" disabled={isLoggingIn} className="w-full btn-primary justify-center text-xs py-3 mt-2">
               {isLoggingIn ? (
                 'Processing...'

@@ -8,6 +8,7 @@ import {
   checkout,
   funnelSummary,
   getOrCreatePlan,
+  getPublicProof,
   impactSummary,
   listCorporateLeads,
   listMetrics,
@@ -25,6 +26,7 @@ import {
   rateLimit,
   requireAdmin,
   requireAuth,
+  requireEmailVerified,
   uidKey,
 } from './src/server/auth';
 import { applyCheckinRewards, applyGrant, applySpend, applyWheelSpin, RewardsError } from './src/server/rewards';
@@ -119,7 +121,7 @@ async function startServer() {
   seedDemoMetrics(PUBLIC_PROOF_USER_ID);
 
   // AI Health Check-in Verification & Attestation Endpoint
-  app.post('/api/verify-checkin', requireAuth, checkinLimit, ...geminiLimit, async (req, res) => {
+  app.post('/api/verify-checkin', requireAuth, requireEmailVerified, checkinLimit, ...geminiLimit, async (req, res) => {
     try {
       const {
         waterLiters,
@@ -212,7 +214,7 @@ Response MUST be valid JSON string only.`,
     }
   });
 
-  app.post('/api/rewards/checkin', requireAuth, rewardsLimit, async (req, res) => {
+  app.post('/api/rewards/checkin', requireAuth, requireEmailVerified, rewardsLimit, async (req, res) => {
     try {
       const body = req.body || {};
       const result = await applyCheckinRewards(req.user!.uid, req.user!.email, {
@@ -225,7 +227,7 @@ Response MUST be valid JSON string only.`,
     }
   });
 
-  app.post('/api/rewards/grant', requireAuth, rewardsLimit, async (req, res) => {
+  app.post('/api/rewards/grant', requireAuth, requireEmailVerified, rewardsLimit, async (req, res) => {
     try {
       const { kind, id } = req.body || {};
       if (kind !== 'mission' && kind !== 'habit' && kind !== 'quicklog') {
@@ -241,7 +243,7 @@ Response MUST be valid JSON string only.`,
     }
   });
 
-  app.post('/api/rewards/spin', requireAuth, rewardsLimit, async (req, res) => {
+  app.post('/api/rewards/spin', requireAuth, requireEmailVerified, rewardsLimit, async (req, res) => {
     try {
       const result = await applyWheelSpin(req.user!.uid, req.user!.email);
       res.json(result);
@@ -250,7 +252,7 @@ Response MUST be valid JSON string only.`,
     }
   });
 
-  app.post('/api/rewards/spend', requireAuth, rewardsLimit, async (req, res) => {
+  app.post('/api/rewards/spend', requireAuth, requireEmailVerified, rewardsLimit, async (req, res) => {
     try {
       const benefitId = String(req.body?.benefitId || '');
       if (!benefitId || benefitId.length > 64) {
@@ -286,12 +288,12 @@ Response MUST be valid JSON string only.`,
     res.json({ plan: getOrCreatePlan(req.user!.uid) });
   });
 
-  app.post('/api/subscriptions/trial', requireAuth, (req, res) => {
+  app.post('/api/subscriptions/trial', requireAuth, requireEmailVerified, (req, res) => {
     const { interval } = req.body || {};
     res.json({ plan: startTrial(req.user!.uid, interval || 'monthly') });
   });
 
-  app.post('/api/subscriptions/checkout', requireAuth, (req, res) => {
+  app.post('/api/subscriptions/checkout', requireAuth, requireEmailVerified, (req, res) => {
     const { interval } = req.body || {};
     if (!interval) return res.status(400).json({ error: 'interval required' });
     res.json({ plan: checkout(req.user!.uid, interval) });
@@ -314,7 +316,7 @@ Response MUST be valid JSON string only.`,
   });
 
   app.get('/api/metrics/proof', (_req, res) => {
-    res.json(impactSummary(PUBLIC_PROOF_USER_ID));
+    res.json(getPublicProof());
   });
 
   app.get('/api/metrics/me/impact', requireAuth, (req, res) => {
@@ -391,6 +393,13 @@ Response MUST be valid JSON string only.`,
           crisis: true,
           resources: CRISIS_RESOURCES,
           sources: [],
+        });
+      }
+
+      if (!req.user?.emailVerified) {
+        return res.status(403).json({
+          error: 'Verify your email to continue',
+          code: 'email_unverified',
         });
       }
 

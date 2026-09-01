@@ -138,6 +138,11 @@ export function listMetrics(userId: string): UserMetric[] {
   return metrics.filter((m) => m.userId === userId).sort((a, b) => a.sessionDate.localeCompare(b.sessionDate));
 }
 
+export function getPublicProof() {
+  seedDemoMetrics(PUBLIC_PROOF_USER_ID);
+  return impactSummary(PUBLIC_PROOF_USER_ID);
+}
+
 export function impactSummary(userId: string) {
   const rows = listMetrics(userId);
   const last14 = rows.slice(-14);
