@@ -273,6 +273,8 @@ On push to `main`, a deploy job runs **only if** the repository variable `GCP_PR
 
 Set `GEMINI_API_KEY`, `ADMIN_EMAILS`, and Firebase Admin credentials on the Cloud Run service (Secret Manager). The workflow only sets `NODE_ENV` and `FIREBASE_PROJECT_ID`; it does not overwrite other service env/secrets. Point `aurahealth.co.ke` at the Cloud Run URL once it serves `/api/health`.
 
+**Firebase Auth on custom domains:** Google/email sign-in requires each hostname in Firebase **Authentication → Settings → Authorized domains** (e.g. `aurahealth.co.ke`, `www.aurahealth.co.ke`). On deploy, CI runs `scripts/authorize-firebase-domains.mjs` when `GCP_SA_KEY` is set. To add domains manually or locally (with gcloud auth): `npm run authorize:domains`.
+
 ## Smart contract workflow
 
 ```bash

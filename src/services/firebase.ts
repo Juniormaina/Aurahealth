@@ -48,6 +48,19 @@ googleProvider.setCustomParameters({
 export const AUTH_ENTER_DASHBOARD_KEY = 'aura_auth_enter_dashboard';
 export const AUTH_FRESH_SIGNIN_KEY = 'aura_auth_fresh_signin';
 
+/** Hosts where popup sign-in is reliable (local dev + Firebase/Vercel defaults). */
+function prefersPopupAuth(): boolean {
+  if (typeof window === 'undefined') return true;
+  const host = window.location.hostname;
+  return (
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host.endsWith('.firebaseapp.com') ||
+    host.endsWith('.web.app') ||
+    host.endsWith('.vercel.app')
+  );
+}
+
 function markPendingAuthNavigation() {
   try {
     sessionStorage.setItem(AUTH_ENTER_DASHBOARD_KEY, '1');
@@ -59,9 +72,15 @@ function markPendingAuthNavigation() {
 
 /**
  * Sign in with real Google Account.
- * Tries popup first; only falls back to redirect when the popup is blocked.
+ * Custom domains (e.g. aurahealth.co.ke) use redirect; localhost/Vercel use popup first.
  */
 export async function signInWithGoogle(): Promise<User> {
+  if (!prefersPopupAuth()) {
+    markPendingAuthNavigation();
+    await signInWithRedirect(auth, googleProvider);
+    throw new Error('Redirecting to Google Sign-In...');
+  }
+
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
@@ -112,8 +131,10 @@ export function getAuthErrorMessage(error: any): string {
   switch (error?.code) {
     case 'auth/operation-not-allowed':
       return 'Email sign-in isn\'t enabled for this app yet. Please try Google Sign-In or Guest mode, or contact support.';
-    case 'auth/unauthorized-domain':
-      return 'This domain isn\'t authorized for sign-in yet. Please try Email Sign-In or Guest mode, or contact support.';
+    case 'auth/unauthorized-domain': {
+      const host = typeof window !== 'undefined' ? window.location.hostname : 'this site';
+      return `Sign-in is not enabled for ${host} yet. Add it under Firebase Console → Authentication → Settings → Authorized domains (include aurahealth.co.ke and www.aurahealth.co.ke).`;
+    }
     case 'auth/api-key-not-valid':
     case 'auth/invalid-api-key':
       return 'Sign-in is temporarily misconfigured. Please try Guest mode, or contact support.';
