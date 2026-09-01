@@ -45,17 +45,29 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
+export const AUTH_ENTER_DASHBOARD_KEY = 'aura_auth_enter_dashboard';
+export const AUTH_FRESH_SIGNIN_KEY = 'aura_auth_fresh_signin';
+
+function markPendingAuthNavigation() {
+  try {
+    sessionStorage.setItem(AUTH_ENTER_DASHBOARD_KEY, '1');
+    sessionStorage.setItem(AUTH_FRESH_SIGNIN_KEY, '1');
+  } catch {
+    // sessionStorage may be unavailable in some embedded contexts
+  }
+}
+
 /**
  * Sign in with real Google Account.
- * Tries popup first, falls back to redirect if popup is blocked by iframe constraints.
+ * Tries popup first; only falls back to redirect when the popup is blocked.
  */
 export async function signInWithGoogle(): Promise<User> {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: any) {
-    console.warn('Google Popup login failed or blocked by iframe, falling back to redirect:', error);
-    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+    if (error.code === 'auth/popup-blocked') {
+      markPendingAuthNavigation();
       await signInWithRedirect(auth, googleProvider);
       throw new Error('Redirecting to Google Sign-In...');
     }
@@ -64,13 +76,8 @@ export async function signInWithGoogle(): Promise<User> {
 }
 
 export async function checkRedirectResult(): Promise<User | null> {
-  try {
-    const result = await getRedirectResult(auth);
-    return result ? result.user : null;
-  } catch (error) {
-    console.error('Error handling redirect result:', error);
-    return null;
-  }
+  const result = await getRedirectResult(auth);
+  return result ? result.user : null;
 }
 
 /**
@@ -121,6 +128,9 @@ export function getAuthErrorMessage(error: any): string {
       return 'Password should be at least 6 characters.';
     case 'auth/network-request-failed':
       return 'Network error — check your connection and try again.';
+    case 'auth/popup-closed-by-user':
+    case 'auth/cancelled-popup-request':
+      return 'Sign-in was cancelled. Try again when you\'re ready.';
     default:
       return error?.message || 'Something went wrong. Please try again.';
   }
