@@ -53,17 +53,48 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
+export const AUTH_ENTER_DASHBOARD_KEY = 'aura_auth_enter_dashboard';
+export const AUTH_FRESH_SIGNIN_KEY = 'aura_auth_fresh_signin';
+
+/** Hosts where popup sign-in is reliable (local dev + Firebase/Vercel defaults). */
+function prefersPopupAuth(): boolean {
+  if (typeof window === 'undefined') return true;
+  const host = window.location.hostname;
+  return (
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host.endsWith('.firebaseapp.com') ||
+    host.endsWith('.web.app') ||
+    host.endsWith('.vercel.app')
+  );
+}
+
+function markPendingAuthNavigation() {
+  try {
+    sessionStorage.setItem(AUTH_ENTER_DASHBOARD_KEY, '1');
+    sessionStorage.setItem(AUTH_FRESH_SIGNIN_KEY, '1');
+  } catch {
+    // sessionStorage may be unavailable in some embedded contexts
+  }
+}
+
 /**
  * Sign in with real Google Account.
- * Tries popup first, falls back to redirect if popup is blocked by iframe constraints.
+ * Custom domains (e.g. aurahealth.co.ke) use redirect; localhost/Vercel use popup first.
  */
 export async function signInWithGoogle(): Promise<User> {
+  if (!prefersPopupAuth()) {
+    markPendingAuthNavigation();
+    await signInWithRedirect(auth, googleProvider);
+    throw new Error('Redirecting to Google Sign-In...');
+  }
+
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: any) {
-    console.warn('Google Popup login failed or blocked by iframe, falling back to redirect:', error);
-    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+    if (error.code === 'auth/popup-blocked') {
+      markPendingAuthNavigation();
       await signInWithRedirect(auth, googleProvider);
       throw new Error('Redirecting to Google Sign-In...');
     }
@@ -72,13 +103,8 @@ export async function signInWithGoogle(): Promise<User> {
 }
 
 export async function checkRedirectResult(): Promise<User | null> {
-  try {
-    const result = await getRedirectResult(auth);
-    return result ? result.user : null;
-  } catch (error) {
-    console.error('Error handling redirect result:', error);
-    return null;
-  }
+  const result = await getRedirectResult(auth);
+  return result ? result.user : null;
 }
 
 function continueUrl() {
@@ -166,8 +192,10 @@ export function getAuthErrorMessage(error: any): string {
       return error?.message || 'Check your name, email, and password and try again.';
     case 'auth/operation-not-allowed':
       return 'Email sign-in isn\'t enabled for this app yet. Please try Google Sign-In or Guest mode, or contact support.';
-    case 'auth/unauthorized-domain':
-      return 'This domain isn\'t authorized for sign-in yet. Please try Email Sign-In or Guest mode, or contact support.';
+    case 'auth/unauthorized-domain': {
+      const host = typeof window !== 'undefined' ? window.location.hostname : 'this site';
+      return `Sign-in is not enabled for ${host} yet. Add it under Firebase Console → Authentication → Settings → Authorized domains (include aurahealth.co.ke and www.aurahealth.co.ke).`;
+    }
     case 'auth/api-key-not-valid':
     case 'auth/invalid-api-key':
       return 'Sign-in is temporarily misconfigured. Please try Guest mode, or contact support.';
@@ -186,9 +214,9 @@ export function getAuthErrorMessage(error: any): string {
       return 'Too many attempts. Wait a minute and try again.';
     case 'auth/network-request-failed':
       return 'Network error — check your connection and try again.';
-    case 'auth/missing-password':
-    case 'auth/missing-email':
-      return 'Please fill in both email and password.';
+    case 'auth/popup-closed-by-user':
+    case 'auth/cancelled-popup-request':
+      return 'Sign-in was cancelled. Try again when you\'re ready.';
     default:
       return 'Something went wrong. Please try again.';
   }

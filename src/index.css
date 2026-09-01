@@ -241,6 +241,33 @@ p, li, label {
   filter: brightness(0.97);
 }
 
+.auth-tab {
+  min-height: 2.75rem;
+  padding: 0.625rem 0.75rem;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  border-radius: 10px;
+}
+
+.auth-tab svg {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+
+.auth-submit {
+  min-height: 2.75rem;
+  font-size: 0.875rem;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.auth-submit svg {
+  flex-shrink: 0;
+}
+
 .btn-secondary {
   background: var(--color-harmony);
   color: #06201C;

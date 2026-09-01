@@ -69,6 +69,8 @@ import {
   getUserHealthLogsFromFirestore,
   getCompanionFromFirestore,
   saveCompanionToFirestore,
+  AUTH_ENTER_DASHBOARD_KEY,
+  AUTH_FRESH_SIGNIN_KEY,
 } from './services/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
@@ -121,9 +123,10 @@ export default function App() {
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [userAccount, setUserAccount] = useState<SignedInAccount | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
-  const [authFormError, setAuthFormError] = useState<string | null>(null);
-  const [verifyBusy, setVerifyBusy] = useState(false);
-  const authSyncChain = useRef(Promise.resolve());
+  const [authError, setAuthError] = useState<string | null>(null);
+  const authSyncUidRef = useRef<string | null>(null);
+  const pendingEnterDashboardRef = useRef(false);
+  const isFreshSignInRef = useRef(false);
   const [isProMode, setIsProMode] = useState<boolean>(false);
   const [premiumOpen, setPremiumOpen] = useState<boolean>(false);
   const [wearablesOpen, setWearablesOpen] = useState<boolean>(false);
@@ -293,16 +296,16 @@ export default function App() {
   };
 
   useEffect(() => {
-    checkRedirectResult().then((user) => {
-      if (user) {
-        void handleFirebaseUserAuthenticated(user, { welcome: true });
-      }
+    checkRedirectResult().catch((err) => {
+      console.error('Redirect sign-in failed:', err);
+      setAuthError(getAuthErrorMessage(err));
     });
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         await handleFirebaseUserAuthenticated(user);
       } else {
+        authSyncUidRef.current = null;
         setUserAccount(null);
         setIsAdmin(false);
       }
@@ -311,68 +314,146 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  const handleRealGoogleSignIn = async () => {
-    setIsLoggingIn(true);
-    setAuthFormError(null);
+  const handleFirebaseUserAuthenticated = async (user: User) => {
+    if (authSyncUidRef.current === user.uid) return;
+    authSyncUidRef.current = user.uid;
+
+    const shouldEnterDashboard =
+      pendingEnterDashboardRef.current ||
+      sessionStorage.getItem(AUTH_ENTER_DASHBOARD_KEY) === '1';
+    const isFreshSignIn =
+      isFreshSignInRef.current ||
+      sessionStorage.getItem(AUTH_FRESH_SIGNIN_KEY) === '1';
+
+    pendingEnterDashboardRef.current = false;
+    isFreshSignInRef.current = false;
+    sessionStorage.removeItem(AUTH_ENTER_DASHBOARD_KEY);
+    sessionStorage.removeItem(AUTH_FRESH_SIGNIN_KEY);
+
     try {
-      const user = await signInWithGoogle();
-      await handleFirebaseUserAuthenticated(user, { welcome: true });
-      setIsLanding(false);
-      confetti({
-        particleCount: 90,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#e11d48', '#38bdf8', '#10b981', '#fbbf24'],
+      const profile = await syncUserProfile(user);
+      const isGoogle = user.providerData.some((provider) => provider.providerId === 'google.com');
+      setUserAccount({
+        name: profile.displayName,
+        email: profile.email,
+        isGoogle,
+        uid: user.uid,
+        photoURL: user.photoURL || '',
       });
+      setIsDemoMode(false);
+      setShowAuth(false);
+      setAuthError(null);
+
+      if (shouldEnterDashboard) {
+        setIsLanding(false);
+      }
+
+      // Every real account starts from a clean slate — no leftover mock/demo
+      // numbers. Real progress comes only from what's saved in Firestore.
+      setStats({
+        cowriesBalance: profile.cowriesBalance ?? 0,
+        totalXp: profile.totalXp ?? 0,
+        avaxEarned: 0,
+        currentStreak: profile.currentStreak ?? 0,
+        longestStreak: profile.longestStreak ?? 0,
+        lastCheckInDate: profile.lastCheckInDate ?? null,
+        rank: 'Health Newcomer',
+        communityContributionScore: 0,
+      });
+      setRewardKeys(profile.completedRewardKeys ?? []);
+
+      // Badges aren't persisted per-account yet, so start locked rather than
+      // showing the demo seed's already-unlocked ones.
+      setBadges(INITIAL_BADGES.map((b) => ({ ...b, unlockedAt: undefined, tokenId: undefined, txHash: undefined })));
+
+      // Sync companion
+      const firestoreComp = await getCompanionFromFirestore(user.uid);
+      if (firestoreComp) {
+        setCompanion((prev) => ({
+          ...prev,
+          ...firestoreComp,
+        }));
+      } else {
+        await saveCompanionToFirestore(user.uid, FRESH_USER_COMPANION);
+        setCompanion(FRESH_USER_COMPANION);
+      }
+
+      // Sync user health logs from Firestore
+      const userLogs = await getUserHealthLogsFromFirestore(user.uid);
+      if (userLogs && userLogs.length > 0) {
+        setCheckIns(userLogs);
+      } else {
+        setCheckIns([]); // Clean start for new account
+      }
+
+      if (isFreshSignIn) {
+        showToast(`Welcome ${profile.displayName}! Authenticated session active.`);
+        confetti({
+          particleCount: 90,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#e11d48', '#38bdf8', '#10b981', '#fbbf24'],
+        });
+      }
     } catch (err: any) {
-      console.error('Google Sign-In Error:', err);
+      authSyncUidRef.current = null;
+      console.error('Failed syncing user profile:', err);
+      setAuthError(getAuthErrorMessage(err));
+    }
+  };
+
+  const resetPendingAuthFlow = () => {
+    pendingEnterDashboardRef.current = false;
+    isFreshSignInRef.current = false;
+    authSyncUidRef.current = null;
+  };
+
+  const handleRealGoogleSignIn = async () => {
+    setAuthError(null);
+    setIsLoggingIn(true);
+    isFreshSignInRef.current = true;
+    pendingEnterDashboardRef.current = true;
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
       if (err.message?.includes('Redirecting')) {
         showToast('Redirecting to Google Authentication...');
-      } else {
-        showToast(getAuthErrorMessage(err));
+        return;
       }
+      resetPendingAuthFlow();
+      setAuthError(getAuthErrorMessage(err));
     } finally {
       setIsLoggingIn(false);
     }
   };
 
   const handleEmailSignIn = async (email: string, pass: string) => {
+    setAuthError(null);
     setIsLoggingIn(true);
-    setAuthFormError(null);
+    isFreshSignInRef.current = true;
+    pendingEnterDashboardRef.current = true;
     try {
-      const user = await signInWithEmail(email, pass);
-      await handleFirebaseUserAuthenticated(user, { welcome: true });
-      setIsLanding(false);
-      confetti({
-        particleCount: 90,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#e11d48', '#38bdf8', '#10b981', '#fbbf24'],
-      });
+      await signInWithEmail(email, pass);
     } catch (err: any) {
       console.warn('Email Sign-In error:', err);
-      setAuthFormError(getAuthErrorMessage(err));
+      resetPendingAuthFlow();
+      setAuthError(getAuthErrorMessage(err));
     } finally {
       setIsLoggingIn(false);
     }
   };
 
   const handleEmailSignUp = async (email: string, pass: string, name: string) => {
+    setAuthError(null);
     setIsLoggingIn(true);
-    setAuthFormError(null);
+    isFreshSignInRef.current = true;
+    pendingEnterDashboardRef.current = true;
     try {
-      const user = await signUpWithEmail(email, pass, name);
-      await handleFirebaseUserAuthenticated(user, { welcome: true });
-      setIsLanding(false);
-      confetti({
-        particleCount: 90,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#e11d48', '#38bdf8', '#10b981', '#fbbf24'],
-      });
+      await signUpWithEmail(email, pass, name);
     } catch (err: any) {
       console.warn('Email Sign-Up error:', err);
-      setAuthFormError(getAuthErrorMessage(err));
+      resetPendingAuthFlow();
+      setAuthError(getAuthErrorMessage(err));
     } finally {
       setIsLoggingIn(false);
     }
@@ -922,18 +1003,19 @@ export default function App() {
   if (showAuth) {
     return (
       <AuthPage
-        onGoogleSignIn={handleRealGoogleSignIn}
+        onRealGoogleSignIn={handleRealGoogleSignIn}
         onEmailSignIn={handleEmailSignIn}
         onEmailSignUp={handleEmailSignUp}
         onForgotPassword={handleForgotPassword}
         onClearAuthError={() => setAuthFormError(null)}
         onStartDemo={handleStartDemo}
         onBack={() => {
-          setAuthFormError(null);
+          setAuthError(null);
           setShowAuth(false);
         }}
         isLoggingIn={isLoggingIn}
-        authError={authFormError}
+        authError={authError}
+        onClearAuthError={() => setAuthError(null)}
       />
     );
   }

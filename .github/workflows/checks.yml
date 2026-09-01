@@ -60,6 +60,11 @@ jobs:
           env_vars: NODE_ENV=production,FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }}
       - name: Publish Firestore rules
         run: npx -y firebase-tools@14 deploy --only firestore:rules --project "$FIREBASE_PROJECT_ID" --non-interactive
+      - name: Authorize Firebase Auth domains
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+          AUTHORIZE_DOMAINS: aurahealth.co.ke,www.aurahealth.co.ke
+        run: node scripts/authorize-firebase-domains.mjs
       - name: Smoke Cloud Run URL
         env:
           BASE_URL: ${{ steps.deploy.outputs.url }}
