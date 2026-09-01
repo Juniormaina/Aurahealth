@@ -206,7 +206,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   Full Name
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-muted absolute left-3 top-3" />
+                  <User className="pointer-events-none w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     id="auth-name"
                     name="name"
@@ -219,7 +219,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     required
                     minLength={2}
                     maxLength={MAX_NAME_LENGTH}
-                    className="aura-input pl-9"
+                    className="aura-input aura-input-icon-left"
                   />
                 </div>
               </div>
@@ -229,7 +229,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-muted absolute left-3 top-3" />
+                <Mail className="pointer-events-none w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   id="auth-email"
                   name="email"
@@ -241,7 +241,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   onChange={(e) => setEmailAddress(e.target.value)}
                   required
                   maxLength={320}
-                  className="aura-input pl-9"
+                  className="aura-input aura-input-icon-left"
                 />
               </div>
             </div>
@@ -250,7 +250,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-muted absolute left-3 top-3" />
+                <Lock className="pointer-events-none w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   id="auth-password"
                   name={emailTab === 'signup' ? 'new-password' : 'current-password'}
@@ -266,12 +266,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   required
                   minLength={emailTab === 'signup' ? MIN_PASSWORD_LENGTH : 1}
                   maxLength={MAX_PASSWORD_LENGTH}
-                  className="aura-input pl-9 pr-10"
+                  className="aura-input aura-input-icon-left aura-input-icon-right"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-muted"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -290,7 +290,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-muted absolute left-3 top-3" />
+                  <Lock className="pointer-events-none w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     id="auth-confirm"
                     name="confirm-password"
@@ -302,7 +302,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     required
                     minLength={MIN_PASSWORD_LENGTH}
                     maxLength={MAX_PASSWORD_LENGTH}
-                    className="aura-input pl-9"
+                    className="aura-input aura-input-icon-left"
                   />
                 </div>
               </div>

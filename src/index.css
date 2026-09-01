@@ -286,7 +286,8 @@ p, li, label {
 
 .aura-input {
   width: 100%;
-  padding: 0.625rem 1rem;
+  padding-block: 0.75rem;
+  padding-inline: 1rem;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(13, 31, 23, 0.55);
@@ -295,6 +296,14 @@ p, li, label {
   line-height: 1.6;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   outline: none;
+}
+
+.aura-input.aura-input-icon-left {
+  padding-left: 2.75rem;
+}
+
+.aura-input.aura-input-icon-right {
+  padding-right: 2.75rem;
 }
 
 .aura-input:focus {
