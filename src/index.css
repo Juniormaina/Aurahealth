@@ -1246,6 +1246,42 @@ p, li, label {
   backdrop-filter: blur(10px);
 }
 
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 28rem;
+  height: min(72dvh, 640px);
+  max-height: calc(100dvh - 11rem);
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .chat-container {
+    max-height: calc(100dvh - 9rem);
+  }
+}
+
+.chat-container-header {
+  flex-shrink: 0;
+}
+
+.chat-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chat-input-area {
+  flex-shrink: 0;
+  background: inherit;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .chat-bubble-astra {
   background: rgba(13, 31, 23, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.12);

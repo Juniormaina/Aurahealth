@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { HealthCompanion } from '../types';
 import { authorizedFetch } from '../services/commerce';
 import { CRISIS_REPLY, CRISIS_RESOURCES, looksLikeCrisis } from '../content/crisisSupport';
@@ -15,8 +15,8 @@ import {
 
 interface AIHealthCoachProps {
   companion: HealthCompanion;
-  language?: string;
   latestAnxiety?: number;
+  onShowToast?: (message: string) => void;
 }
 
 interface ChatSource {
@@ -25,17 +25,21 @@ interface ChatSource {
 }
 
 interface ChatMessage {
-  sender: 'user' | 'astra' | 'system';
+  sender: 'user' | 'astra';
   text: string;
   time: string;
   sources?: ChatSource[];
 }
 
 const PROMPT_CHIPS = [
-  'Start a 5-minute Kiswahili stress reset',
+  'Start a 5-minute stress reset',
   'Adapt a session to my mood',
   'How do I boost my streak?',
 ];
+
+function coachGreeting(latestAnxiety?: number): string {
+  return `Hello! I'm Astra. Today's anxiety check-in is ${latestAnxiety ?? 7}/10 — we can do a 5-minute reset together. I'm not a doctor; for diagnosis or medication, see a licensed professional.`;
+}
 
 function PromptChipRow({
   chips,
@@ -67,21 +71,26 @@ function PromptChipRow({
 
 export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
   companion,
-  language = 'Kiswahili',
   latestAnxiety,
+  onShowToast,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       sender: 'astra',
-      text: `Habari. I'm Astra. ${language} micro-sessions adapt to your mood in real time. Today's anxiety check-in is ${latestAnxiety ?? 7}/10 — we can do a 5-minute reset together. I'm not a doctor; for diagnosis or medication, see a licensed professional.`,
+      text: coachGreeting(latestAnxiety),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [crisisOpen, setCrisisOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const levelPct = Math.min(100, (companion.xp / Math.max(1, companion.xpToNextLevel)) * 100);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
 
   const lastAstraIndex = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -94,9 +103,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
     if (!rawText.trim() || isLoading) return;
     const userText = rawText.trim();
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const history = messages
-      .filter((m) => m.sender !== 'system')
-      .map((m) => ({ sender: m.sender === 'user' ? 'user' : 'astra', text: m.text }));
+    const history = messages.map((m) => ({ sender: m.sender, text: m.text }));
     setMessages((prev) => [...prev, { sender: 'user', text: userText, time }]);
     setInputMessage('');
     setIsLoading(true);
@@ -123,7 +130,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
             streakDays: companion.streakDays,
             mood: companion.mood,
           },
-          language,
+          language: 'English',
           latestAnxiety,
         }),
       });
@@ -136,29 +143,16 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
         ]);
       } else if (response.status === 403) {
         const data = (await response.json().catch(() => ({}))) as { code?: string };
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: 'system',
-            text:
-              data.code === 'email_unverified'
-                ? 'Confirm the link we sent to your email to unlock Astra chat. You can resend it from Settings.'
-                : 'Astra could not reply just then. Please try again in a moment.',
-            time,
-          },
-        ]);
+        onShowToast?.(
+          data.code === 'email_unverified'
+            ? 'Confirm the link we sent to your email to unlock Astra chat. You can resend it from Settings.'
+            : 'Astra could not reply just then. Please try again in a moment.'
+        );
       } else {
         throw new Error('Coach API error');
       }
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: 'system',
-          text: 'Connection hiccup — your streak and check-ins are still saved. Try sending again.',
-          time,
-        },
-      ]);
+      onShowToast?.('Connection hiccup — your streak and check-ins are still saved. Try sending again.');
     } finally {
       setIsLoading(false);
     }
@@ -170,17 +164,6 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
   };
 
   const renderMessage = (m: ChatMessage, idx: number) => {
-    if (m.sender === 'system') {
-      return (
-        <div key={idx} className="flex justify-center px-2">
-          <div className="chat-system-tag max-w-[92%] text-center">
-            <p className="whitespace-pre-wrap">{m.text}</p>
-            <span className="block text-[9px] mt-1 font-mono text-slate-500">{m.time}</span>
-          </div>
-        </div>
-      );
-    }
-
     const isUser = m.sender === 'user';
 
     return (
@@ -233,7 +216,8 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
   };
 
   return (
-    <div className="aura-card-gradient p-4 sm:p-6 relative overflow-hidden max-w-4xl mx-auto flex flex-col h-[min(72dvh,640px)] min-h-[28rem]">
+    <div className="aura-card-gradient chat-container p-4 sm:p-6 relative max-w-4xl mx-auto">
+      <div className="chat-container-header shrink-0 min-w-0">
       <div className="flex items-start sm:items-center gap-3 pb-3 border-b border-line min-w-0">
         <div className="relative shrink-0">
           <img
@@ -302,8 +286,9 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
           </div>
         )}
       </div>
+      </div>
 
-      <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 scrollbar-none min-h-0">
+      <div className="chat-messages py-4 pr-1 scrollbar-none">
         {messages.map((m, idx) => (
           <React.Fragment key={idx}>
             {renderMessage(m, idx)}
@@ -319,21 +304,24 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
             <span>Astra is thinking…</span>
           </div>
         )}
+        <div ref={messagesEndRef} aria-hidden />
       </div>
 
-      <form onSubmit={handleSendMessage} className="pt-3 border-t border-line flex items-center gap-2 shrink-0">
-        <input
-          type="text"
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          placeholder="Chat about your routine, sleep, or stress…"
-          className="aura-input flex-1 text-xs"
-          aria-label="Message to Astra"
-        />
-        <button type="submit" disabled={isLoading || !inputMessage.trim()} className="btn-primary p-3 shrink-0" aria-label="Send message">
-          <Send className="w-4 h-4" />
-        </button>
-      </form>
+      <div className="chat-input-area">
+        <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+          <input
+            type="text"
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            placeholder="Chat about your routine, sleep, or stress..."
+            className="aura-input flex-1 text-xs"
+            aria-label="Message to Astra"
+          />
+          <button type="submit" disabled={isLoading || !inputMessage.trim()} className="btn-primary p-3 shrink-0" aria-label="Send message">
+            <Send className="w-4 h-4" />
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

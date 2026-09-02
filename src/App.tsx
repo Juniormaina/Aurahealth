@@ -1142,8 +1142,8 @@ export default function App() {
         {activeTab === 'coach' && (
           <AIHealthCoach
             companion={companion}
-            language={SESSION_LANGUAGES.find((l) => l.id === sessionLanguage)?.native || 'Kiswahili'}
             latestAnxiety={latestAnxiety}
+            onShowToast={showToast}
           />
         )}
 
