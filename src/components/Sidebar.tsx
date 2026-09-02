@@ -177,7 +177,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
 
           {userAccount && (
-            <div className={`flex items-center gap-3 px-2 py-2 rounded-xl bg-white/[0.04] border border-[#242E42] ${isCollapsed ? 'justify-center' : ''}`}>
+            <div className={`flex items-center gap-3 px-2 py-2 rounded-xl bg-white/[0.04] border border-[#242E42] ${isCollapsed ? 'flex-col justify-center' : ''}`}>
               {userAccount.photoURL ? (
                 <img src={userAccount.photoURL} alt={userAccount.name} className="w-8 h-8 rounded-full object-cover" />
               ) : (
@@ -202,6 +202,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </button>
                   )}
                 </>
+              )}
+              {isCollapsed && onSignOut && (
+                <button
+                  type="button"
+                  onClick={onSignOut}
+                  className="p-1.5 rounded-lg text-white/60 hover:text-[#00FFC2]"
+                  aria-label="Sign out"
+                  data-tooltip="Sign out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               )}
             </div>
           )}

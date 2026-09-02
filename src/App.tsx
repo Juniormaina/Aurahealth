@@ -5,7 +5,6 @@ import { GlobalSearch } from './components/GlobalSearch';
 import { LandingPage } from './components/LandingPage';
 import { AboutView } from './components/AboutView';
 import { AuthPage } from './components/AuthPage';
-import { EmailVerifyBanner } from './components/EmailVerifyBanner';
 import { DashboardHome } from './components/DashboardHome';
 import { AdminDashboard } from './components/AdminDashboard';
 import { SpinWheelLootbox } from './components/SpinWheelLootbox';
@@ -1053,21 +1052,14 @@ export default function App() {
       <div className="flex-1 flex flex-col min-h-screen min-w-0 app-shell-main">
         <Navbar
           stats={stats}
+          userName={userAccount?.name}
+          onSignOut={userAccount ? handleLogout : undefined}
           onOpenCheckin={() => setIsCheckinModalOpen(true)}
           onOpenSearch={() => setSearchOpen(true)}
           onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         />
 
-      {userAccount && userAccount.emailVerified === false && (
-        <EmailVerifyBanner
-          email={userAccount.email}
-          sending={verifyBusy}
-          onResend={() => void handleResendVerification()}
-          onRefresh={() => void handleConfirmVerified()}
-        />
-      )}
-
-      {isDemoMode && (
+      {isDemoMode && !userAccount && (
         <div className="trust-band border-b border-[#FFFAF4]/12 py-2.5 px-4">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2 text-[#FFFAF4]">
@@ -1107,7 +1099,7 @@ export default function App() {
             onFeedCompanion={handleFeedCompanion}
             onOpenWheel={() => setActiveTab('wheel')}
             isFreshStart={!isDemoMode}
-            onQuickLog={handleQuickLog}
+            onQuickLog={userAccount ? undefined : handleQuickLog}
             astraReaction={astraReaction}
             userId={commerceUserId}
             showUpgrade={!isPaidPlan}

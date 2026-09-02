@@ -1,19 +1,22 @@
 import React from 'react';
-import { Sparkles, Menu, Search } from 'lucide-react';
+import { Sparkles, Menu, Search, LogOut } from 'lucide-react';
 import { EconomyStats } from '../types';
 
 interface NavbarProps {
   onOpenCheckin: () => void;
   onOpenSearch?: () => void;
   onToggleMobileMenu?: () => void;
+  onSignOut?: () => void;
+  userName?: string;
   stats?: EconomyStats;
-  [key: string]: unknown;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenCheckin,
   onOpenSearch,
   onToggleMobileMenu,
+  onSignOut,
+  userName,
 }) => {
   return (
     <header className="navbar-gradient sticky top-0 z-30">
@@ -48,6 +51,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <kbd className="hidden md:inline text-[10px] font-mono text-slate-500 border border-[#242E42] rounded px-1.5 py-0.5">
                   ⌘K
                 </kbd>
+              </button>
+            )}
+            {onSignOut && userName && (
+              <button
+                type="button"
+                onClick={onSignOut}
+                className="btn-ghost text-xs sm:text-sm"
+                aria-label="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Sign out</span>
               </button>
             )}
             <button type="button" onClick={onOpenCheckin} className="flex items-center gap-2 btn-primary shrink-0">
