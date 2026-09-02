@@ -22,9 +22,25 @@ export async function authorizedFetch(path: string, init?: RequestInit): Promise
   });
 }
 
-export type CoachReplyResult =
-  | { ok: true; reply: string; sources?: { title: string; uri: string }[]; crisis?: boolean }
-  | { ok: false; status: number; code?: string; message: string };
+export type CoachReplySuccess = {
+  ok: true;
+  reply: string;
+  sources?: { title: string; uri: string }[];
+  crisis?: boolean;
+};
+
+export type CoachReplyFailure = {
+  ok: false;
+  status: number;
+  code?: string;
+  message: string;
+};
+
+export type CoachReplyResult = CoachReplySuccess | CoachReplyFailure;
+
+export function isCoachReplyFailure(result: CoachReplyResult): result is CoachReplyFailure {
+  return result.ok === false;
+}
 
 /** POST /api/ai-coach with token refresh on 401 and a request timeout. */
 export async function fetchCoachReply(payload: Record<string, unknown>): Promise<CoachReplyResult> {

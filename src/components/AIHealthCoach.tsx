@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { HealthCompanion } from '../types';
-import { fetchCoachReply } from '../services/commerce';
+import { fetchCoachReply, isCoachReplyFailure } from '../services/commerce';
 import { CRISIS_REPLY, CRISIS_RESOURCES, looksLikeCrisis } from '../content/crisisSupport';
 import {
   Send,
@@ -138,23 +138,22 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
         latestAnxiety,
       });
 
-      if (result.ok) {
+      if (isCoachReplyFailure(result)) {
+        console.error('Coach reply failed:', result.status, result.message);
+        onShowToast?.(result.message);
+        appendAstraReply(
+          result.status === 401
+            ? `${result.message} Tap Enter Dashboard on the home page to sign in, then come back to Coach.`
+            : result.message,
+          time
+        );
+      } else {
         appendAstraReply(
           result.crisis ? CRISIS_REPLY : result.reply,
           time,
           result.crisis ? undefined : result.sources
         );
-        return;
       }
-
-      console.error('Coach reply failed:', result.status, result.message);
-      onShowToast?.(result.message);
-      appendAstraReply(
-        result.status === 401
-          ? `${result.message} Tap Enter Dashboard on the home page to sign in, then come back to Coach.`
-          : result.message,
-        time
-      );
     } catch (err) {
       console.error('Failed to fetch AI response:', err);
       const message = 'Something went wrong reaching Astra. Try sending again.';
