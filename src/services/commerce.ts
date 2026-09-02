@@ -22,6 +22,89 @@ export async function authorizedFetch(path: string, init?: RequestInit): Promise
   });
 }
 
+export type CoachReplyResult =
+  | { ok: true; reply: string; sources?: { title: string; uri: string }[]; crisis?: boolean }
+  | { ok: false; status: number; code?: string; message: string };
+
+/** POST /api/ai-coach with token refresh on 401 and a request timeout. */
+export async function fetchCoachReply(payload: Record<string, unknown>): Promise<CoachReplyResult> {
+  const user = auth.currentUser;
+  if (!user) {
+    return { ok: false, status: 401, message: 'Sign in to chat with Astra.' };
+  }
+
+  const post = async (forceRefresh: boolean) => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await user.getIdToken(forceRefresh)}`,
+    };
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 90_000);
+    try {
+      return await fetch('/api/ai-coach', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  let response: Response;
+  try {
+    response = await post(false);
+    if (response.status === 401) {
+      response = await post(true);
+    }
+  } catch (err) {
+    console.error('Coach network error:', err);
+    const aborted = err instanceof Error && err.name === 'AbortError';
+    return {
+      ok: false,
+      status: 0,
+      message: aborted
+        ? 'Astra took too long to respond. Try again.'
+        : 'Connection hiccup — your streak and check-ins are still saved. Try sending again.',
+    };
+  }
+
+  if (response.ok) {
+    const data = (await response.json().catch(() => ({}))) as {
+      reply?: string;
+      sources?: { title: string; uri: string }[];
+      crisis?: boolean;
+    };
+    const reply = typeof data.reply === 'string' ? data.reply.trim() : '';
+    if (!reply) {
+      return { ok: false, status: 502, message: 'Astra returned an empty reply. Try again.' };
+    }
+    return { ok: true, reply, sources: data.sources, crisis: data.crisis };
+  }
+
+  const data = (await response.json().catch(() => ({}))) as { code?: string; error?: string };
+  if (response.status === 403 && data.code === 'email_unverified') {
+    return {
+      ok: false,
+      status: 403,
+      code: 'email_unverified',
+      message: 'Confirm the link we sent to your email to unlock Astra chat. You can resend it from Settings.',
+    };
+  }
+  if (response.status === 401) {
+    return { ok: false, status: 401, message: 'Your session expired. Sign out and sign in again, then retry.' };
+  }
+  if (response.status === 429) {
+    return { ok: false, status: 429, message: 'Too many messages right now. Wait a minute and try again.' };
+  }
+  return {
+    ok: false,
+    status: response.status,
+    message: data.error || 'Astra could not reply just then. Please try again.',
+  };
+}
+
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await authorizedFetch(path, init);
   if (!res.ok) throw new Error(`${path} failed`);

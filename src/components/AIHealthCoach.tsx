@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { HealthCompanion } from '../types';
-import { authorizedFetch } from '../services/commerce';
+import { fetchCoachReply } from '../services/commerce';
 import { CRISIS_REPLY, CRISIS_RESOURCES, looksLikeCrisis } from '../content/crisisSupport';
 import {
   Send,
@@ -85,6 +85,9 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [crisisOpen, setCrisisOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
 
   const levelPct = Math.min(100, (companion.xp / Math.max(1, companion.xpToNextLevel)) * 100);
 
@@ -99,68 +102,73 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
     return -1;
   }, [messages]);
 
+  const appendAstraReply = (text: string, time: string, sources?: ChatSource[]) => {
+    setMessages((prev) => [...prev, { sender: 'astra', text, time, sources }]);
+  };
+
   const sendMessage = async (rawText: string) => {
-    if (!rawText.trim() || isLoading) return;
     const userText = rawText.trim();
+    if (!userText || isLoading) return;
+
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const history = messages.map((m) => ({ sender: m.sender, text: m.text }));
+    const history = messagesRef.current.map((m) => ({ sender: m.sender, text: m.text }));
+
     setMessages((prev) => [...prev, { sender: 'user', text: userText, time }]);
     setInputMessage('');
+    if (inputRef.current) inputRef.current.value = '';
     setIsLoading(true);
 
-    const crisisCard = () => {
-      setMessages((prev) => [...prev, { sender: 'astra', text: CRISIS_REPLY, time }]);
-      setIsLoading(false);
-    };
-
     if (looksLikeCrisis(userText)) {
-      crisisCard();
+      appendAstraReply(CRISIS_REPLY, time);
+      setIsLoading(false);
       return;
     }
 
     try {
-      const response = await authorizedFetch('/api/ai-coach', {
-        method: 'POST',
-        body: JSON.stringify({
-          userMessage: userText,
-          history,
-          companionState: {
-            stage: companion.stage,
-            level: companion.level,
-            streakDays: companion.streakDays,
-            mood: companion.mood,
-          },
-          language: 'English',
-          latestAnxiety,
-        }),
+      const result = await fetchCoachReply({
+        userMessage: userText,
+        history,
+        companionState: {
+          stage: companion.stage,
+          level: companion.level,
+          streakDays: companion.streakDays,
+          mood: companion.mood,
+        },
+        language: 'English',
+        latestAnxiety,
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setMessages((prev) => [
-          ...prev,
-          { sender: 'astra', text: data.crisis ? CRISIS_REPLY : data.reply, time, sources: data.crisis ? undefined : data.sources },
-        ]);
-      } else if (response.status === 403) {
-        const data = (await response.json().catch(() => ({}))) as { code?: string };
-        onShowToast?.(
-          data.code === 'email_unverified'
-            ? 'Confirm the link we sent to your email to unlock Astra chat. You can resend it from Settings.'
-            : 'Astra could not reply just then. Please try again in a moment.'
+      if (result.ok) {
+        appendAstraReply(
+          result.crisis ? CRISIS_REPLY : result.reply,
+          time,
+          result.crisis ? undefined : result.sources
         );
-      } else {
-        throw new Error('Coach API error');
+        return;
       }
-    } catch {
-      onShowToast?.('Connection hiccup — your streak and check-ins are still saved. Try sending again.');
+
+      console.error('Coach reply failed:', result.status, result.message);
+      onShowToast?.(result.message);
+      appendAstraReply(
+        result.status === 401
+          ? `${result.message} Tap Enter Dashboard on the home page to sign in, then come back to Coach.`
+          : result.message,
+        time
+      );
+    } catch (err) {
+      console.error('Failed to fetch AI response:', err);
+      const message = 'Something went wrong reaching Astra. Try sending again.';
+      onShowToast?.(message);
+      appendAstraReply(message, time);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await sendMessage(inputMessage);
+    const text = inputRef.current?.value ?? inputMessage;
+    await sendMessage(text);
   };
 
   const renderMessage = (m: ChatMessage, idx: number) => {
@@ -310,6 +318,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
       <div className="chat-input-area">
         <form onSubmit={handleSendMessage} className="flex items-center gap-2">
           <input
+            ref={inputRef}
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
