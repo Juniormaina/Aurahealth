@@ -123,10 +123,10 @@ export default function App() {
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [userAccount, setUserAccount] = useState<SignedInAccount | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const authSyncUidRef = useRef<string | null>(null);
-  const pendingEnterDashboardRef = useRef(false);
-  const isFreshSignInRef = useRef(false);
+  const [authFormError, setAuthFormError] = useState<string | null>(null);
+  const [verifyBusy, setVerifyBusy] = useState(false);
+  const authSyncChain = useRef(Promise.resolve());
+  const authSyncedUidRef = useRef<string | null>(null);
   const [isProMode, setIsProMode] = useState<boolean>(false);
   const [premiumOpen, setPremiumOpen] = useState<boolean>(false);
   const [wearablesOpen, setWearablesOpen] = useState<boolean>(false);
@@ -233,58 +233,99 @@ export default function App() {
       .catch(() => undefined);
   }, [commerceUserId]);
 
-  const handleFirebaseUserAuthenticated = async (user: User, opts?: { welcome?: boolean }) => {
+  const consumePendingAuthFlags = () => {
+    let enterDashboard = false;
+    let welcome = false;
+    try {
+      enterDashboard = sessionStorage.getItem(AUTH_ENTER_DASHBOARD_KEY) === '1';
+      welcome = sessionStorage.getItem(AUTH_FRESH_SIGNIN_KEY) === '1';
+      sessionStorage.removeItem(AUTH_ENTER_DASHBOARD_KEY);
+      sessionStorage.removeItem(AUTH_FRESH_SIGNIN_KEY);
+    } catch {
+      // ignore
+    }
+    return { enterDashboard, welcome };
+  };
+
+  const handleFirebaseUserAuthenticated = async (
+    user: User,
+    opts?: { welcome?: boolean; enterDashboard?: boolean }
+  ) => {
+    const pending = consumePendingAuthFlags();
+    const welcome = Boolean(opts?.welcome || pending.welcome);
+    const enterDashboard = Boolean(opts?.enterDashboard || pending.enterDashboard);
+    const alreadySynced = authSyncedUidRef.current === user.uid;
+
     const run = async () => {
       try {
-        const profile = await syncUserProfile(user);
-        setUserAccount({
-          name: profile.displayName,
-          email: profile.email,
-          isGoogle: user.providerData.some((p) => p.providerId === 'google.com'),
-          uid: user.uid,
-          photoURL: user.photoURL || '',
-          emailVerified: user.emailVerified,
-        });
-        setIsDemoMode(false);
-        setShowAuth(false);
-        setAuthFormError(null);
+        if (!alreadySynced) {
+          const profile = await syncUserProfile(user);
+          setUserAccount({
+            name: profile.displayName,
+            email: profile.email,
+            isGoogle: user.providerData.some((p) => p.providerId === 'google.com'),
+            uid: user.uid,
+            photoURL: user.photoURL || '',
+            emailVerified: user.emailVerified,
+          });
+          setIsDemoMode(false);
+          setShowAuth(false);
+          setAuthFormError(null);
 
-        setStats({
-          cowriesBalance: profile.cowriesBalance ?? 0,
-          totalXp: profile.totalXp ?? 0,
-          avaxEarned: 0,
-          currentStreak: profile.currentStreak ?? 0,
-          longestStreak: profile.longestStreak ?? 0,
-          lastCheckInDate: profile.lastCheckInDate ?? null,
-          rank: 'Health Newcomer',
-          communityContributionScore: 0,
-        });
-        setRewardKeys(profile.completedRewardKeys ?? []);
-        setBadges(INITIAL_BADGES.map((b) => ({ ...b, unlockedAt: undefined, tokenId: undefined, txHash: undefined })));
+          setStats({
+            cowriesBalance: profile.cowriesBalance ?? 0,
+            totalXp: profile.totalXp ?? 0,
+            avaxEarned: 0,
+            currentStreak: profile.currentStreak ?? 0,
+            longestStreak: profile.longestStreak ?? 0,
+            lastCheckInDate: profile.lastCheckInDate ?? null,
+            rank: 'Health Newcomer',
+            communityContributionScore: 0,
+          });
+          setRewardKeys(profile.completedRewardKeys ?? []);
+          setBadges(INITIAL_BADGES.map((b) => ({ ...b, unlockedAt: undefined, tokenId: undefined, txHash: undefined })));
 
-        const firestoreComp = await getCompanionFromFirestore(user.uid);
-        if (firestoreComp) {
-          setCompanion((prev) => ({
-            ...prev,
-            ...firestoreComp,
-          }));
+          const firestoreComp = await getCompanionFromFirestore(user.uid);
+          if (firestoreComp) {
+            setCompanion((prev) => ({
+              ...prev,
+              ...firestoreComp,
+            }));
+          } else {
+            await saveCompanionToFirestore(user.uid, FRESH_USER_COMPANION);
+            setCompanion(FRESH_USER_COMPANION);
+          }
+
+          const userLogs = await getUserHealthLogsFromFirestore(user.uid);
+          setCheckIns(userLogs && userLogs.length > 0 ? userLogs : []);
+          authSyncedUidRef.current = user.uid;
         } else {
-          await saveCompanionToFirestore(user.uid, FRESH_USER_COMPANION);
-          setCompanion(FRESH_USER_COMPANION);
+          setShowAuth(false);
+          setAuthFormError(null);
         }
 
-        const userLogs = await getUserHealthLogsFromFirestore(user.uid);
-        setCheckIns(userLogs && userLogs.length > 0 ? userLogs : []);
+        if (enterDashboard) {
+          setIsLanding(false);
+        }
 
-        if (opts?.welcome) {
+        if (welcome) {
+          const name = user.displayName || user.email?.split('@')[0] || 'Aura Member';
           showToast(
             user.emailVerified
-              ? `Welcome ${profile.displayName}! Authenticated session active.`
-              : `Welcome ${profile.displayName}! Confirm the link we sent to ${profile.email} to unlock Cowries and Astra chat.`
+              ? `Welcome ${name}! Authenticated session active.`
+              : `Welcome ${name}! Confirm the link we sent to ${user.email} to unlock Cowries and Astra chat.`
           );
+          confetti({
+            particleCount: 90,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ['#e11d48', '#38bdf8', '#10b981', '#fbbf24'],
+          });
         }
       } catch (err: unknown) {
+        authSyncedUidRef.current = null;
         console.error('Failed syncing user profile:', err);
+        setAuthFormError(getAuthErrorMessage(err));
       }
     };
     const next = authSyncChain.current.then(run, run);
@@ -296,16 +337,29 @@ export default function App() {
   };
 
   useEffect(() => {
-    checkRedirectResult().catch((err) => {
-      console.error('Redirect sign-in failed:', err);
-      setAuthError(getAuthErrorMessage(err));
-    });
+    checkRedirectResult()
+      .then((user) => {
+        if (user) {
+          // Returning from Google redirect — always enter the dashboard.
+          try {
+            sessionStorage.setItem(AUTH_ENTER_DASHBOARD_KEY, '1');
+            sessionStorage.setItem(AUTH_FRESH_SIGNIN_KEY, '1');
+          } catch {
+            // ignore
+          }
+          void handleFirebaseUserAuthenticated(user, { welcome: true, enterDashboard: true });
+        }
+      })
+      .catch((err) => {
+        console.error('Redirect sign-in failed:', err);
+        setAuthFormError(getAuthErrorMessage(err));
+      });
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         await handleFirebaseUserAuthenticated(user);
       } else {
-        authSyncUidRef.current = null;
+        authSyncedUidRef.current = null;
         setUserAccount(null);
         setIsAdmin(false);
       }
@@ -314,146 +368,52 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  const handleFirebaseUserAuthenticated = async (user: User) => {
-    if (authSyncUidRef.current === user.uid) return;
-    authSyncUidRef.current = user.uid;
-
-    const shouldEnterDashboard =
-      pendingEnterDashboardRef.current ||
-      sessionStorage.getItem(AUTH_ENTER_DASHBOARD_KEY) === '1';
-    const isFreshSignIn =
-      isFreshSignInRef.current ||
-      sessionStorage.getItem(AUTH_FRESH_SIGNIN_KEY) === '1';
-
-    pendingEnterDashboardRef.current = false;
-    isFreshSignInRef.current = false;
-    sessionStorage.removeItem(AUTH_ENTER_DASHBOARD_KEY);
-    sessionStorage.removeItem(AUTH_FRESH_SIGNIN_KEY);
-
-    try {
-      const profile = await syncUserProfile(user);
-      const isGoogle = user.providerData.some((provider) => provider.providerId === 'google.com');
-      setUserAccount({
-        name: profile.displayName,
-        email: profile.email,
-        isGoogle,
-        uid: user.uid,
-        photoURL: user.photoURL || '',
-      });
-      setIsDemoMode(false);
-      setShowAuth(false);
-      setAuthError(null);
-
-      if (shouldEnterDashboard) {
-        setIsLanding(false);
-      }
-
-      // Every real account starts from a clean slate — no leftover mock/demo
-      // numbers. Real progress comes only from what's saved in Firestore.
-      setStats({
-        cowriesBalance: profile.cowriesBalance ?? 0,
-        totalXp: profile.totalXp ?? 0,
-        avaxEarned: 0,
-        currentStreak: profile.currentStreak ?? 0,
-        longestStreak: profile.longestStreak ?? 0,
-        lastCheckInDate: profile.lastCheckInDate ?? null,
-        rank: 'Health Newcomer',
-        communityContributionScore: 0,
-      });
-      setRewardKeys(profile.completedRewardKeys ?? []);
-
-      // Badges aren't persisted per-account yet, so start locked rather than
-      // showing the demo seed's already-unlocked ones.
-      setBadges(INITIAL_BADGES.map((b) => ({ ...b, unlockedAt: undefined, tokenId: undefined, txHash: undefined })));
-
-      // Sync companion
-      const firestoreComp = await getCompanionFromFirestore(user.uid);
-      if (firestoreComp) {
-        setCompanion((prev) => ({
-          ...prev,
-          ...firestoreComp,
-        }));
-      } else {
-        await saveCompanionToFirestore(user.uid, FRESH_USER_COMPANION);
-        setCompanion(FRESH_USER_COMPANION);
-      }
-
-      // Sync user health logs from Firestore
-      const userLogs = await getUserHealthLogsFromFirestore(user.uid);
-      if (userLogs && userLogs.length > 0) {
-        setCheckIns(userLogs);
-      } else {
-        setCheckIns([]); // Clean start for new account
-      }
-
-      if (isFreshSignIn) {
-        showToast(`Welcome ${profile.displayName}! Authenticated session active.`);
-        confetti({
-          particleCount: 90,
-          spread: 80,
-          origin: { y: 0.6 },
-          colors: ['#e11d48', '#38bdf8', '#10b981', '#fbbf24'],
-        });
-      }
-    } catch (err: any) {
-      authSyncUidRef.current = null;
-      console.error('Failed syncing user profile:', err);
-      setAuthError(getAuthErrorMessage(err));
-    }
-  };
-
-  const resetPendingAuthFlow = () => {
-    pendingEnterDashboardRef.current = false;
-    isFreshSignInRef.current = false;
-    authSyncUidRef.current = null;
-  };
-
   const handleRealGoogleSignIn = async () => {
-    setAuthError(null);
+    // Already signed in (e.g. after a redirect that left you on landing) — enter app.
+    if (auth.currentUser) {
+      await handleFirebaseUserAuthenticated(auth.currentUser, { welcome: true, enterDashboard: true });
+      return;
+    }
+
     setIsLoggingIn(true);
-    isFreshSignInRef.current = true;
-    pendingEnterDashboardRef.current = true;
+    setAuthFormError(null);
     try {
-      await signInWithGoogle();
+      const user = await signInWithGoogle();
+      await handleFirebaseUserAuthenticated(user, { welcome: true, enterDashboard: true });
     } catch (err: any) {
       if (err.message?.includes('Redirecting')) {
         showToast('Redirecting to Google Authentication...');
         return;
       }
-      resetPendingAuthFlow();
-      setAuthError(getAuthErrorMessage(err));
+      setAuthFormError(getAuthErrorMessage(err));
     } finally {
       setIsLoggingIn(false);
     }
   };
 
   const handleEmailSignIn = async (email: string, pass: string) => {
-    setAuthError(null);
     setIsLoggingIn(true);
-    isFreshSignInRef.current = true;
-    pendingEnterDashboardRef.current = true;
+    setAuthFormError(null);
     try {
-      await signInWithEmail(email, pass);
+      const user = await signInWithEmail(email, pass);
+      await handleFirebaseUserAuthenticated(user, { welcome: true, enterDashboard: true });
     } catch (err: any) {
       console.warn('Email Sign-In error:', err);
-      resetPendingAuthFlow();
-      setAuthError(getAuthErrorMessage(err));
+      setAuthFormError(getAuthErrorMessage(err));
     } finally {
       setIsLoggingIn(false);
     }
   };
 
   const handleEmailSignUp = async (email: string, pass: string, name: string) => {
-    setAuthError(null);
     setIsLoggingIn(true);
-    isFreshSignInRef.current = true;
-    pendingEnterDashboardRef.current = true;
+    setAuthFormError(null);
     try {
-      await signUpWithEmail(email, pass, name);
+      const user = await signUpWithEmail(email, pass, name);
+      await handleFirebaseUserAuthenticated(user, { welcome: true, enterDashboard: true });
     } catch (err: any) {
       console.warn('Email Sign-Up error:', err);
-      resetPendingAuthFlow();
-      setAuthError(getAuthErrorMessage(err));
+      setAuthFormError(getAuthErrorMessage(err));
     } finally {
       setIsLoggingIn(false);
     }
@@ -492,6 +452,7 @@ export default function App() {
 
   const handleLogout = async () => {
     await logoutUser();
+    authSyncedUidRef.current = null;
     setUserAccount(null);
     setIsAdmin(false);
     setIsLanding(true);
@@ -1007,15 +968,14 @@ export default function App() {
         onEmailSignIn={handleEmailSignIn}
         onEmailSignUp={handleEmailSignUp}
         onForgotPassword={handleForgotPassword}
-        onClearAuthError={() => setAuthFormError(null)}
         onStartDemo={handleStartDemo}
         onBack={() => {
-          setAuthError(null);
+          setAuthFormError(null);
           setShowAuth(false);
         }}
         isLoggingIn={isLoggingIn}
-        authError={authError}
-        onClearAuthError={() => setAuthError(null)}
+        authError={authFormError}
+        onClearAuthError={() => setAuthFormError(null)}
       />
     );
   }

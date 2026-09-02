@@ -56,17 +56,9 @@ googleProvider.setCustomParameters({
 export const AUTH_ENTER_DASHBOARD_KEY = 'aura_auth_enter_dashboard';
 export const AUTH_FRESH_SIGNIN_KEY = 'aura_auth_fresh_signin';
 
-/** Hosts where popup sign-in is reliable (local dev + Firebase/Vercel defaults). */
+/** Hosts where popup OAuth works well. Custom domains still try popup first. */
 function prefersPopupAuth(): boolean {
-  if (typeof window === 'undefined') return true;
-  const host = window.location.hostname;
-  return (
-    host === 'localhost' ||
-    host === '127.0.0.1' ||
-    host.endsWith('.firebaseapp.com') ||
-    host.endsWith('.web.app') ||
-    host.endsWith('.vercel.app')
-  );
+  return typeof window !== 'undefined';
 }
 
 function markPendingAuthNavigation() {
@@ -79,12 +71,13 @@ function markPendingAuthNavigation() {
 }
 
 /**
- * Sign in with real Google Account.
- * Custom domains (e.g. aurahealth.co.ke) use redirect; localhost/Vercel use popup first.
+ * Sign in with Google. Popup first; redirect only when the popup is blocked.
+ * Marks sessionStorage so a redirect return always enters the dashboard.
  */
 export async function signInWithGoogle(): Promise<User> {
+  markPendingAuthNavigation();
+
   if (!prefersPopupAuth()) {
-    markPendingAuthNavigation();
     await signInWithRedirect(auth, googleProvider);
     throw new Error('Redirecting to Google Sign-In...');
   }
@@ -94,9 +87,17 @@ export async function signInWithGoogle(): Promise<User> {
     return result.user;
   } catch (error: any) {
     if (error.code === 'auth/popup-blocked') {
-      markPendingAuthNavigation();
       await signInWithRedirect(auth, googleProvider);
       throw new Error('Redirecting to Google Sign-In...');
+    }
+    // User cancelled — clear pending flags so a later session restore doesn't force dashboard
+    if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+      try {
+        sessionStorage.removeItem(AUTH_ENTER_DASHBOARD_KEY);
+        sessionStorage.removeItem(AUTH_FRESH_SIGNIN_KEY);
+      } catch {
+        // ignore
+      }
     }
     throw error;
   }

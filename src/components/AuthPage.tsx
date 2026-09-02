@@ -28,7 +28,6 @@ interface AuthPageProps {
   onForgotPassword: (email: string) => Promise<void> | void;
   onStartDemo: () => void;
   onBack: () => void;
-  onClearAuthError?: () => void;
   isLoggingIn?: boolean;
   authError?: string | null;
   onClearAuthError?: () => void;
@@ -50,7 +49,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   onForgotPassword,
   onStartDemo,
   onBack,
-  onClearAuthError,
   isLoggingIn = false,
   authError = null,
   onClearAuthError,
