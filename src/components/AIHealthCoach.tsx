@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { HealthCompanion } from '../types';
 import { authorizedFetch } from '../services/commerce';
 import { CRISIS_REPLY, CRISIS_RESOURCES, looksLikeCrisis } from '../content/crisisSupport';
-import { MessageSquare, Send, Sparkles, Bot, Loader2, Heart, Flame, ExternalLink, Search, Phone } from 'lucide-react';
+import {
+  Send,
+  Sparkles,
+  Loader2,
+  ExternalLink,
+  Search,
+  Phone,
+  ChevronDown,
+  AlertTriangle,
+} from 'lucide-react';
 
 interface AIHealthCoachProps {
   companion: HealthCompanion;
@@ -16,13 +25,51 @@ interface ChatSource {
 }
 
 interface ChatMessage {
-  sender: 'user' | 'astra';
+  sender: 'user' | 'astra' | 'system';
   text: string;
   time: string;
   sources?: ChatSource[];
 }
 
-export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, language = 'Kiswahili', latestAnxiety }) => {
+const PROMPT_CHIPS = [
+  'Start a 5-minute Kiswahili stress reset',
+  'Adapt a session to my mood',
+  'How do I boost my streak?',
+];
+
+function PromptChipRow({
+  chips,
+  disabled,
+  onSelect,
+}: {
+  chips: string[];
+  disabled: boolean;
+  onSelect: (text: string) => void;
+}) {
+  return (
+    <div className="coach-prompt-scroll pl-11 sm:pl-11">
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory">
+        {chips.map((chip) => (
+          <button
+            key={chip}
+            type="button"
+            className="prompt-chip snap-start shrink-0"
+            disabled={disabled}
+            onClick={() => onSelect(chip)}
+          >
+            {chip}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
+  companion,
+  language = 'Kiswahili',
+  latestAnxiety,
+}) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       sender: 'astra',
@@ -32,12 +79,24 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, languag
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [crisisOpen, setCrisisOpen] = useState(false);
+
+  const levelPct = Math.min(100, (companion.xp / Math.max(1, companion.xpToNextLevel)) * 100);
+
+  const lastAstraIndex = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i].sender === 'astra') return i;
+    }
+    return -1;
+  }, [messages]);
 
   const sendMessage = async (rawText: string) => {
     if (!rawText.trim() || isLoading) return;
     const userText = rawText.trim();
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const history = messages.map((m) => ({ sender: m.sender, text: m.text }));
+    const history = messages
+      .filter((m) => m.sender !== 'system')
+      .map((m) => ({ sender: m.sender === 'user' ? 'user' : 'astra', text: m.text }));
     setMessages((prev) => [...prev, { sender: 'user', text: userText, time }]);
     setInputMessage('');
     setIsLoading(true);
@@ -80,10 +139,10 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, languag
         setMessages((prev) => [
           ...prev,
           {
-            sender: 'astra',
+            sender: 'system',
             text:
               data.code === 'email_unverified'
-                ? 'Confirm the link we sent to your email to unlock Astra chat. You can resend it from the banner or Settings.'
+                ? 'Confirm the link we sent to your email to unlock Astra chat. You can resend it from Settings.'
                 : 'Astra could not reply just then. Please try again in a moment.',
             time,
           },
@@ -95,8 +154,8 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, languag
       setMessages((prev) => [
         ...prev,
         {
-          sender: 'astra',
-          text: `Astra: "Keep your momentum going! Every check-in boosts our health and unlocks sponsor rewards!"`,
+          sender: 'system',
+          text: 'Connection hiccup — your streak and check-ins are still saved. Try sending again.',
           time,
         },
       ]);
@@ -110,17 +169,73 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, languag
     await sendMessage(inputMessage);
   };
 
-  const promptChips = [
-    'Start a 5-minute Kiswahili stress reset',
-    'Adapt a session to my mood',
-    'How do I boost my streak?',
-  ];
+  const renderMessage = (m: ChatMessage, idx: number) => {
+    if (m.sender === 'system') {
+      return (
+        <div key={idx} className="flex justify-center px-2">
+          <div className="chat-system-tag max-w-[92%] text-center">
+            <p className="whitespace-pre-wrap">{m.text}</p>
+            <span className="block text-[9px] mt-1 font-mono text-slate-500">{m.time}</span>
+          </div>
+        </div>
+      );
+    }
+
+    const isUser = m.sender === 'user';
+
+    return (
+      <div key={idx} className={`flex items-end gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+        {!isUser && (
+          <img
+            src={companion.imageUrl}
+            alt=""
+            className="w-8 h-8 rounded-full border border-white/15 object-cover shrink-0 mb-0.5"
+          />
+        )}
+        {isUser && (
+          <div className="w-8 h-8 rounded-full bg-primary/90 text-[var(--color-primary-foreground)] flex items-center justify-center text-xs font-bold shrink-0 mb-0.5">
+            You
+          </div>
+        )}
+
+        <div className={`flex flex-col max-w-[min(82%,20rem)] ${isUser ? 'items-end' : 'items-start'}`}>
+          {!isUser && <span className="text-[10px] font-semibold text-slate-400 mb-1 px-1">Astra</span>}
+          <div className={`rounded-2xl px-3.5 py-2.5 text-xs leading-[1.65] ${isUser ? 'chat-bubble-user' : 'chat-bubble-astra'}`}>
+            <p className="whitespace-pre-wrap">{m.text}</p>
+
+            {!isUser && m.sources && m.sources.length > 0 && (
+              <div className="mt-2.5 pt-2 border-t border-white/10 space-y-1">
+                <div className="flex items-center gap-1 text-[9px] text-slate-400 font-bold uppercase tracking-wide">
+                  <Search className="w-2.5 h-2.5" /> Sources
+                </div>
+                {m.sources.map((s, sIdx) => (
+                  <a
+                    key={sIdx}
+                    href={s.uri}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1 text-[10px] text-[var(--color-harmony)] hover:underline truncate"
+                    title={s.uri}
+                  >
+                    <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                    <span className="truncate">{s.title}</span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+          <span className={`text-[9px] mt-1 font-mono px-1 ${isUser ? 'text-slate-500' : 'text-slate-500'}`}>
+            {m.time}
+          </span>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="aura-card-gradient p-4 sm:p-6 relative overflow-hidden max-w-4xl mx-auto flex flex-col h-[min(70dvh,600px)] min-h-[28rem]">
-      {/* Header */}
-      <div className="flex items-start sm:items-center gap-3 pb-4 border-b border-line min-w-0">
-        <div className="relative">
+    <div className="aura-card-gradient p-4 sm:p-6 relative overflow-hidden max-w-4xl mx-auto flex flex-col h-[min(72dvh,640px)] min-h-[28rem]">
+      <div className="flex items-start sm:items-center gap-3 pb-3 border-b border-line min-w-0">
+        <div className="relative shrink-0">
           <img
             src={companion.imageUrl}
             alt="Astra"
@@ -128,129 +243,94 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({ companion, languag
           />
           <span className="absolute bottom-0 right-0 w-3 h-3 bg-harmony border-2 border-peach rounded-full" />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h3 className="text-base sm:text-lg font-bold text-navy flex items-center gap-2 flex-wrap">
             Astra AI Health Coach <Sparkles className="w-4 h-4 text-gold shrink-0" />
           </h3>
-          <p className="text-xs text-muted leading-[1.6]">
-            Gemini AI + live web search • Not a clinician or emergency service • Stage: {companion.stage} (Level {companion.level})
+          <p className="text-[11px] text-muted leading-[1.5] mt-0.5">
+            Gemini AI + live web search · Not a clinician or emergency service
           </p>
-        </div>
-      </div>
-
-      <div className="mt-3 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2.5 space-y-2">
-        <p className="text-[11px] text-rose-100 leading-[1.5]">
-          If you are in crisis or might hurt yourself, get help now. Astra cannot keep you safe in an emergency.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {CRISIS_RESOURCES.map((resource) => (
-            <a
-              key={resource.href}
-              href={resource.href}
-              target={resource.href.startsWith('http') ? '_blank' : undefined}
-              rel={resource.href.startsWith('http') ? 'noreferrer' : undefined}
-              className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-rose-50 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 rounded-full px-2.5 py-1"
-            >
-              {resource.href.startsWith('tel:') ? <Phone className="w-3 h-3" /> : <ExternalLink className="w-3 h-3" />}
-              {resource.name}
-              <span className="text-rose-200/80 font-normal">{resource.detail}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-
-      {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-2 scrollbar-none">
-        {messages.map((m, idx) => (
-          <div
-            key={idx}
-            className={`flex items-start gap-3 ${m.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-          >
-            {m.sender === 'astra' ? (
-              <div className="w-8 h-8 rounded-full bg-ivory text-gold border border-line flex items-center justify-center text-sm font-bold shrink-0">
-                ✨
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <span className="text-[11px] font-semibold text-ink whitespace-nowrap">
+              {companion.stage} · Level {companion.level}
+            </span>
+            <div className="flex items-center gap-2 min-w-[8rem] flex-1 max-w-[12rem]">
+              <div className="coach-level-progress flex-1" aria-hidden>
+                <div className="coach-level-progress-fill" style={{ width: `${levelPct}%` }} />
               </div>
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-navy text-sunlight border border-navy flex items-center justify-center text-sm font-bold shrink-0">
-                👤
-              </div>
-            )}
-
-            <div
-              className={`max-w-[80%] rounded-2xl p-3.5 text-xs leading-[1.6] ${
-                m.sender === 'user' ? 'chat-bubble-user text-white' : 'chat-bubble text-slate-100'
-              }`}
-            >
-              <p className="whitespace-pre-wrap">{m.text}</p>
-
-              {m.sender === 'astra' && m.sources && m.sources.length > 0 && (
-                <div className="mt-2.5 pt-2 border-t border-line space-y-1">
-                  <div className="flex items-center gap-1 text-[9px] text-muted font-bold uppercase tracking-wide">
-                    <Search className="w-2.5 h-2.5" /> Sources
-                  </div>
-                  {m.sources.map((s, sIdx) => (
-                    <a
-                      key={sIdx}
-                      href={s.uri}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-1 text-[10px] text-harmony hover:text-navy truncate"
-                      title={s.uri}
-                    >
-                      <ExternalLink className="w-2.5 h-2.5 shrink-0" />
-                      <span className="truncate">{s.title}</span>
-                    </a>
-                  ))}
-                </div>
-              )}
-
-              <div
-                className={`text-[9px] mt-1 text-right font-mono ${
-                  m.sender === 'user' ? 'text-[#FFFAF4]/70' : 'text-muted'
-                }`}
-              >
-                {m.time}
-              </div>
+              <span className="text-[10px] tabular-nums text-muted whitespace-nowrap">
+                {companion.xp}/{companion.xpToNextLevel} XP
+              </span>
             </div>
           </div>
-        ))}
+        </div>
+      </div>
 
-        {isLoading && (
-          <div className="flex items-center gap-2 text-xs text-muted italic">
-            <Loader2 className="w-4 h-4 animate-spin text-gold" />
-            <span>Astra is searching & thinking...</span>
+      <div className="mt-3 rounded-xl border border-rose-400/25 bg-rose-500/8 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setCrisisOpen((open) => !open)}
+          className="coach-crisis-toggle w-full flex items-center justify-between gap-2 px-3 py-2 text-left"
+          aria-expanded={crisisOpen}
+        >
+          <span className="inline-flex items-center gap-2 text-[11px] font-semibold text-rose-100">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            In crisis? Get immediate help
+          </span>
+          <ChevronDown className={`w-4 h-4 text-rose-200/80 shrink-0 transition-transform ${crisisOpen ? 'rotate-180' : ''}`} />
+        </button>
+        {crisisOpen && (
+          <div className="px-3 pb-3 pt-0 space-y-2 border-t border-rose-400/20">
+            <p className="text-[11px] text-rose-100/90 leading-[1.5] pt-2">
+              Astra cannot keep you safe in an emergency. If you might hurt yourself, contact a helpline now.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {CRISIS_RESOURCES.map((resource) => (
+                <a
+                  key={resource.href}
+                  href={resource.href}
+                  target={resource.href.startsWith('http') ? '_blank' : undefined}
+                  rel={resource.href.startsWith('http') ? 'noreferrer' : undefined}
+                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-rose-50 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 rounded-full px-2.5 py-1"
+                >
+                  {resource.href.startsWith('tel:') ? <Phone className="w-3 h-3" /> : <ExternalLink className="w-3 h-3" />}
+                  {resource.name}
+                  <span className="text-rose-200/80 font-normal">{resource.detail}</span>
+                </a>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Input Box */}
-      <div className="flex gap-2 overflow-x-auto pb-3">
-        {promptChips.map((chip) => (
-          <button
-            key={chip}
-            type="button"
-            className="prompt-chip"
-            disabled={isLoading}
-            onClick={() => sendMessage(chip)}
-          >
-            {chip}
-          </button>
+      <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 scrollbar-none min-h-0">
+        {messages.map((m, idx) => (
+          <React.Fragment key={idx}>
+            {renderMessage(m, idx)}
+            {idx === lastAstraIndex && !isLoading && (
+              <PromptChipRow chips={PROMPT_CHIPS} disabled={isLoading} onSelect={sendMessage} />
+            )}
+          </React.Fragment>
         ))}
+
+        {isLoading && (
+          <div className="flex items-center gap-2 pl-11 text-xs text-muted">
+            <Loader2 className="w-4 h-4 animate-spin text-gold shrink-0" />
+            <span>Astra is thinking…</span>
+          </div>
+        )}
       </div>
 
-      <form onSubmit={handleSendMessage} className="pt-2 border-t border-line flex items-center gap-2">
+      <form onSubmit={handleSendMessage} className="pt-3 border-t border-line flex items-center gap-2 shrink-0">
         <input
           type="text"
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
-          placeholder="Ask Astra a medical question, or chat about your streak & routine..."
+          placeholder="Chat about your routine, sleep, or stress…"
           className="aura-input flex-1 text-xs"
+          aria-label="Message to Astra"
         />
-        <button
-          type="submit"
-          disabled={isLoading || !inputMessage.trim()}
-          className="btn-primary p-3"
-        >
+        <button type="submit" disabled={isLoading || !inputMessage.trim()} className="btn-primary p-3 shrink-0" aria-label="Send message">
           <Send className="w-4 h-4" />
         </button>
       </form>
