@@ -11,6 +11,7 @@ import {
   LogOut,
   Bell,
   HelpCircle,
+  Info,
   Zap,
   Watch,
   ShieldCheck,
@@ -34,6 +35,7 @@ const NAV_ITEMS = [
   { id: 'companion', label: 'Companion', icon: Sparkles },
   { id: 'coach', label: 'AI Coach', icon: MessageSquare },
   { id: 'wheel', label: 'Rewards', icon: Award },
+  { id: 'about', label: 'About', icon: Info },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 

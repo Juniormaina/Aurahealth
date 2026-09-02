@@ -3,6 +3,7 @@ import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { GlobalSearch } from './components/GlobalSearch';
 import { LandingPage } from './components/LandingPage';
+import { AboutView } from './components/AboutView';
 import { AuthPage } from './components/AuthPage';
 import { EmailVerifyBanner } from './components/EmailVerifyBanner';
 import { DashboardHome } from './components/DashboardHome';
@@ -143,6 +144,11 @@ export default function App() {
 
   const handleNavigateTab = (tab: string) => {
     setActiveTab(tab);
+  };
+
+  const handleOpenAbout = () => {
+    setIsLanding(false);
+    setActiveTab('about');
   };
 
   const handleAdminLogin = () => {
@@ -985,6 +991,7 @@ export default function App() {
       <div className="min-h-screen landscape-shell">
         <LandingPage
           onOpenAuth={() => setShowAuth(true)}
+          onOpenAbout={handleOpenAbout}
           userAccount={userAccount}
           isDemoMode={isDemoMode}
           onEnterDashboard={() => setIsLanding(false)}
@@ -1145,6 +1152,19 @@ export default function App() {
             companion={companion}
             language={SESSION_LANGUAGES.find((l) => l.id === sessionLanguage)?.native || 'Kiswahili'}
             latestAnxiety={latestAnxiety}
+          />
+        )}
+
+        {activeTab === 'about' && (
+          <AboutView
+            onStartTrial={() => {
+              if (!auth.currentUser) {
+                setPremiumOpen(true);
+                trackFunnel('upgrade_prompt_shown', { from: 'about_pricing' });
+                return;
+              }
+              void handleStartTrial();
+            }}
           />
         )}
 

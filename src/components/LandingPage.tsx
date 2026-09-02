@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { AuraLogo } from './AuraLogo';
 import { Hero } from './landing/Hero';
-import { Proof } from './landing/Proof';
 import { Features } from './landing/Features';
-import { Rewards } from './landing/Rewards';
-import { Pricing } from './landing/Pricing';
 import { Trust } from './landing/Trust';
 import { AdminLoginModal } from './AdminLoginModal';
 import { ShieldCheck, LogOut } from 'lucide-react';
 
 interface LandingPageProps {
   onOpenAuth: () => void;
+  onOpenAbout: () => void;
   userAccount?: { name: string; email: string; isGoogle: boolean; uid?: string; photoURL?: string } | null;
   isDemoMode?: boolean;
   onEnterDashboard?: () => void;
@@ -19,15 +17,11 @@ interface LandingPageProps {
   isStaffSignedIn?: boolean;
 }
 
-const NAV_LINKS = [
-  { href: '#features', id: 'features', label: 'Features' },
-  { href: '#proof', id: 'proof', label: 'Proof' },
-  { href: '#rewards', id: 'rewards', label: 'Rewards' },
-  { href: '#pricing', id: 'pricing', label: 'Pricing' },
-];
+const NAV_LINKS = [{ href: '#features', id: 'features', label: 'Features' }];
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenAuth,
+  onOpenAbout,
   userAccount,
   isDemoMode,
   onEnterDashboard,
@@ -79,6 +73,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   {link.label}
                 </a>
               ))}
+              <button type="button" onClick={onOpenAbout} className="landing-nav-link">
+                About
+              </button>
             </nav>
             {signedIn ? (
               <div className="flex items-center gap-2 shrink-0">
@@ -109,6 +106,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               {link.label}
             </a>
           ))}
+          <button type="button" onClick={onOpenAbout} className="landing-nav-link whitespace-nowrap">
+            About
+          </button>
         </nav>
       </header>
 
@@ -116,9 +116,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 flex-1 w-full min-w-0">
         <Features />
-        <Proof />
-        <Rewards />
-        <Pricing onStartTrial={signedIn ? onEnterDashboard! : onOpenAuth} />
         <Trust />
       </main>
 
@@ -140,16 +137,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <footer className="border-t border-white/15 bg-[rgba(8,20,16,0.78)] backdrop-blur-[16px] py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-xs text-[#D5E4DC]">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <strong className="text-[#F7FFFC]">Aura Health</strong>
-          {onAdminLogin && (
+          <div className="flex items-center gap-4">
             <button
               type="button"
-              onClick={() => setShowAdminModal(true)}
-              className="flex items-center gap-1.5 text-[11px] font-semibold text-[#D5E4DC] hover:text-[var(--color-harmony)] px-3 py-1.5"
+              onClick={onOpenAbout}
+              className="text-[11px] font-semibold text-[#D5E4DC] hover:text-[var(--color-harmony)] px-3 py-1.5"
             >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Staff admin
+              About
             </button>
-          )}
+            {onAdminLogin && (
+              <button
+                type="button"
+                onClick={() => setShowAdminModal(true)}
+                className="flex items-center gap-1.5 text-[11px] font-semibold text-[#D5E4DC] hover:text-[var(--color-harmony)] px-3 py-1.5"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Staff admin
+              </button>
+            )}
+          </div>
         </div>
       </footer>
     </div>

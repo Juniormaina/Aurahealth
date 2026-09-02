@@ -56,6 +56,14 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
       category: 'Navigation',
     },
     {
+      id: 'about',
+      title: 'About Aura Health',
+      description: 'Proof, rewards tiers, pricing, and trust policies',
+      icon: <span className="text-lg">ℹ️</span>,
+      action: () => { onNavigate('about'); onClose(); },
+      category: 'Navigation',
+    },
+    {
       id: 'checkin',
       title: 'Daily Check-In',
       description: 'Log your daily health metrics and earn rewards',
