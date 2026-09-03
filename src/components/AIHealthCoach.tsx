@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { HealthCompanion } from '../types';
 import { fetchCoachReply, isCoachReplyFailure } from '../services/commerce';
 import { CRISIS_REPLY, CRISIS_RESOURCES, looksLikeCrisis } from '../content/crisisSupport';
+import { resolveSessionLanguage, SessionLanguageId } from '../content/valueProps';
 import {
   Send,
   Sparkles,
@@ -16,6 +17,7 @@ import {
 interface AIHealthCoachProps {
   companion: HealthCompanion;
   latestAnxiety?: number;
+  language?: SessionLanguageId;
   onShowToast?: (message: string) => void;
 }
 
@@ -37,8 +39,10 @@ const PROMPT_CHIPS = [
   'How do I boost my streak?',
 ];
 
-function coachGreeting(latestAnxiety?: number): string {
-  return `Hello! I'm Astra. Today's anxiety check-in is ${latestAnxiety ?? 7}/10 — we can do a 5-minute reset together. I'm not a doctor; for diagnosis or medication, see a licensed professional.`;
+function coachGreeting(latestAnxiety?: number, languageName = 'English'): string {
+  const languageNote =
+    languageName === 'English' ? '' : ` I can chat in ${languageName}.`;
+  return `Hello! I'm Astra. Today's anxiety check-in is ${latestAnxiety ?? 7}/10 — we can do a 5-minute reset together.${languageNote} I'm not a doctor; for diagnosis or medication, see a licensed professional.`;
 }
 
 function PromptChipRow({
@@ -72,12 +76,14 @@ function PromptChipRow({
 export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
   companion,
   latestAnxiety,
+  language,
   onShowToast,
 }) => {
+  const languageName = resolveSessionLanguage(language).native;
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       sender: 'astra',
-      text: coachGreeting(latestAnxiety),
+      text: coachGreeting(latestAnxiety, languageName),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -134,7 +140,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
           streakDays: companion.streakDays,
           mood: companion.mood,
         },
-        language: 'English',
+        language,
         latestAnxiety,
       });
 

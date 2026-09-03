@@ -114,6 +114,22 @@ export async function fetchCoachReply(payload: Record<string, unknown>): Promise
   if (response.status === 429) {
     return { ok: false, status: 429, message: 'Too many messages right now. Wait a minute and try again.' };
   }
+  if (response.status === 503 && data.code === 'ai_unconfigured') {
+    return {
+      ok: false,
+      status: 503,
+      code: 'ai_unconfigured',
+      message: 'Astra AI is not configured on this server yet. Check-ins still save.',
+    };
+  }
+  if (response.status === 503) {
+    return {
+      ok: false,
+      status: 503,
+      code: data.code || 'ai_unavailable',
+      message: data.error || 'Astra could not reach the AI service just then. Please try again.',
+    };
+  }
   return {
     ok: false,
     status: response.status,

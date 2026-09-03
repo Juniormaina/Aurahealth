@@ -223,6 +223,8 @@ Create `src/.env` (already gitignored) with:
 ```bash
 # Frontend / server
 GEMINI_API_KEY=your-gemini-api-key
+# Optional: GEMINI_MODEL=gemini-2.5-flash
+# Optional: TAVILY_API_KEY=your-tavily-key
 
 # Contract deployment (Avalanche Fuji testnet)
 FUJI_RPC_URL=https://api.avax-test.network/ext/bc/C/rpc
@@ -263,15 +265,34 @@ GitHub Actions (`.github/workflows/checks.yml`) on every PR and push: `lint`, `b
 
 On push to `main`, a deploy job runs **only if** the repository variable `GCP_PROJECT_ID` is set:
 
-1. Build and deploy the Dockerfile to Cloud Run (`CLOUD_RUN_SERVICE`, default `aurahealth`).
-2. `firebase deploy --only firestore:rules` to `FIREBASE_PROJECT_ID` (default `aura-health-f478f`).
-3. Smoke the new Cloud Run URL (`/api/health` 200, `/api/ai-coach` 401). If `PRODUCTION_URL` is set (e.g. `https://www.aurahealth.co.ke`), smoke that too — leave it unset until DNS points at Cloud Run.
+1. Build and deploy the Dockerfile to Cloud Run (`CLOUD_RUN_SERVICE`, default `aurahealth`). Request timeout is 120s so Gemini coach calls can finish.
+2. Merge Secret Manager bindings that already exist (`GEMINI_API_KEY`, `TAVILY_API_KEY`, `FIREBASE_SERVICE_ACCOUNT_JSON`, `ADMIN_EMAILS`, `FIREBASE_WEB_API_KEY`). Missing secrets are skipped so a first deploy still lands.
+3. `firebase deploy --only firestore:rules` to `FIREBASE_PROJECT_ID` (default `aura-health-f478f`).
+4. Smoke the new Cloud Run URL (`/api/health` 200 with `ai.configured`, `/api/ai-coach` 401). If `PRODUCTION_URL` is set (e.g. `https://www.aurahealth.co.ke`), smoke that too — leave it unset until DNS points at Cloud Run.
 
 **GitHub variables:** `GCP_PROJECT_ID`, `GCP_REGION` (default `us-central1`), `CLOUD_RUN_SERVICE`, `FIREBASE_PROJECT_ID`, `PRODUCTION_URL`.
 
-**GitHub secret:** `GCP_SA_KEY` — JSON for a service account with Cloud Run Admin, Cloud Build, Service Account User, and Firebase Rules Admin.
+**GitHub secret:** `GCP_SA_KEY` — JSON for a service account with Cloud Run Admin, Cloud Build, Service Account User, Firebase Rules Admin, and Secret Manager Viewer.
 
-Set `GEMINI_API_KEY`, `ADMIN_EMAILS`, and Firebase Admin credentials on the Cloud Run service (Secret Manager). The workflow only sets `NODE_ENV` and `FIREBASE_PROJECT_ID`; it does not overwrite other service env/secrets. Point `aurahealth.co.ke` at the Cloud Run URL once it serves `/api/health`.
+**Secret Manager (one-time):** create the secrets in the same GCP project, then grant the Cloud Run runtime service account `roles/secretmanager.secretAccessor` on each:
+
+```bash
+# Example: Gemini key used by Astra coach + check-in attestation
+printf '%s' "$GEMINI_API_KEY" | gcloud secrets create GEMINI_API_KEY \
+  --data-file=- --project "$GCP_PROJECT_ID"
+# Or add a version if the secret already exists:
+# printf '%s' "$GEMINI_API_KEY" | gcloud secrets versions add GEMINI_API_KEY --data-file=-
+
+PROJECT_NUMBER="$(gcloud projects describe "$GCP_PROJECT_ID" --format='value(projectNumber)')"
+gcloud secrets add-iam-policy-binding GEMINI_API_KEY \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor" \
+  --project "$GCP_PROJECT_ID"
+```
+
+`GET /api/health` reports `{ ai: { configured, model, searchConfigured } }` without leaking keys. After deploy, `configured` should be `true` once `GEMINI_API_KEY` is bound. Point `aurahealth.co.ke` at the Cloud Run URL once that probe is healthy.
+
+The workflow merges `NODE_ENV`, `FIREBASE_PROJECT_ID`, and `APP_URL` (from `PRODUCTION_URL`) and **does not overwrite** other service env vars. Secret bindings are merged, not replaced.
 
 **Firebase Auth on custom domains:** Google/email sign-in requires each hostname in Firebase **Authentication → Settings → Authorized domains** (e.g. `aurahealth.co.ke`, `www.aurahealth.co.ke`). On deploy, CI runs `scripts/authorize-firebase-domains.mjs` when `GCP_SA_KEY` is set. To add domains manually or locally (with gcloud auth): `npm run authorize:domains`.
 
@@ -314,7 +335,7 @@ public/             favicon.svg (app icon) and aurahealth-logo.svg (wordmark)
 src/
   content/          Value props, session languages, subscription tier catalog
   db/schema.sql     Plans, user_metrics, funnel_events, corporate_leads
-  server/           In-memory commerce/metrics store used by Express
+  server/           In-memory commerce/metrics store used by Express; gemini coach helpers in ai.ts
   contracts/        Solidity sources (LoyaltyPoints, AchievementBadges, StreakTracker, TierSystem, IncentiveToken)
   script/           Foundry deployment scripts (optional, requires forge-std)
   Scripts/          Hardhat deployment/verification scripts (.cjs)

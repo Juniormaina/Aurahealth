@@ -227,14 +227,6 @@ async function startServer() {
     }
   });
 
-  // App-internal chit-chat (streaks, cowries, badges, etc.) should never
-  // trigger a web search — the model already has that context from
-  // companionState/history, and searching the raw message pulls back
-  // unrelated results (e.g. "how's my streak?" surfacing Snapchat streak
-  // guides). Only search for messages that don't look like app talk.
-  const APP_CONTEXT_TERMS = /\b(streak|cowrie|cowries|xp|level|badge|companion|astra|wheel|sponsor|check-?in|cosmic|egg|hatchling|vitality|harmony|mission|quest)\b/i;
-  const shouldSearch = (text: string) => text.trim().length >= 8 && !APP_CONTEXT_TERMS.test(text);
-
   app.get('/api/plans', (_req, res) => {
     res.json({
       valueProps: VALUE_PROPS,
@@ -356,6 +348,7 @@ async function startServer() {
     try {
       const { userMessage, companionState, history, language, latestAnxiety } = req.body || {};
       const userText = String(userMessage || '').slice(0, 4000);
+      const languageName = resolveSessionLanguage(language).native;
 
       if (looksLikeCrisis(userText)) {
         return res.json({
@@ -373,30 +366,21 @@ async function startServer() {
         });
       }
 
-      if (!process.env.GEMINI_API_KEY) {
-        return res.json({
-          reply: `Astra (${companionState?.stage || 'Hatchling'}): "Keep up the fantastic work! Stay hydrated and take your daily checks to help me level up!"`,
-          sources: [],
+      if (!hasGeminiKey()) {
+        return res.status(503).json({
+          error: 'Astra AI is not configured on this server yet.',
+          code: 'ai_unconfigured',
         });
       }
 
       const ai = getGeminiAI();
       const searchResults = shouldSearch(userText) ? await tavilySearch(userText) : [];
-
-      const baseInstruction = `You are Astra, a whimsical but genuinely helpful AI Health Companion on the AuraHealth Wellness App.
-Current Pet Stats — Stage: ${companionState?.stage || 'Hatchling'}, Level: ${companionState?.level || 1}, Streak: ${companionState?.streakDays ?? 0} Days, Mood: ${companionState?.mood || 'joyful'}.
-Latest anxiety check-in (1-10): ${latestAnxiety ?? 'unknown'}.
-Respond in English only. Adapt this reply to the user's mood in real time. Offer a 5-minute wellness micro-session (breath, gratitude, or focus) when they ask for help with stress, sleep, or anxiety. Stay grounded in everyday professional life and practical daily habits.
-
-You can have real, multi-turn conversations — remember what the user already told you earlier in this chat.
-
-${searchResults.length > 0 ? `You've been given live web search results below for the user's latest message. Use them to ground factual/medical/health answers in current, reliable sources, and mention what you found naturally. If the results aren't actually relevant to a casual message, ignore them and just chat normally.` : ''}
-
-Always make clear you are an AI, not a doctor: for anything about diagnosis, medication, dosing, or symptoms that sound serious or urgent, say so plainly and recommend seeing a licensed healthcare professional or emergency services — do not attempt to diagnose or prescribe.
-
-If the user may be in crisis or at risk of harming themselves, drop character immediately. Tell them you are not a clinician, urge them to contact emergency services or a helpline now, and point them to Kenya 999 / 112, Kenya Red Cross 1199, Befrienders Kenya +254 722 178 177, and https://www.iasp.info/suicidalthoughts/. Do not discuss methods.
-
-For everyday chit-chat, streak motivation, or app questions, respond in character as Astra: energetic, encouraging, 2-4 sentences.`;
+      const baseInstruction = buildCoachInstruction({
+        companionState,
+        latestAnxiety,
+        languageName,
+        hasSearch: searchResults.length > 0,
+      });
 
       const userTurnText = searchResults.length > 0
         ? `${userText}\n\n[Live web search results for reference — use if relevant, ignore for casual chit-chat]\n${searchResults
@@ -413,7 +397,7 @@ For everyday chit-chat, streak motivation, or app questions, respond in characte
       ];
 
       const response = await ai.models.generateContent({
-        model: 'gemini-flash-latest',
+        model: geminiModel(),
         contents,
         config: { systemInstruction: baseInstruction },
       });
@@ -424,11 +408,11 @@ For everyday chit-chat, streak motivation, or app questions, respond in characte
           .filter((r) => isSafeHttpUrl(r.url))
           .map((r) => ({ title: String(r.title || '').slice(0, 200), uri: r.url })),
       });
-    } catch {
-      console.warn('AI coach error');
-      res.json({
-        reply: `Astra: "I'm right here with you! Every daily check-in powers up our health journey!"`,
-        sources: [],
+    } catch (err) {
+      console.warn('AI coach error:', err instanceof Error ? err.message : 'unknown');
+      res.status(503).json({
+        error: 'Astra could not reach the AI service just then. Please try again.',
+        code: 'ai_unavailable',
       });
     }
   });

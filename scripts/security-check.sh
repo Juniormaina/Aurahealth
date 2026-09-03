@@ -91,6 +91,19 @@ expect() {
 echo "Checking $BASE_URL"
 
 expect GET /api/health 200
+health_json="$(curl -sS "$BASE_URL/api/health")"
+if ! echo "$health_json" | grep -q '"status":"ok"'; then
+  echo "FAIL  GET /api/health  body missing status ok: $health_json"
+  fail=1
+else
+  echo "ok    GET /api/health  body status ok"
+fi
+if ! echo "$health_json" | grep -q '"configured":'; then
+  echo "FAIL  GET /api/health  body missing ai.configured: $health_json"
+  fail=1
+else
+  echo "ok    GET /api/health  ai readiness reported"
+fi
 expect GET /api/plans 200
 expect GET /api/metrics/proof 200
 expect GET /api/corporate 200

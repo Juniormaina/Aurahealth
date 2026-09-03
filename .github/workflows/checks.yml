@@ -48,6 +48,15 @@ jobs:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           credentials_json: ${{ secrets.GCP_SA_KEY }}
       - uses: google-github-actions/setup-gcloud@v2
+      - name: Discover Secret Manager bindings
+        id: secrets
+        run: |
+          bindings="$(bash scripts/cloud-run-secret-bindings.sh "${{ vars.GCP_PROJECT_ID }}")"
+          {
+            echo "bindings<<EOF"
+            printf '%s\n' "$bindings"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
       - name: Deploy Cloud Run from Dockerfile
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
@@ -56,8 +65,12 @@ jobs:
           service: ${{ env.SERVICE }}
           region: ${{ env.GCP_REGION }}
           source: ./
+          timeout: 120s
           flags: --allow-unauthenticated --port=8080
-          env_vars: NODE_ENV=production,FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }}
+          env_vars: NODE_ENV=production,FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }},APP_URL=${{ vars.PRODUCTION_URL }}
+          secrets: ${{ steps.secrets.outputs.bindings }}
+          secrets_update_strategy: merge
+          env_vars_update_strategy: merge
       - name: Publish Firestore rules
         run: npx -y firebase-tools@14 deploy --only firestore:rules --project "$FIREBASE_PROJECT_ID" --non-interactive
       - name: Authorize Firebase Auth domains

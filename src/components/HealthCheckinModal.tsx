@@ -102,6 +102,16 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
           aiAttestationScore = data.aiAttestationScore;
           aiFeedback = data.aiFeedback || aiFeedback;
         }
+        const flags = Array.isArray(data.riskFlags)
+          ? data.riskFlags.filter((flag: unknown): flag is string => typeof flag === 'string' && flag.trim().length > 0)
+          : [];
+        if (flags.length) {
+          aiFeedback = `${aiFeedback} Watch-outs: ${flags.join(', ')}.`;
+        }
+      } else if (response.status === 401 || response.status === 403) {
+        onShowToast?.(
+          'Sign in with a verified email for live AI attestation. Your check-in will still save.'
+        );
       }
     } catch (err) {
       console.warn('Backend API connection standard fallback used:', err);

@@ -1158,6 +1158,7 @@ export default function App() {
           <AIHealthCoach
             companion={companion}
             latestAnxiety={latestAnxiety}
+            language={sessionLanguage}
             onShowToast={showToast}
           />
         )}
