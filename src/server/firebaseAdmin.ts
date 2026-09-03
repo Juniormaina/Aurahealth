@@ -1,4 +1,5 @@
 import { cert, getApps, initializeApp, applicationDefault, type App } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 
 const FALLBACK_PROJECT_ID = 'aura-health-f478f';
@@ -89,4 +90,24 @@ export function getAdminDb(): Firestore | null {
 
 export function rewardsLedgerConfigured(): boolean {
   return getAdminDb() != null;
+}
+
+/** Verify a Firebase ID token with revocation check when Admin SDK is configured. */
+export async function verifyIdTokenWithAdmin(idToken: string): Promise<{
+  uid: string;
+  email?: string;
+  emailVerified: boolean;
+} | null> {
+  const adminApp = getAdminApp();
+  if (!adminApp) return null;
+  try {
+    const decoded = await getAuth(adminApp).verifyIdToken(idToken, true);
+    return {
+      uid: decoded.uid,
+      email: decoded.email,
+      emailVerified: Boolean(decoded.email_verified),
+    };
+  } catch {
+    return null;
+  }
 }

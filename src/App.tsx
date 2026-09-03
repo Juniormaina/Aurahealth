@@ -47,6 +47,7 @@ import {
 import {
   SANDBOX_WALLET,
   connectWeb3Wallet,
+  getWalletErrorMessage,
   WalletState,
   createOffChainActivityRecord,
   CONTRACT_ADDRESSES,
@@ -478,10 +479,23 @@ export default function App() {
     setIsLanding(true);
   };
 
-  const handleConnectWallet = async () => {
-    const w = await connectWeb3Wallet();
-    setWallet(w);
-    showToast(`Connected Health Ledger Account: ${w.shortAddress}`);
+  const handleAuthConnectWallet = async () => {
+    setIsLoggingIn(true);
+    setAuthFormError(null);
+    try {
+      const w = await connectWeb3Wallet({ requireWallet: true });
+      setWallet(w);
+      setShowAuth(false);
+      setIsLanding(false);
+      setIsDemoMode(true);
+      showToast(
+        `${w.providerName || 'Wallet'} connected: ${w.shortAddress}. On-chain check-ins use Avalanche Fuji.`
+      );
+    } catch (err) {
+      setAuthFormError(getWalletErrorMessage(err));
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   // Feed companion action
@@ -973,6 +987,7 @@ export default function App() {
         onEmailSignIn={handleEmailSignIn}
         onEmailSignUp={handleEmailSignUp}
         onForgotPassword={handleForgotPassword}
+        onConnectWallet={handleAuthConnectWallet}
         onStartDemo={handleStartDemo}
         onBack={() => {
           setAuthFormError(null);

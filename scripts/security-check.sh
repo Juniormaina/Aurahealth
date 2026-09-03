@@ -14,6 +14,7 @@ PORT="${PORT:-3012}"
 BASE_URL="${BASE_URL:-}"
 STARTED=0
 PID=""
+LOG="${ROOT}/.aura-security-check-server.log"
 
 cleanup() {
   if [[ "$STARTED" == "1" && -n "${PID}" ]]; then
@@ -33,6 +34,10 @@ wait_for_health() {
     sleep 0.25
   done
   echo "Timed out waiting for $url/api/health" >&2
+  if [[ -f "$LOG" ]]; then
+    echo "---- server log ----" >&2
+    tail -n 40 "$LOG" >&2 || true
+  fi
   return 1
 }
 
@@ -44,7 +49,7 @@ elif [[ "${BUNDLE:-}" == "1" ]]; then
     exit 1
   fi
   echo "Starting production bundle on port $PORT..."
-  NODE_ENV=production PORT="$PORT" node dist/server.cjs >/tmp/aura-security-check-server.log 2>&1 &
+  NODE_ENV=production PORT="$PORT" node dist/server.cjs >"$LOG" 2>&1 &
   PID=$!
   STARTED=1
   BASE_URL="http://127.0.0.1:${PORT}"
@@ -53,7 +58,7 @@ elif curl -sf "http://127.0.0.1:3000/api/health" >/dev/null 2>&1; then
   BASE_URL="http://127.0.0.1:3000"
 else
   echo "Starting temporary server on port $PORT..."
-  PORT="$PORT" ./node_modules/.bin/tsx server.ts >/tmp/aura-security-check-server.log 2>&1 &
+  PORT="$PORT" ./node_modules/.bin/tsx server.ts >"$LOG" 2>&1 &
   PID=$!
   STARTED=1
   BASE_URL="http://127.0.0.1:${PORT}"
@@ -98,11 +103,23 @@ expect POST /api/rewards/spin 401
 expect POST /api/rewards/spend 401
 expect GET /api/subscriptions/me 401
 expect POST /api/subscriptions/trial 401
+expect POST /api/subscriptions/checkout 401
 expect GET /api/metrics/me 401
 expect POST /api/funnel/event 401
 expect GET /api/admin/session 401
 expect GET /api/funnel/summary 401
 expect GET /api/corporate/leads 401
+
+# Security headers (Helmet)
+hdr="$(curl -sSI "$BASE_URL/api/health")"
+for needed in "x-content-type-options: nosniff" "x-frame-options: DENY" "referrer-policy:"; do
+  if ! echo "$hdr" | grep -qi "$needed"; then
+    echo "FAIL  missing security header matching: $needed"
+    fail=1
+  else
+    echo "ok    security header: $needed"
+  fi
+done
 
 if [[ -n "${TOKEN:-}" ]]; then
   expect GET /api/corporate/leads 403 "$TOKEN"

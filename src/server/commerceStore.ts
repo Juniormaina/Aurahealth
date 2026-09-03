@@ -1,3 +1,5 @@
+import { sanitizeFunnelMeta } from './securityMiddleware';
+
 export type PlanId = 'free' | 'trial' | 'premium' | 'lifetime' | 'corporate';
 export type PlanInterval = 'monthly' | 'annual' | 'lifetime' | 'corporate';
 
@@ -60,20 +62,35 @@ export function seedDemoMetrics(userId: string = PUBLIC_PROOF_USER_ID) {
   }
 }
 
+const PLAN_INTERVALS: PlanInterval[] = ['monthly', 'annual', 'lifetime', 'corporate'];
+const MAX_METRICS = 5_000;
+const MAX_FUNNEL = 2_000;
+const MAX_LEADS = 500;
+
+export function isPlanInterval(value: unknown): value is PlanInterval {
+  return typeof value === 'string' && (PLAN_INTERVALS as string[]).includes(value);
+}
+
+/** Unpaid checkout is for local/demo only unless explicitly enabled. */
+export function unpaidCheckoutAllowed(): boolean {
+  if (process.env.ALLOW_UNPAID_CHECKOUT === '1') return true;
+  return process.env.NODE_ENV !== 'production';
+}
+
 export function getOrCreatePlan(userId: string): UserPlan {
   const existing = plans.get(userId);
   if (existing) {
     if (existing.plan === 'trial' && existing.trialEndsAt && new Date(existing.trialEndsAt) < new Date()) {
       const converted: UserPlan = {
         ...existing,
-        plan: 'premium',
-        interval: existing.interval || 'monthly',
-        status: 'active',
-        autoRenew: true,
+        plan: 'free',
+        status: 'canceled',
+        autoRenew: false,
+        trialEndsAt: existing.trialEndsAt,
         updatedAt: new Date().toISOString(),
       };
       plans.set(userId, converted);
-      trackFunnel(userId, 'auto_subscribe', { from: 'trial' });
+      trackFunnel(userId, 'trial_expired', { from: 'trial' });
       return converted;
     }
     return existing;
@@ -92,27 +109,39 @@ export function getOrCreatePlan(userId: string): UserPlan {
 }
 
 export function startTrial(userId: string, interval: PlanInterval = 'monthly'): UserPlan {
+  const safeInterval = isPlanInterval(interval) ? interval : 'monthly';
   const now = new Date();
   const trialEnds = new Date(now.getTime() + 7 * 86400000);
   const plan: UserPlan = {
     userId,
     plan: 'trial',
-    interval,
+    interval: safeInterval,
     status: 'active',
     trialEndsAt: trialEnds.toISOString(),
-    autoRenew: true,
+    autoRenew: false,
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   };
   plans.set(userId, plan);
-  trackFunnel(userId, 'trial_start', { interval });
+  trackFunnel(userId, 'trial_start', { interval: safeInterval });
   return plan;
 }
 
-export function checkout(
-  userId: string,
-  interval: PlanInterval
-): UserPlan {
+export class CheckoutDisabledError extends Error {
+  code = 'payment_required' as const;
+  constructor(message = 'Paid checkout is not enabled. Connect a payment provider or set ALLOW_UNPAID_CHECKOUT=1 for demos.') {
+    super(message);
+    this.name = 'CheckoutDisabledError';
+  }
+}
+
+export function checkout(userId: string, interval: PlanInterval): UserPlan {
+  if (!unpaidCheckoutAllowed()) {
+    throw new CheckoutDisabledError();
+  }
+  if (!isPlanInterval(interval)) {
+    throw new Error('invalid_interval');
+  }
   const now = new Date().toISOString();
   const plan: UserPlan = {
     userId,
@@ -130,7 +159,17 @@ export function checkout(
 }
 
 export function recordMetric(row: UserMetric) {
-  metrics.push(row);
+  metrics.push({
+    ...row,
+    moodScore: Math.min(5, Math.max(1, Number(row.moodScore) || 1)),
+    anxietyLevel: Math.min(10, Math.max(1, Number(row.anxietyLevel) || 1)),
+    language: row.language ? String(row.language).slice(0, 16) : undefined,
+    source: row.source ? String(row.source).slice(0, 40) : undefined,
+    sessionDate: String(row.sessionDate || '').slice(0, 32),
+  });
+  if (metrics.length > MAX_METRICS) {
+    metrics.splice(0, metrics.length - MAX_METRICS);
+  }
   trackFunnel(row.userId, 'metric_logged', { mood: row.moodScore, anxiety: row.anxietyLevel });
 }
 
@@ -180,7 +219,15 @@ export function impactSummary(userId: string) {
 }
 
 export function trackFunnel(userId: string, event: string, meta?: Record<string, unknown>) {
-  funnel.push({ userId, event, meta, createdAt: new Date().toISOString() });
+  funnel.push({
+    userId: String(userId).slice(0, 128),
+    event: String(event).slice(0, 64),
+    meta: sanitizeFunnelMeta(meta),
+    createdAt: new Date().toISOString(),
+  });
+  if (funnel.length > MAX_FUNNEL) {
+    funnel.splice(0, funnel.length - MAX_FUNNEL);
+  }
 }
 
 export function funnelSummary() {
@@ -188,20 +235,37 @@ export function funnelSummary() {
   for (const e of funnel) counts[e.event] = (counts[e.event] || 0) + 1;
   const uniqueUsers = new Set(funnel.map((e) => e.userId)).size;
   const trials = funnel.filter((e) => e.event === 'trial_start').length;
-  const conversions = funnel.filter((e) => e.event === 'conversion' || e.event === 'auto_subscribe').length;
+  const conversions = funnel.filter((e) => e.event === 'conversion').length;
   return {
     uniqueUsers,
     trials,
     conversions,
     conversionRate: trials ? Number(((conversions / trials) * 100).toFixed(1)) : 0,
     events: counts,
-    recent: funnel.slice(-25).reverse(),
+    // Redact full userIds in admin feed — keep a short fingerprint only.
+    recent: funnel.slice(-25).reverse().map((e) => ({
+      event: e.event,
+      createdAt: e.createdAt,
+      userFingerprint: e.userId.slice(0, 8),
+      meta: e.meta,
+    })),
   };
 }
 
 export function addCorporateLead(lead: Record<string, unknown>) {
-  const row = { ...lead, createdAt: new Date().toISOString() };
+  const row = {
+    company: String(lead.company || '').slice(0, 200),
+    contactEmail: String(lead.contactEmail || '').slice(0, 200),
+    seats: Math.min(10_000, Math.max(1, Number(lead.seats) || 25)),
+    packageId: String(lead.packageId || 'team').slice(0, 40),
+    notes: lead.notes != null ? String(lead.notes).slice(0, 500) : undefined,
+    sourceIp: lead.sourceIp != null ? String(lead.sourceIp).slice(0, 64) : undefined,
+    createdAt: new Date().toISOString(),
+  };
   corporateLeads.push(row);
+  if (corporateLeads.length > MAX_LEADS) {
+    corporateLeads.splice(0, corporateLeads.length - MAX_LEADS);
+  }
   return row;
 }
 

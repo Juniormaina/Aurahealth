@@ -10,13 +10,12 @@ import {
   UserPlus,
   LogIn,
   Lock,
+  Wallet,
 } from 'lucide-react';
 import {
   MAX_NAME_LENGTH,
   MAX_PASSWORD_LENGTH,
   MIN_PASSWORD_LENGTH,
-  isValidEmail,
-  normalizeEmail,
   signinFieldError,
   signupFieldError,
 } from '../services/authValidation';
@@ -26,6 +25,7 @@ interface AuthPageProps {
   onEmailSignIn: (email: string, pass: string) => void;
   onEmailSignUp: (email: string, pass: string, name: string) => void;
   onForgotPassword: (email: string) => Promise<void> | void;
+  onConnectWallet: () => void | Promise<void>;
   onStartDemo: () => void;
   onBack: () => void;
   isLoggingIn?: boolean;
@@ -47,6 +47,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   onEmailSignIn,
   onEmailSignUp,
   onForgotPassword,
+  onConnectWallet,
   onStartDemo,
   onBack,
   isLoggingIn = false,
@@ -129,10 +130,15 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           {emailTab === 'signup' ? 'Create your Aura Health account' : 'Sign in to Aura Health'}
         </h1>
         <p className="view-copy mb-8">
-          Continue with Google, email, or a guest walkthrough.
+          Continue with Google, a wallet (Core / MetaMask), email, or a guest walkthrough.
         </p>
 
         <div className="space-y-3 mb-8">
+          {displayError && (
+            <div className="bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/40 text-[var(--color-danger)] text-xs p-3 rounded-[4px] font-semibold leading-[1.6]">
+              {displayError}
+            </div>
+          )}
           <button
             type="button"
             onClick={onRealGoogleSignIn}
@@ -140,9 +146,25 @@ export const AuthPage: React.FC<AuthPageProps> = ({
             className="w-full btn-primary justify-center text-sm py-3"
           >
             <GoogleMark />
-            {isLoggingIn ? 'Connecting to Google...' : 'Continue with Google'}
+            {isLoggingIn ? 'Connecting…' : 'Continue with Google'}
           </button>
-          <button type="button" onClick={onStartDemo} className="w-full btn-ghost justify-center text-sm py-3">
+          <button
+            type="button"
+            onClick={() => {
+              clearErrors();
+              void onConnectWallet();
+            }}
+            disabled={isLoggingIn}
+            className="w-full justify-center text-sm py-3 rounded-xl font-semibold inline-flex items-center gap-2 border-2 border-[var(--color-harmony)] text-[var(--color-harmony)] bg-[var(--color-harmony)]/10 hover:bg-[var(--color-harmony)]/20 transition-colors disabled:opacity-50"
+            aria-label="Connect wallet with Core or MetaMask"
+          >
+            <Wallet className="w-4 h-4 shrink-0" />
+            {isLoggingIn ? 'Waiting for wallet…' : 'Connect Wallet'}
+          </button>
+          <p className="text-[11px] text-slate-400 text-center leading-[1.5] px-2">
+            Core · MetaMask · other browser wallets · Avalanche Fuji
+          </p>
+          <button type="button" onClick={onStartDemo} disabled={isLoggingIn} className="w-full btn-ghost justify-center text-sm py-3">
             <Play className="w-4 h-4 shrink-0" />
             Continue as Guest
           </button>

@@ -6,10 +6,12 @@ import { GoogleGenAI } from '@google/genai';
 import {
   addCorporateLead,
   checkout,
+  CheckoutDisabledError,
   funnelSummary,
   getOrCreatePlan,
   getPublicProof,
   impactSummary,
+  isPlanInterval,
   listCorporateLeads,
   listMetrics,
   recordMetric,
@@ -27,9 +29,11 @@ import {
   requireAdmin,
   requireAuth,
   requireEmailVerified,
+  requireSelf,
   uidKey,
 } from './src/server/auth';
 import { applyCheckinRewards, applyGrant, applySpend, applyWheelSpin, RewardsError } from './src/server/rewards';
+import { applySecurityMiddleware, isSafeHttpUrl } from './src/server/securityMiddleware';
 
 // This project's env vars (GEMINI_API_KEY, PRIVATE_KEY, etc.) live in
 // src/.env, not a root .env — load that explicitly, with a plain
@@ -48,6 +52,7 @@ async function startServer() {
   const app = express();
   const PORT = listenPort(process.env.PORT);
   app.set('trust proxy', 1);
+  applySecurityMiddleware(app);
 
   const jsonDefault = express.json({ limit: '32kb' });
   const jsonCheckin = express.json({ limit: '1mb' });
@@ -69,6 +74,8 @@ async function startServer() {
   const funnelLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 60, key: uidKey('funnel') });
   const adminLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 30, key: uidKey('admin') });
   const rewardsLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 40, key: uidKey('rewards') });
+  const checkoutLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, key: uidKey('checkout') });
+  const metricsLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 60, key: uidKey('metrics') });
 
   const sendRewardsError = (res: express.Response, err: unknown) => {
     if (err instanceof RewardsError) {
@@ -192,13 +199,17 @@ Response MUST be valid JSON string only.`,
           if (textResponse) {
             const cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
             const parsed = JSON.parse(cleanJson);
-            aiAttestationScore = parsed.score || 90;
-            aiFeedback = parsed.feedback || aiFeedback;
+            const rawScore = Number(parsed.score);
+            aiAttestationScore = Number.isFinite(rawScore)
+              ? Math.min(100, Math.max(60, Math.round(rawScore)))
+              : 90;
+            aiFeedback = String(parsed.feedback || aiFeedback).slice(0, 500);
           }
-        } catch (genErr) {
-          console.warn('Gemini AI Verification fallback used:', genErr);
+        } catch {
+          console.warn('Gemini AI Verification fallback used');
           if (medicationTaken) aiAttestationScore += 5;
           if (sleep >= 7) aiAttestationScore += 3;
+          aiAttestationScore = Math.min(100, aiAttestationScore);
           aiFeedback = 'Daily health log recorded cleanly. Consistency verified!';
         }
       }
@@ -284,22 +295,30 @@ Response MUST be valid JSON string only.`,
   app.get('/api/subscriptions/me', requireAuth, (req, res) => {
     res.json({ plan: getOrCreatePlan(req.user!.uid) });
   });
-  app.get('/api/subscriptions/:userId', requireAuth, (req, res) => {
+  app.get('/api/subscriptions/:userId', requireAuth, requireSelf('userId'), (req, res) => {
     res.json({ plan: getOrCreatePlan(req.user!.uid) });
   });
 
-  app.post('/api/subscriptions/trial', requireAuth, requireEmailVerified, (req, res) => {
+  app.post('/api/subscriptions/trial', requireAuth, requireEmailVerified, checkoutLimit, (req, res) => {
     const { interval } = req.body || {};
-    res.json({ plan: startTrial(req.user!.uid, interval || 'monthly') });
+    const safe = isPlanInterval(interval) ? interval : 'monthly';
+    res.json({ plan: startTrial(req.user!.uid, safe) });
   });
 
-  app.post('/api/subscriptions/checkout', requireAuth, requireEmailVerified, (req, res) => {
+  app.post('/api/subscriptions/checkout', requireAuth, requireEmailVerified, checkoutLimit, (req, res) => {
     const { interval } = req.body || {};
-    if (!interval) return res.status(400).json({ error: 'interval required' });
-    res.json({ plan: checkout(req.user!.uid, interval) });
+    if (!isPlanInterval(interval)) return res.status(400).json({ error: 'interval required' });
+    try {
+      res.json({ plan: checkout(req.user!.uid, interval) });
+    } catch (err) {
+      if (err instanceof CheckoutDisabledError) {
+        return res.status(402).json({ error: err.message, code: err.code });
+      }
+      return res.status(400).json({ error: 'Checkout failed' });
+    }
   });
 
-  app.post('/api/metrics', requireAuth, (req, res) => {
+  app.post('/api/metrics', requireAuth, metricsLimit, (req, res) => {
     const { moodScore, anxietyLevel, sessionDate, language, source } = req.body || {};
     if (moodScore == null || anxietyLevel == null) {
       return res.status(400).json({ error: 'moodScore and anxietyLevel required' });
@@ -322,13 +341,13 @@ Response MUST be valid JSON string only.`,
   app.get('/api/metrics/me/impact', requireAuth, (req, res) => {
     res.json(impactSummary(req.user!.uid));
   });
-  app.get('/api/metrics/:userId/impact', requireAuth, (req, res) => {
+  app.get('/api/metrics/:userId/impact', requireAuth, requireSelf('userId'), (req, res) => {
     res.json(impactSummary(req.user!.uid));
   });
   app.get('/api/metrics/me', requireAuth, (req, res) => {
     res.json({ metrics: listMetrics(req.user!.uid) });
   });
-  app.get('/api/metrics/:userId', requireAuth, (req, res) => {
+  app.get('/api/metrics/:userId', requireAuth, requireSelf('userId'), (req, res) => {
     res.json({ metrics: listMetrics(req.user!.uid) });
   });
 
@@ -343,7 +362,7 @@ Response MUST be valid JSON string only.`,
     res.json({ ok: true, email: req.user!.email });
   });
 
-  app.get('/api/funnel/summary', requireAuth, requireAdmin, (_req, res) => {
+  app.get('/api/funnel/summary', requireAuth, adminLimit, requireAdmin, (_req, res) => {
     res.json(funnelSummary());
   });
 
@@ -366,7 +385,7 @@ Response MUST be valid JSON string only.`,
   app.post('/api/corporate', leadLimit, saveCorporateLead);
   app.post('/api/corporate/packages', leadLimit, saveCorporateLead);
 
-  app.get('/api/corporate/leads', requireAuth, requireAdmin, (_req, res) => {
+  app.get('/api/corporate/leads', requireAuth, adminLimit, requireAdmin, (_req, res) => {
     res.json({ leads: listCorporateLeads() });
   });
   app.get('/api/corporate', (_req, res) => {
@@ -450,10 +469,12 @@ For everyday chit-chat, streak motivation, or app questions, respond in characte
 
       res.json({
         reply: response.text || "Astra beams with energy! Let's keep your health streak going!",
-        sources: searchResults.map((r) => ({ title: r.title, uri: r.url })),
+        sources: searchResults
+          .filter((r) => isSafeHttpUrl(r.url))
+          .map((r) => ({ title: String(r.title || '').slice(0, 200), uri: r.url })),
       });
-    } catch (err: any) {
-      console.warn('AI coach error:', err);
+    } catch {
+      console.warn('AI coach error');
       res.json({
         reply: `Astra: "I'm right here with you! Every daily check-in powers up our health journey!"`,
         sources: [],

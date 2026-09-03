@@ -158,13 +158,16 @@ async function main() {
       });
       const alice = testEnv.authenticatedContext('alice').firestore();
       await assertFails(updateDoc(doc(alice, 'healthLogs', logId), { uid: 'eve' }));
+      await assertFails(updateDoc(doc(alice, 'healthLogs', logId), { aiAttestationScore: 100 }));
+      await assertFails(deleteDoc(doc(alice, 'healthLogs', logId)));
       const eve = testEnv.authenticatedContext('eve').firestore();
       await assertFails(getDoc(doc(eve, 'healthLogs', logId)));
     });
 
-    await check('owner can write companion; stranger cannot', async () => {
+    await check('owner can write companion; stranger cannot; delete denied', async () => {
       const alice = testEnv.authenticatedContext('alice').firestore();
       await assertSucceeds(setDoc(doc(alice, 'companion', 'alice'), companion('alice')));
+      await assertFails(deleteDoc(doc(alice, 'companion', 'alice')));
       const eve = testEnv.authenticatedContext('eve').firestore();
       await assertFails(setDoc(doc(eve, 'companion', 'alice'), companion('alice')));
     });

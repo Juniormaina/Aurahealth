@@ -198,7 +198,16 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
                 <div className="flex items-center gap-1 text-[9px] text-slate-400 font-bold uppercase tracking-wide">
                   <Search className="w-2.5 h-2.5" /> Sources
                 </div>
-                {m.sources.map((s, sIdx) => (
+                {m.sources
+                  .filter((s) => {
+                    try {
+                      const u = new URL(s.uri);
+                      return u.protocol === 'https:' || u.protocol === 'http:';
+                    } catch {
+                      return false;
+                    }
+                  })
+                  .map((s, sIdx) => (
                   <a
                     key={sIdx}
                     href={s.uri}

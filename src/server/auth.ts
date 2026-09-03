@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
+import { verifyIdTokenWithAdmin } from './firebaseAdmin';
 
 export type AuthUser = {
   uid: string;
@@ -14,8 +15,12 @@ declare global {
   }
 }
 
-function firebaseWebApiKey(): string {
-  return process.env.FIREBASE_WEB_API_KEY || 'AIzaSyD7JptGcJbWRAt44G3GCGj0zTZ-UwpF0W0';
+function firebaseWebApiKey(): string | null {
+  const key = process.env.FIREBASE_WEB_API_KEY?.trim();
+  if (key) return key;
+  // Public Firebase web API key (same as the client SDK). Restrict by HTTP
+  // referrer in Google Cloud. Prefer FIREBASE_WEB_API_KEY in production.
+  return 'AIzaSyD7JptGcJbWRAt44G3GCGj0zTZ-UwpF0W0';
 }
 
 function splitList(raw: string | undefined): string[] {
@@ -36,10 +41,12 @@ function bearerToken(req: Request): string | null {
   return token || null;
 }
 
-export async function verifyFirebaseIdToken(idToken: string): Promise<AuthUser | null> {
+async function verifyViaIdentityToolkit(idToken: string): Promise<AuthUser | null> {
+  const apiKey = firebaseWebApiKey();
+  if (!apiKey) return null;
   try {
     const res = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseWebApiKey())}`,
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(apiKey)}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,9 +70,15 @@ export async function verifyFirebaseIdToken(idToken: string): Promise<AuthUser |
       emailVerified: Boolean(user.emailVerified),
     };
   } catch (err) {
-    console.warn('Firebase token lookup failed:', err);
+    console.warn('Firebase token lookup failed');
     return null;
   }
+}
+
+export async function verifyFirebaseIdToken(idToken: string): Promise<AuthUser | null> {
+  const viaAdmin = await verifyIdTokenWithAdmin(idToken);
+  if (viaAdmin) return viaAdmin;
+  return verifyViaIdentityToolkit(idToken);
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -101,6 +114,17 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
     return res.status(403).json({ error: 'Verified admin email required' });
   }
   next();
+}
+
+/** Reject path :userId that does not match the authenticated caller (IDOR guard). */
+export function requireSelf(paramName = 'userId') {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const requested = req.params[paramName];
+    if (requested && requested !== req.user?.uid) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    next();
+  };
 }
 
 type RateBucket = { n: number; reset: number };
@@ -148,4 +172,3 @@ export function uidKey(prefix: string) {
 export function ipKey(prefix: string) {
   return (req: Request) => `${prefix}:${clientIp(req)}`;
 }
-

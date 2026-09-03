@@ -111,6 +111,16 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid;
     }
 
+    function isHttpsUrl(val) {
+      return val is string
+        && val.size() <= 2048
+        && (val.size() == 0 || val.matches('https://.*'));
+    }
+
+    function optHttpsUrl(data, key) {
+      return !(key in data) || data[key] == null || isHttpsUrl(data[key]);
+    }
+
     function isValidUser(data) {
       return data.keys().hasOnly([
           'uid', 'email', 'displayName', 'photoURL',
@@ -120,7 +130,7 @@ service cloud.firestore {
         && uidMatchesAuth(data)
         && optString(data, 'email', 320)
         && optString(data, 'displayName', 200)
-        && optString(data, 'photoURL', 2048)
+        && optHttpsUrl(data, 'photoURL')
         && optNumber(data, 'cowriesBalance', 0, 100000000)
         && optNumber(data, 'totalXp', 0, 100000000)
         && optNumber(data, 'currentStreak', 0, 100000)
@@ -150,7 +160,7 @@ service cloud.firestore {
         && optString(data, 'mood', 32)
         && optNumber(data, 'streakDays', 0, 100000)
         && optNumber(data, 'totalCheckIns', 0, 1000000)
-        && optString(data, 'imageUrl', 2048)
+        && optHttpsUrl(data, 'imageUrl')
         && optString(data, 'element', 32)
         && optStringList(data, 'equippedCosmetics', 50)
         && optTimestamp(data, 'updatedAt');
@@ -198,21 +208,27 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Companion may sync client-side progression for now; Cowries on /users
+    // remain Admin SDK only. Prefer migrating companion XP to the server next.
     match /companion/{userId} {
       allow read: if isOwner(userId);
       allow create: if isOwner(userId) && isValidCompanion(request.resource.data);
-      allow update: if isOwner(userId) && uidNotModified() && isValidCompanion(request.resource.data);
-      allow delete: if isOwner(userId);
+      allow update: if isOwner(userId)
+        && uidNotModified()
+        && isValidCompanion(request.resource.data);
+      allow delete: if false;
     }
 
     match /healthLogs/{logId} {
       allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
       allow create: if isAuthenticated() && isValidHealthLog(request.resource.data);
-      allow update: if isAuthenticated()
-        && resource.data.uid == request.auth.uid
-        && uidNotModified()
-        && isValidHealthLog(request.resource.data);
-      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      // Prevent history tampering / attestation rewrite after create.
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

@@ -80,6 +80,7 @@ export interface WalletState {
   avaxBalance: string;
   networkName: string;
   isSandbox: boolean;
+  providerName?: string;
 }
 
 export const SANDBOX_WALLET: WalletState = {
@@ -89,7 +90,78 @@ export const SANDBOX_WALLET: WalletState = {
   avaxBalance: '4.85 Care Credits',
   networkName: 'AuraHealth Verification Ledger',
   isSandbox: true,
+  providerName: 'Sandbox',
 };
+
+export class WalletConnectError extends Error {
+  code: 'no_provider' | 'rejected' | 'switch_failed' | 'unknown';
+  constructor(code: WalletConnectError['code'], message: string) {
+    super(message);
+    this.name = 'WalletConnectError';
+    this.code = code;
+  }
+}
+
+type InjectedEthereum = {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  isMetaMask?: boolean;
+  isAvalanche?: boolean;
+  isCore?: boolean;
+  providers?: InjectedEthereum[];
+};
+
+function detectProviderName(provider: InjectedEthereum): string {
+  if (provider.isAvalanche || provider.isCore) return 'Core';
+  if (provider.isMetaMask) return 'MetaMask';
+  return 'Browser wallet';
+}
+
+/** Prefer Core, then MetaMask, when several wallets inject into the page. */
+function getInjectedProvider(): InjectedEthereum | null {
+  if (typeof window === 'undefined') return null;
+  const eth = (window as Window & { ethereum?: InjectedEthereum }).ethereum;
+  if (!eth) return null;
+  if (Array.isArray(eth.providers) && eth.providers.length > 0) {
+    return (
+      eth.providers.find((p) => p.isAvalanche || p.isCore) ||
+      eth.providers.find((p) => p.isMetaMask) ||
+      eth.providers[0]
+    );
+  }
+  return eth;
+}
+
+async function ensureFujiNetwork(provider: InjectedEthereum): Promise<void> {
+  try {
+    const chainId = (await provider.request({ method: 'eth_chainId' })) as string;
+    if (chainId?.toLowerCase() === AVALANCHE_FUJI_CONFIG.chainId) return;
+    try {
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: AVALANCHE_FUJI_CONFIG.chainId }],
+      });
+    } catch (switchErr: unknown) {
+      const code = (switchErr as { code?: number })?.code;
+      if (code === 4902 || code === -32603) {
+        await provider.request({
+          method: 'wallet_addEthereumChain',
+          params: [AVALANCHE_FUJI_CONFIG],
+        });
+        return;
+      }
+      throw switchErr;
+    }
+  } catch (err: unknown) {
+    const code = (err as { code?: number })?.code;
+    if (code === 4001) {
+      throw new WalletConnectError('rejected', 'Network switch was cancelled in your wallet.');
+    }
+    throw new WalletConnectError(
+      'switch_failed',
+      'Could not switch to Avalanche Fuji. Add the Fuji testnet in Core or MetaMask and try again.'
+    );
+  }
+}
 
 /**
  * Local product activity (check-in without a wallet, loot wheel, sponsor UI).
@@ -118,10 +190,11 @@ export function createOffChainActivityRecord(activity: string, detail: string): 
  * without inventing a transaction hash.
  */
 export async function checkInOnChain(): Promise<TxRecord | null> {
-  if (typeof window === 'undefined' || !(window as any).ethereum) return null;
+  const injected = getInjectedProvider();
+  if (!injected) return null;
 
   try {
-    const provider = new ethers.BrowserProvider((window as any).ethereum);
+    const provider = new ethers.BrowserProvider(injected);
     const network = await provider.getNetwork();
     if (Number(network.chainId) !== 43113) return null; // not on Fuji — skip real tx
 
@@ -151,33 +224,76 @@ export async function checkInOnChain(): Promise<TxRecord | null> {
   }
 }
 
-// Check or connect Web3 Wallet (Core Wallet or MetaMask)
-export async function connectWeb3Wallet(): Promise<WalletState> {
-  if (typeof window !== 'undefined' && (window as any).ethereum) {
-    try {
-      const provider = new ethers.BrowserProvider((window as any).ethereum);
-      const accounts = await provider.send('eth_requestAccounts', []);
-      if (accounts && accounts.length > 0) {
-        const address = accounts[0];
-        const balance = await provider.getBalance(address);
-        const formattedBalance = parseFloat(ethers.formatEther(balance)).toFixed(3) + ' Care Credits';
+export type ConnectWalletOptions = {
+  /** When true, missing wallet / cancel throws instead of returning the sandbox wallet. */
+  requireWallet?: boolean;
+};
 
-        return {
-          isConnected: true,
-          address,
-          shortAddress: `${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
-          avaxBalance: formattedBalance,
-          networkName: 'AuraHealth Verification Ledger',
-          isSandbox: false,
-        };
-      }
-    } catch (e) {
-      console.warn('Web3 Wallet connection declined or error:', e);
+// Check or connect Web3 Wallet (Core Wallet, MetaMask, and other injected providers)
+export async function connectWeb3Wallet(options: ConnectWalletOptions = {}): Promise<WalletState> {
+  const { requireWallet = false } = options;
+  const injected = getInjectedProvider();
+
+  if (!injected) {
+    if (requireWallet) {
+      throw new WalletConnectError(
+        'no_provider',
+        'No wallet found. Install Core or MetaMask, then refresh this page.'
+      );
     }
+    return SANDBOX_WALLET;
   }
 
-  // Fallback to Sandbox Wallet for smooth testing
-  return SANDBOX_WALLET;
+  try {
+    await ensureFujiNetwork(injected);
+    const provider = new ethers.BrowserProvider(injected);
+    const accounts = (await provider.send('eth_requestAccounts', [])) as string[];
+    if (!accounts?.length) {
+      if (requireWallet) {
+        throw new WalletConnectError('rejected', 'No account was shared by your wallet.');
+      }
+      return SANDBOX_WALLET;
+    }
+
+    const address = accounts[0];
+    const balance = await provider.getBalance(address);
+    const formattedBalance = `${parseFloat(ethers.formatEther(balance)).toFixed(3)} AVAX`;
+    const providerName = detectProviderName(injected);
+
+    return {
+      isConnected: true,
+      address,
+      shortAddress: `${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
+      avaxBalance: formattedBalance,
+      networkName: AVALANCHE_FUJI_CONFIG.chainName,
+      isSandbox: false,
+      providerName,
+    };
+  } catch (e) {
+    if (e instanceof WalletConnectError) {
+      if (requireWallet) throw e;
+      return SANDBOX_WALLET;
+    }
+    const code = (e as { code?: number })?.code;
+    if (code === 4001) {
+      const rejected = new WalletConnectError('rejected', 'Wallet connection was cancelled.');
+      if (requireWallet) throw rejected;
+      return SANDBOX_WALLET;
+    }
+    console.warn('Web3 Wallet connection declined or error:', e);
+    if (requireWallet) {
+      throw new WalletConnectError(
+        'unknown',
+        'Could not connect your wallet. Unlock Core or MetaMask and try again.'
+      );
+    }
+    return SANDBOX_WALLET;
+  }
+}
+
+export function getWalletErrorMessage(error: unknown): string {
+  if (error instanceof WalletConnectError) return error.message;
+  return 'Could not connect your wallet. Try Core or MetaMask and try again.';
 }
 
 export function computeKeccakProof(payloadString: string): string {

@@ -20,3 +20,5 @@ artifacts/
 cache/
 typechain-types/
 .gstack/
+
+.aura-security-check-server.log

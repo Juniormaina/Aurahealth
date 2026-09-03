@@ -202,9 +202,8 @@ export function getAuthErrorMessage(error: any): string {
       return 'Sign-in is temporarily misconfigured. Please try Guest mode, or contact support.';
     case 'auth/wrong-password':
     case 'auth/invalid-credential':
-      return 'Invalid email or password.';
     case 'auth/user-not-found':
-      return 'No account found for this email. Try Signing Up!';
+      return 'Invalid email or password.';
     case 'auth/email-already-in-use':
       return 'Email is already registered. Please Sign In instead.';
     case 'auth/weak-password':
