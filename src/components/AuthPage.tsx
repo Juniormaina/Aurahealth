@@ -162,7 +162,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
             {isLoggingIn ? 'Waiting for wallet…' : 'Connect Wallet'}
           </button>
           <p className="text-[11px] text-slate-400 text-center leading-[1.5] px-2">
-            Core · MetaMask · other browser wallets · Avalanche Fuji
+            Core · MetaMask · other browser wallets
           </p>
           <button type="button" onClick={onStartDemo} disabled={isLoggingIn} className="w-full btn-ghost justify-center text-sm py-3">
             <Play className="w-4 h-4 shrink-0" />

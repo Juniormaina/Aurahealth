@@ -94,7 +94,7 @@ export const SANDBOX_WALLET: WalletState = {
 };
 
 export class WalletConnectError extends Error {
-  code: 'no_provider' | 'rejected' | 'switch_failed' | 'unknown';
+  code: 'no_provider' | 'rejected' | 'unknown';
   constructor(code: WalletConnectError['code'], message: string) {
     super(message);
     this.name = 'WalletConnectError';
@@ -131,36 +131,12 @@ function getInjectedProvider(): InjectedEthereum | null {
   return eth;
 }
 
-async function ensureFujiNetwork(provider: InjectedEthereum): Promise<void> {
-  try {
-    const chainId = (await provider.request({ method: 'eth_chainId' })) as string;
-    if (chainId?.toLowerCase() === AVALANCHE_FUJI_CONFIG.chainId) return;
-    try {
-      await provider.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: AVALANCHE_FUJI_CONFIG.chainId }],
-      });
-    } catch (switchErr: unknown) {
-      const code = (switchErr as { code?: number })?.code;
-      if (code === 4902 || code === -32603) {
-        await provider.request({
-          method: 'wallet_addEthereumChain',
-          params: [AVALANCHE_FUJI_CONFIG],
-        });
-        return;
-      }
-      throw switchErr;
-    }
-  } catch (err: unknown) {
-    const code = (err as { code?: number })?.code;
-    if (code === 4001) {
-      throw new WalletConnectError('rejected', 'Network switch was cancelled in your wallet.');
-    }
-    throw new WalletConnectError(
-      'switch_failed',
-      'Could not switch to Avalanche Fuji. Add the Fuji testnet in Core or MetaMask and try again.'
-    );
-  }
+function networkLabel(chainId: bigint | number): string {
+  const id = Number(chainId);
+  if (id === 43113) return AVALANCHE_FUJI_CONFIG.chainName;
+  if (id === 43114) return 'Avalanche C-Chain';
+  if (id === 1) return 'Ethereum Mainnet';
+  return `Chain ${id}`;
 }
 
 /**
@@ -229,7 +205,8 @@ export type ConnectWalletOptions = {
   requireWallet?: boolean;
 };
 
-// Check or connect Web3 Wallet (Core Wallet, MetaMask, and other injected providers)
+// Check or connect Web3 Wallet (Core Wallet, MetaMask, and other injected providers).
+// Does not force a network switch — uses whatever chain the wallet is on.
 export async function connectWeb3Wallet(options: ConnectWalletOptions = {}): Promise<WalletState> {
   const { requireWallet = false } = options;
   const injected = getInjectedProvider();
@@ -245,7 +222,6 @@ export async function connectWeb3Wallet(options: ConnectWalletOptions = {}): Pro
   }
 
   try {
-    await ensureFujiNetwork(injected);
     const provider = new ethers.BrowserProvider(injected);
     const accounts = (await provider.send('eth_requestAccounts', [])) as string[];
     if (!accounts?.length) {
@@ -256,8 +232,13 @@ export async function connectWeb3Wallet(options: ConnectWalletOptions = {}): Pro
     }
 
     const address = accounts[0];
-    const balance = await provider.getBalance(address);
-    const formattedBalance = `${parseFloat(ethers.formatEther(balance)).toFixed(3)} AVAX`;
+    const [balance, network] = await Promise.all([
+      provider.getBalance(address),
+      provider.getNetwork(),
+    ]);
+    const symbol =
+      Number(network.chainId) === 43113 || Number(network.chainId) === 43114 ? 'AVAX' : 'ETH';
+    const formattedBalance = `${parseFloat(ethers.formatEther(balance)).toFixed(3)} ${symbol}`;
     const providerName = detectProviderName(injected);
 
     return {
@@ -265,7 +246,7 @@ export async function connectWeb3Wallet(options: ConnectWalletOptions = {}): Pro
       address,
       shortAddress: `${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
       avaxBalance: formattedBalance,
-      networkName: AVALANCHE_FUJI_CONFIG.chainName,
+      networkName: networkLabel(network.chainId),
       isSandbox: false,
       providerName,
     };

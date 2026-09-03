@@ -489,7 +489,7 @@ export default function App() {
       setIsLanding(false);
       setIsDemoMode(true);
       showToast(
-        `${w.providerName || 'Wallet'} connected: ${w.shortAddress}. On-chain check-ins use Avalanche Fuji.`
+        `${w.providerName || 'Wallet'} connected: ${w.shortAddress} · ${w.networkName}`
       );
     } catch (err) {
       setAuthFormError(getWalletErrorMessage(err));
