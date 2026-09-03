@@ -111,6 +111,14 @@ export async function fetchCoachReply(payload: Record<string, unknown>): Promise
   if (response.status === 401) {
     return { ok: false, status: 401, message: 'Your session expired. Sign out and sign in again, then retry.' };
   }
+  if (response.status === 404) {
+    return {
+      ok: false,
+      status: 404,
+      code: 'not_found',
+      message: 'Astra’s API is not running on this host. Redeploy so /api/ai-coach is served (not only the static app).',
+    };
+  }
   if (response.status === 429) {
     return { ok: false, status: 429, message: 'Too many messages right now. Wait a minute and try again.' };
   }

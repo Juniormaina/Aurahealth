@@ -94,6 +94,7 @@ export function applySecurityMiddleware(app: Express) {
         : false,
       frameguard: { action: 'deny' },
       crossOriginEmbedderPolicy: false,
+      crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
       crossOriginResourcePolicy: { policy: 'same-origin' },
       referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
       hsts: isProd ? { maxAge: 31536000, includeSubDomains: true } : false,
