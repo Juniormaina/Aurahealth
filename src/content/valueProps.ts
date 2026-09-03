@@ -20,6 +20,25 @@ export const SESSION_LANGUAGES = [
 
 export type SessionLanguageId = (typeof SESSION_LANGUAGES)[number]['id'];
 
+export function isSessionLanguageId(value: unknown): value is SessionLanguageId {
+  return typeof value === 'string' && SESSION_LANGUAGES.some((lang) => lang.id === value);
+}
+
+/** Map a Settings language id (or free-form label) to the native session language name. */
+export function resolveSessionLanguage(value: unknown): (typeof SESSION_LANGUAGES)[number] {
+  if (isSessionLanguageId(value)) {
+    return SESSION_LANGUAGES.find((lang) => lang.id === value) ?? SESSION_LANGUAGES[0];
+  }
+  if (typeof value === 'string') {
+    const needle = value.trim().toLowerCase();
+    const match = SESSION_LANGUAGES.find(
+      (lang) => lang.native.toLowerCase() === needle || lang.label.toLowerCase() === needle
+    );
+    if (match) return match;
+  }
+  return SESSION_LANGUAGES[0];
+}
+
 export const SUBSCRIPTION_TIERS = [
   {
     id: 'monthly' as const,

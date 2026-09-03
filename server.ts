@@ -2,7 +2,6 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
-import { GoogleGenAI } from '@google/genai';
 import {
   addCorporateLead,
   checkout,
@@ -34,6 +33,21 @@ import {
 } from './src/server/auth';
 import { applyCheckinRewards, applyGrant, applySpend, applyWheelSpin, RewardsError } from './src/server/rewards';
 import { applySecurityMiddleware, isSafeHttpUrl } from './src/server/securityMiddleware';
+import {
+  aiHealthStatus,
+  buildCheckinPrompt,
+  buildCoachInstruction,
+  CHECKIN_RESPONSE_SCHEMA,
+  getGeminiAI,
+  geminiModel,
+  hasGeminiKey,
+  heuristicCheckin,
+  parseCheckinAttestation,
+  parseCheckinImage,
+  resolveSessionLanguage,
+  shouldSearch,
+  tavilySearch,
+} from './src/server/ai';
 
 // This project's env vars (GEMINI_API_KEY, PRIVATE_KEY, etc.) live in
 // src/.env, not a root .env — load that explicitly, with a plain
@@ -85,44 +99,13 @@ async function startServer() {
     return res.status(500).json({ error: 'Rewards ledger failed', code: 'ledger_error' });
   };
 
-  // Real web search via Tavily (free tier, no billing required) — used to
-  // ground Astra's factual/medical answers instead of Gemini's native
-  // Google Search grounding tool, which needs a billing-enabled Google Cloud
-  // project. Returns [] on any failure so a search hiccup never blocks chat.
-  const tavilySearch = async (query: string): Promise<{ title: string; url: string; content: string }[]> => {
-    const apiKey = process.env.TAVILY_API_KEY;
-    if (!apiKey) return [];
-    try {
-      const res = await fetch('https://api.tavily.com/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ query, max_results: 4, search_depth: 'basic' }),
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return (data.results || []).map((r: any) => ({
-        title: r.title || r.url,
-        url: r.url,
-        content: (r.content || '').slice(0, 600),
-      }));
-    } catch (err) {
-      console.warn('Tavily search failed:', err);
-      return [];
-    }
-  };
-
-  // Initialize Gemini AI lazily/safely
-  const getGeminiAI = () => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY environment variable is not configured.');
-    }
-    return new GoogleGenAI({ apiKey });
-  };
-
   // API Routes
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', network: 'AuraHealth Verification Engine' });
+  app.get('/api/health', (_req, res) => {
+    res.json({
+      status: 'ok',
+      network: 'AuraHealth Verification Engine',
+      ai: aiHealthStatus(),
+    });
   });
 
   seedDemoMetrics(PUBLIC_PROOF_USER_ID);
@@ -150,74 +133,42 @@ async function startServer() {
       const mood = typeof moodRating === 'number' ? moodRating : Number(moodRating);
       const activity = typeof activityMinutes === 'number' ? activityMinutes : Number(activityMinutes);
       const safeNotes = String(notes || '').slice(0, 500);
-      const photo =
-        typeof imageBase64 === 'string' ? imageBase64.replace(/^data:image\/\w+;base64,/, '') : '';
-      if (photo.length > 750_000) {
+      const image = parseCheckinImage(imageBase64);
+      if (image && 'tooLarge' in image) {
         return res.status(413).json({ success: false, error: 'Photo too large' });
       }
 
-      let aiAttestationScore = 92;
-      let aiFeedback = 'Health log successfully analyzed and verified.';
+      let attestation = heuristicCheckin(medicationTaken === true, sleep);
 
-      if (process.env.GEMINI_API_KEY) {
+      if (hasGeminiKey()) {
         try {
           const ai = getGeminiAI();
-          const promptParts: any[] = [
-            `You are an AI Health Adherence Verifier for the AuraHealth Wellness App.
-Evaluate this user's health report:
-- Hydration: ${hydrationLiters ?? 'n/a'} litres
-- Sleep: ${Number.isFinite(sleep) ? sleep : 'n/a'} hours
-- Medication Taken: ${medicationTaken ? 'YES' : 'NO'}
-- Mood Rating: ${Number.isFinite(mood) ? mood : 'n/a'}/5
-- Activity: ${Number.isFinite(activity) ? activity : 'n/a'} minutes
-- User Notes: "${safeNotes || 'No notes provided'}"
-
-Provide a JSON object response with:
-1. "score": number between 60 and 100 based on completeness, health consistency, and adherence sincerity.
-2. "feedback": 2-3 sentences of warm, encouraging feedback for the user and their Health Companion.
-3. "riskFlags": array of strings (e.g. ["Low hydration", "Missed medication"]) or empty array if none.
-4. "suggestedCowriesBonus": number between 10 and 50.
-
-Response MUST be valid JSON string only.`,
+          const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
+            { text: buildCheckinPrompt({ hydrationLiters, sleep, medicationTaken: medicationTaken === true, mood, activity, notes: safeNotes }) },
           ];
-
-          if (photo) {
-            promptParts.push({
-              inlineData: {
-                mimeType: 'image/jpeg',
-                data: photo,
-              },
-            });
-          }
+          if (image) parts.push({ inlineData: image });
 
           const response = await ai.models.generateContent({
-            model: 'gemini-flash-latest',
-            contents: promptParts,
+            model: geminiModel(),
+            contents: [{ role: 'user', parts }],
+            config: {
+              responseMimeType: 'application/json',
+              responseSchema: CHECKIN_RESPONSE_SCHEMA,
+            },
           });
 
-          const textResponse = response.text;
-          if (textResponse) {
-            const cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-            const parsed = JSON.parse(cleanJson);
-            const rawScore = Number(parsed.score);
-            aiAttestationScore = Number.isFinite(rawScore)
-              ? Math.min(100, Math.max(60, Math.round(rawScore)))
-              : 90;
-            aiFeedback = String(parsed.feedback || aiFeedback).slice(0, 500);
-          }
-        } catch {
-          console.warn('Gemini AI Verification fallback used');
-          if (medicationTaken) aiAttestationScore += 5;
-          if (sleep >= 7) aiAttestationScore += 3;
-          aiAttestationScore = Math.min(100, aiAttestationScore);
-          aiFeedback = 'Daily health log recorded cleanly. Consistency verified!';
+          attestation = parseCheckinAttestation(response.text, attestation);
+        } catch (err) {
+          console.warn('Gemini AI Verification fallback used:', err instanceof Error ? err.message : 'unknown');
+          attestation = heuristicCheckin(medicationTaken === true, sleep);
         }
       }
 
       res.json({
         success: true,
-        aiAttestationScore,
-        aiFeedback,
+        aiAttestationScore: attestation.score,
+        aiFeedback: attestation.feedback,
+        riskFlags: attestation.riskFlags,
         timestamp: new Date().toISOString(),
       });
     } catch {
