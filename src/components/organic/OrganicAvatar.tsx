@@ -307,8 +307,8 @@ export function OrganicSceneChrome({ children }: { children: React.ReactNode }) 
         dampingFactor={0.05}
         minDistance={2.2}
         maxDistance={6}
-        minPolarAngle={Math.PI / 3.2}
-        maxPolarAngle={Math.PI / 2.05}
+        minPolarAngle={0.25}
+        maxPolarAngle={Math.PI / 2}
         target={[0, 0.85, 0]}
       />
     </>
