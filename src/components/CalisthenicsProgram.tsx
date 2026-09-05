@@ -23,6 +23,14 @@ import {
   weekPreview,
 } from '../content/calisthenicsProgram';
 import { AnimatedWorkoutTrainer } from './AnimatedWorkoutTrainer';
+import { Calisthenics3DViewport } from './Calisthenics3DViewport';
+import {
+  TempoPhase,
+  firstWorkPhase,
+  nextWorkPhase,
+  phaseDuration,
+  resolveExercise3DConfig,
+} from '../content/calisthenicsExercises3D';
 
 export interface CalisthenicsProgress {
   programDay: number;
@@ -115,7 +123,12 @@ export const CalisthenicsProgram: React.FC<CalisthenicsProgramProps> = ({
   const [restRunning, setRestRunning] = useState(false);
   const [rpe, setRpe] = useState(6);
   const [showAudit, setShowAudit] = useState(false);
+  const [repCount, setRepCount] = useState(1);
+  const [phase, setPhase] = useState<TempoPhase>('idle');
+  const [phaseLeft, setPhaseLeft] = useState(0);
+  const [phaseTotal, setPhaseTotal] = useState(0);
   const restRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const phaseRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     setProgress(loadProgress(storageKey));
@@ -148,6 +161,61 @@ export const CalisthenicsProgram: React.FC<CalisthenicsProgramProps> = ({
   const pct = Math.round((completedCount / CALISTHENICS_TOTAL_DAYS) * 100);
   const isDoneToday = progress.completedDays.includes(viewDay);
   const currentEx = sessionExercises[exerciseIndex];
+  const resting = restLeft > 0;
+
+  /** Drive eccentric / concentric phase timer from the active exercise tempo. */
+  useEffect(() => {
+    if (phaseRef.current) {
+      clearInterval(phaseRef.current);
+      phaseRef.current = null;
+    }
+    if (!inSession || !currentEx || resting) {
+      if (resting) setPhase('rest');
+      return;
+    }
+
+    const cfg = resolveExercise3DConfig({
+      exerciseId: currentEx.exerciseId,
+      pattern: currentEx.pattern,
+      name: currentEx.name,
+      isHold: currentEx.isHold,
+      tempo: currentEx.tempo,
+    });
+    const hold = Boolean(currentEx.isHold || cfg.isHold);
+    let localPhase = firstWorkPhase(cfg.tempo, hold);
+    let localLeft = Math.max(1, phaseDuration(localPhase, cfg.tempo));
+    let localRep = 1;
+    setPhase(localPhase);
+    setPhaseTotal(localLeft);
+    setPhaseLeft(localLeft);
+    setRepCount(1);
+
+    phaseRef.current = setInterval(() => {
+      localLeft -= 1;
+      if (localLeft > 0) {
+        setPhaseLeft(localLeft);
+        return;
+      }
+      const prev = localPhase;
+      localPhase = nextWorkPhase(prev, cfg.tempo, hold);
+      const first = firstWorkPhase(cfg.tempo, hold);
+      if (!hold && localPhase === first) {
+        localRep += 1;
+        setRepCount(localRep);
+      }
+      localLeft = Math.max(1, phaseDuration(localPhase, cfg.tempo));
+      setPhase(localPhase);
+      setPhaseTotal(localLeft);
+      setPhaseLeft(localLeft);
+    }, 1000);
+
+    return () => {
+      if (phaseRef.current) {
+        clearInterval(phaseRef.current);
+        phaseRef.current = null;
+      }
+    };
+  }, [inSession, resting, exerciseIndex, setIndex, currentEx?.exerciseId, currentEx?.tempo, currentEx?.isHold]);
 
   const persist = (next: CalisthenicsProgress) => setProgress(next);
 
@@ -240,7 +308,6 @@ export const CalisthenicsProgram: React.FC<CalisthenicsProgramProps> = ({
   };
 
   if (inSession && currentEx) {
-    const resting = restLeft > 0;
     return (
       <div className="max-w-2xl mx-auto space-y-4">
         <div className="glass-panel rounded-2xl p-5 sm:p-6 space-y-4">
@@ -253,24 +320,33 @@ export const CalisthenicsProgram: React.FC<CalisthenicsProgramProps> = ({
             </span>
           </div>
 
-          <AnimatedWorkoutTrainer
-            pattern={currentEx.pattern}
-            isResting={resting}
-            isHold={Boolean(currentEx.isHold)}
-            isMirroring={!resting}
+          <Calisthenics3DViewport
+            exerciseId={currentEx.exerciseId}
             exerciseName={currentEx.name}
+            pattern={currentEx.pattern}
+            tempo={currentEx.tempo}
+            isHold={Boolean(currentEx.isHold)}
+            isResting={resting}
+            setIndex={setIndex}
+            targetSets={currentEx.targetSets}
+            repCount={repCount}
+            targetRepsLabel={currentEx.targetReps}
+            phase={resting ? 'rest' : phase}
+            phaseLeft={resting ? restLeft : phaseLeft}
+            phaseTotal={resting ? 0 : phaseTotal}
             label={
               resting
-                ? 'Coach Aura recovers with you — shake out, then we go again.'
+                ? 'Recovery · shake out, then next set'
                 : currentEx.isHold
-                  ? 'Hold this shape with Coach Aura — same posture, same breath.'
-                  : 'Coach Aura is doing the reps with you — mirror the motion.'
+                  ? 'Isometric · match the hold shape'
+                  : 'Live tempo · mirror the phases'
             }
           />
 
           <div>
             <p className="text-[11px] text-muted font-semibold uppercase tracking-wide mb-1">
               Exercise {exerciseIndex + 1}/{sessionExercises.length} · Set {setIndex + 1}/{currentEx.targetSets}
+              {!currentEx.isHold && !resting ? ` · Rep ${repCount}` : ''}
             </p>
             <h2 className="text-xl sm:text-2xl font-bold text-white font-display">{currentEx.name}</h2>
             <p className="text-sm text-slate-300 mt-2 leading-relaxed">{currentEx.formCue}</p>

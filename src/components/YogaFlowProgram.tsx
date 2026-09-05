@@ -16,7 +16,7 @@ import {
   flowTotalSeconds,
   getAsana,
 } from '../content/yogaFlows';
-import { AnimatedYogaTrainer } from './AnimatedYogaTrainer';
+import { Yoga3DViewport } from './Yoga3DViewport';
 
 interface YogaFlowProgramProps {
   storageKey: string;
@@ -183,8 +183,9 @@ export const YogaFlowProgram: React.FC<YogaFlowProgramProps> = ({
             <div className="h-full bg-[var(--color-harmony)] transition-all" style={{ width: `${progressPct}%` }} />
           </div>
 
-          <AnimatedYogaTrainer
+          <Yoga3DViewport
             animationAssetId={step.animation_asset_id}
+            poseName={step.pose_name}
             isBreathing={asana?.type === 'Breathwork' || breathPhase !== 'idle'}
             breathPhase={breathPhase}
             label={`Coach Aura · ${phaseLabel(breathPhase)}${breathLeft ? ` ${breathLeft}s` : ''}`}
