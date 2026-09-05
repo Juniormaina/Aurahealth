@@ -1,4 +1,4 @@
-import React, { Suspense, useMemo } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import type { MovementPattern } from '../content/calisthenicsProgram';
 import {
@@ -10,6 +10,8 @@ import {
 } from '../content/calisthenicsExercises3D';
 import { OrganicViewportShell } from './organic/OrganicAvatar';
 import { CoachCharacter, StudioSceneChrome } from './organic/CoachCharacter';
+import { TrainerSelect } from './organic/TrainerSelect';
+import { loadTrainerId, saveTrainerId, type TrainerId } from './organic/trainerConfig';
 import type { BreathPhase } from './organic/organicMotion';
 
 export interface Calisthenics3DViewportProps {
@@ -19,6 +21,7 @@ export interface Calisthenics3DViewportProps {
   tempo?: string;
   isHold?: boolean;
   isResting?: boolean;
+  instructionCue?: string;
   setIndex: number;
   targetSets: number;
   repCount: number;
@@ -55,6 +58,7 @@ export const Calisthenics3DViewport: React.FC<Calisthenics3DViewportProps> = ({
   tempo,
   isHold,
   isResting = false,
+  instructionCue,
   setIndex,
   targetSets,
   repCount,
@@ -65,6 +69,8 @@ export const Calisthenics3DViewport: React.FC<Calisthenics3DViewportProps> = ({
   label,
   className = '',
 }) => {
+  const [trainerId, setTrainerId] = useState<TrainerId>(() => loadTrainerId());
+
   const config = useMemo(
     () =>
       resolveExercise3DConfig({
@@ -82,13 +88,21 @@ export const Calisthenics3DViewport: React.FC<Calisthenics3DViewportProps> = ({
   const progress = isResting ? 0 : motionProgress(phase, phaseElapsed, phaseTotal || 1);
   const breathPhase = phaseToBreath(phase, isResting);
 
+  const onTrainerChange = (id: TrainerId) => {
+    setTrainerId(id);
+    saveTrainerId(id);
+  };
+
   return (
     <OrganicViewportShell
       className={className}
       topLeft={
-        <span className="rounded-md bg-black/40 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-200/90 backdrop-blur-sm">
-          {label ?? (isResting ? 'Recovery' : 'Coach Aura · live')}
-        </span>
+        <>
+          <TrainerSelect value={trainerId} onChange={onTrainerChange} />
+          <span className="rounded-md bg-black/40 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-200/90 backdrop-blur-sm w-fit">
+            {label ?? (isResting ? 'Recovery' : 'Coach Aura · live')}
+          </span>
+        </>
       }
       topRight={
         <span className="rounded-md bg-emerald-950/55 px-2 py-1 text-[10px] font-medium tabular-nums text-emerald-50/90 backdrop-blur-sm">
@@ -119,8 +133,11 @@ export const Calisthenics3DViewport: React.FC<Calisthenics3DViewportProps> = ({
           <StudioSceneChrome>
             <CoachCharacter
               mode="calisthenics"
+              trainerId={trainerId}
               animationState={animationState}
               progress={progress}
+              poseName={exerciseName}
+              instructionCue={instructionCue}
               breathPhase={breathPhase}
               isBreathing={!isResting}
               isResting={isResting}

@@ -186,6 +186,7 @@ export const YogaFlowProgram: React.FC<YogaFlowProgramProps> = ({
           <Yoga3DViewport
             animationAssetId={step.animation_asset_id}
             poseName={step.pose_name}
+            instructionCue={step.audio_cue}
             isBreathing={asana?.type === 'Breathwork' || breathPhase !== 'idle'}
             breathPhase={breathPhase}
             label={`Coach Aura · ${phaseLabel(breathPhase)}${breathLeft ? ` ${breathLeft}s` : ''}`}

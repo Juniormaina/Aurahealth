@@ -331,8 +331,8 @@ export function OrganicViewportShell({
       <div className="absolute inset-0 h-56 sm:h-64">{children}</div>
       <div className="pointer-events-none relative z-10 flex h-56 sm:h-64 flex-col justify-between p-3">
         <div className="flex items-start justify-between gap-2">
-          {topLeft}
-          {topRight}
+          <div className="pointer-events-auto flex flex-col gap-1.5">{topLeft}</div>
+          <div className="pointer-events-none">{topRight}</div>
         </div>
         <div className="flex items-end justify-between gap-2">
           <div>{bottomLeft}</div>

@@ -327,6 +327,7 @@ export const CalisthenicsProgram: React.FC<CalisthenicsProgramProps> = ({
             tempo={currentEx.tempo}
             isHold={Boolean(currentEx.isHold)}
             isResting={resting}
+            instructionCue={currentEx.formCue}
             setIndex={setIndex}
             targetSets={currentEx.targetSets}
             repCount={repCount}

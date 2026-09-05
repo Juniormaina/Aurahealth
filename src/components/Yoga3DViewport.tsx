@@ -1,12 +1,15 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrganicViewportShell } from './organic/OrganicAvatar';
 import { CoachCharacter, StudioSceneChrome } from './organic/CoachCharacter';
+import { TrainerSelect } from './organic/TrainerSelect';
+import { loadTrainerId, saveTrainerId, type TrainerId } from './organic/trainerConfig';
 import type { BreathPhase } from './organic/organicMotion';
 
 export interface Yoga3DViewportProps {
   animationAssetId: string;
   poseName?: string;
+  instructionCue?: string;
   breathPhase?: BreathPhase;
   isBreathing?: boolean;
   label?: string;
@@ -16,18 +19,29 @@ export interface Yoga3DViewportProps {
 export const Yoga3DViewport: React.FC<Yoga3DViewportProps> = ({
   animationAssetId,
   poseName,
+  instructionCue,
   breathPhase = 'idle',
   isBreathing = false,
   label,
   className = '',
 }) => {
+  const [trainerId, setTrainerId] = useState<TrainerId>(() => loadTrainerId());
+
+  const onTrainerChange = (id: TrainerId) => {
+    setTrainerId(id);
+    saveTrainerId(id);
+  };
+
   return (
     <OrganicViewportShell
       className={className}
       topLeft={
-        <span className="rounded-md bg-black/35 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-200/90 backdrop-blur-sm">
-          {label ?? 'Coach Aura · 360°'}
-        </span>
+        <>
+          <TrainerSelect value={trainerId} onChange={onTrainerChange} />
+          <span className="rounded-md bg-black/35 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-200/90 backdrop-blur-sm w-fit">
+            {label ?? 'Coach Aura · 360°'}
+          </span>
+        </>
       }
       topRight={
         poseName ? (
@@ -47,7 +61,10 @@ export const Yoga3DViewport: React.FC<Yoga3DViewportProps> = ({
           <StudioSceneChrome>
             <CoachCharacter
               mode="yoga"
+              trainerId={trainerId}
               yogaAssetId={animationAssetId}
+              poseName={poseName}
+              instructionCue={instructionCue}
               breathPhase={breathPhase}
               isBreathing={isBreathing}
               swayAmp={breathPhase === 'idle' && !isBreathing ? 0.9 : 1.15}

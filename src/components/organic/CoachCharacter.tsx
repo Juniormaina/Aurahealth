@@ -24,20 +24,25 @@ import {
   buildPoseClip,
   familyFromYogaAsset,
 } from './coachPoseLibrary';
-
-/** Mixamo Xbot (three.js examples) — athletic humanoid with idle locomotion clips. */
-export const COACH_MODEL_URL = '/models/coach_aura.glb';
-
-useGLTF.preload(COACH_MODEL_URL);
+import {
+  TrainerId,
+  TRAINER_MODELS,
+  cueBoneOffsets,
+  parseCueMotion,
+} from './trainerConfig';
 
 export type CoachMotionMode = 'calisthenics' | 'yoga';
 
 export interface CoachCharacterProps {
   mode: CoachMotionMode;
+  trainerId: TrainerId;
   animationState?: AnimationState;
   /** 0 = extended (A), 1 = bottom (B) for tempo-driven calisthenics */
   progress?: number;
   yogaAssetId?: string;
+  /** On-screen instructional text — drives procedural cue overlays. */
+  instructionCue?: string;
+  poseName?: string;
   breathPhase?: BreathPhase;
   isBreathing?: boolean;
   isResting?: boolean;
@@ -47,7 +52,11 @@ export interface CoachCharacterProps {
 const _euler = new THREE.Euler();
 const _quat = new THREE.Quaternion();
 
-function styleCoachMaterials(root: THREE.Object3D) {
+useGLTF.preload(TRAINER_MODELS.male.url);
+useGLTF.preload(TRAINER_MODELS.female.url);
+
+function styleTrainerMaterials(root: THREE.Object3D, trainerId: TrainerId) {
+  const outfit = TRAINER_MODELS[trainerId].outfit;
   root.traverse((obj) => {
     if (!(obj as THREE.Mesh).isMesh) return;
     const mesh = obj as THREE.Mesh;
@@ -57,19 +66,28 @@ function styleCoachMaterials(root: THREE.Object3D) {
       if (!(orig as THREE.MeshStandardMaterial).isMeshStandardMaterial) return orig;
       const mat = (orig as THREE.MeshStandardMaterial).clone();
       const name = `${mesh.name} ${mat.name}`.toLowerCase();
-      if (/skin|face|head|body/.test(name) && !/shirt|pant|shoe|hair|suit/.test(name)) {
-        mat.color.set(EMERALD.skin);
-        mat.roughness = 0.45;
-        mat.metalness = 0.05;
+      const isSkin = /skin|face|head|body/.test(name) && !/shirt|pant|shoe|hair|suit|vest/.test(name);
+      if (isSkin) {
+        mat.color.set(trainerId === 'female' ? '#e8b898' : '#c68642');
+        mat.roughness = 0.44;
+        mat.metalness = 0.04;
       } else if (/hair/.test(name)) {
-        mat.color.set('#064e3b');
-        mat.roughness = 0.7;
-      } else {
-        mat.color.set(EMERALD.torso);
+        mat.color.set(trainerId === 'female' ? '#1c1917' : '#0b3d2e');
+        mat.roughness = 0.72;
+      } else if (outfit === 'yoga') {
+        // Female: standardized yoga outfit — deep emerald set
+        mat.color.set(/pant|leg|short|shoe/.test(name) ? '#022c22' : '#064e3b');
         mat.emissive.set(EMERALD.accent);
-        mat.emissiveIntensity = 0.045;
+        mat.emissiveIntensity = 0.035;
         mat.roughness = 0.4;
-        mat.metalness = 0.18;
+        mat.metalness = 0.14;
+      } else {
+        // Male: gym vest + shorts
+        mat.color.set(/pant|leg|short|shoe/.test(name) ? '#134e4a' : '#059669');
+        mat.emissive.set(EMERALD.accent);
+        mat.emissiveIntensity = 0.04;
+        mat.roughness = 0.38;
+        mat.metalness = 0.16;
       }
       mat.needsUpdate = true;
       return mat;
@@ -99,25 +117,36 @@ function resolveTargetPose(props: CoachCharacterProps): RigPose {
 function CoachCharacterInner(props: CoachCharacterProps) {
   const {
     mode,
+    trainerId,
     animationState = 'idle',
     progress = 0,
     yogaAssetId,
+    instructionCue,
+    poseName,
     breathPhase = 'idle',
     isBreathing = false,
     isResting = false,
     swayAmp = 1,
   } = props;
 
+  const modelUrl = TRAINER_MODELS[trainerId].url;
   const group = useRef<THREE.Group>(null);
-  const { scene, animations } = useGLTF(COACH_MODEL_URL);
+  const { scene, animations } = useGLTF(modelUrl);
 
   const model = useMemo(() => {
     const cloned = cloneSkinned(scene) as THREE.Object3D;
-    styleCoachMaterials(cloned);
+    styleTrainerMaterials(cloned, trainerId);
+    if (trainerId === 'female') cloned.scale.set(0.96, 0.98, 0.96);
+    else cloned.scale.set(1, 1, 1);
     return cloned;
-  }, [scene]);
+  }, [scene, trainerId]);
 
   const bones = useMemo(() => collectBones(model), [model]);
+
+  const cueFlags = useMemo(
+    () => parseCueMotion(instructionCue, poseName, yogaAssetId),
+    [instructionCue, poseName, yogaAssetId]
+  );
 
   const proceduralClips = useMemo(() => {
     const clips: THREE.AnimationClip[] = [];
@@ -135,7 +164,7 @@ function CoachCharacterInner(props: CoachCharacterProps) {
   const breath = useMemo(() => new SpringScalar(0.4), []);
   const activeClip = useRef<string | null>(null);
   const floorBox = useMemo(() => new THREE.Box3(), []);
-  const groundKey = `${mode}-${animationState}-${yogaAssetId ?? ''}-${isResting}-${Math.round(progress * 12)}`;
+  const groundKey = `${trainerId}-${mode}-${animationState}-${yogaAssetId ?? ''}-${isResting}-${Math.round(progress * 12)}`;
 
   useEffect(() => {
     if (!actions) return;
@@ -156,11 +185,11 @@ function CoachCharacterInner(props: CoachCharacterProps) {
     if (next === activeClip.current) return;
     const prev = activeClip.current ? actions[activeClip.current] : null;
     const upcoming = next ? actions[next] : null;
-    if (prev) prev.fadeOut(0.4);
+    if (prev) prev.fadeOut(0.45);
     if (upcoming) {
-      upcoming.reset().fadeIn(0.45).play();
-      upcoming.setEffectiveWeight(0.4);
-      upcoming.setEffectiveTimeScale(0.9);
+      upcoming.reset().fadeIn(0.5).play();
+      upcoming.setEffectiveWeight(0.35);
+      upcoming.setEffectiveTimeScale(0.85);
       if (mode === 'yoga' || animationState === 'plank' || isResting) {
         upcoming.setLoop(THREE.LoopOnce, 1);
         upcoming.clampWhenFinished = true;
@@ -178,10 +207,10 @@ function CoachCharacterInner(props: CoachCharacterProps) {
     const target = resolveTargetPose(props);
     const dt = Math.min(delta, 0.05);
     const sway = posturalSway(state.clock.elapsedTime, swayAmp * (isResting ? 1.25 : 1));
+    const cueOffsets = cueBoneOffsets(cueFlags, state.clock.elapsedTime);
 
-    // Orientation only — vertical placement is owned by <Center bottom> + BB snap
     group.current.position.set(0, 0, 0);
-    slerpEuler(group.current, target.rootRot, dt, 5.5);
+    slerpEuler(group.current, target.rootRot, dt, 5.2);
 
     for (const [name, eulers] of Object.entries(target.bones)) {
       const bone = bones.get(name);
@@ -194,9 +223,20 @@ function CoachCharacterInner(props: CoachCharacterProps) {
       } else if (name.includes('Neck') || name.includes('Head')) {
         [sx, sy, sz] = sway.head;
       }
-      _euler.set(eulers[0] + sx, eulers[1] + sy, eulers[2] + sz, 'XYZ');
+      const cue = cueOffsets[name] ?? [0, 0, 0];
+      _euler.set(eulers[0] + sx + cue[0], eulers[1] + sy + cue[1], eulers[2] + sz + cue[2], 'XYZ');
       _quat.setFromEuler(_euler);
-      bone.quaternion.slerp(_quat, 1 - Math.exp(-8.5 * dt));
+      bone.quaternion.slerp(_quat, 1 - Math.exp(-8.2 * dt));
+    }
+
+    // Cue overlays for bones not in the base pose map (e.g. extra foot pedal on standing)
+    for (const [name, cue] of Object.entries(cueOffsets)) {
+      if (target.bones[name]) continue;
+      const bone = bones.get(name);
+      if (!bone) continue;
+      _euler.set(bone.rotation.x + cue[0], bone.rotation.y + cue[1], bone.rotation.z + cue[2], 'XYZ');
+      _quat.setFromEuler(_euler);
+      bone.quaternion.slerp(_quat, 1 - Math.exp(-6.5 * dt));
     }
 
     const b = breath.step(breathInflation(breathPhase, isBreathing), dt, 9, 6);
@@ -220,7 +260,7 @@ function CoachCharacterInner(props: CoachCharacterProps) {
       }
     }
 
-    // Continuous floor collision: lowest posed vertex sits on Y=0
+    // Floor collision — lowest vertices on Y=0 regardless of pose
     group.current.updateWorldMatrix(true, true);
     floorBox.setFromObject(group.current);
     if (Number.isFinite(floorBox.min.y)) {
@@ -240,7 +280,7 @@ function CoachCharacterInner(props: CoachCharacterProps) {
 export function CoachCharacter(props: CoachCharacterProps) {
   return (
     <Suspense fallback={null}>
-      <CoachCharacterInner {...props} />
+      <CoachCharacterInner key={props.trainerId} {...props} />
     </Suspense>
   );
 }
