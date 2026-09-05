@@ -1691,3 +1691,13 @@ p, li, label {
 .bg-sunlight.text-navy {
   color: var(--color-primary-foreground);
 }
+
+/* Calisthenics animated coach stage */
+.trainer-stage-grid {
+  background-image:
+    radial-gradient(ellipse at 50% 100%, rgba(47, 122, 115, 0.28), transparent 55%),
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 18px 18px, 18px 18px;
+  background-position: center, center, center;
+}

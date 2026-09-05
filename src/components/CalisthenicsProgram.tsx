@@ -22,6 +22,7 @@ import {
   getExerciseById,
   weekPreview,
 } from '../content/calisthenicsProgram';
+import { AnimatedWorkoutTrainer } from './AnimatedWorkoutTrainer';
 
 export interface CalisthenicsProgress {
   programDay: number;
@@ -239,6 +240,7 @@ export const CalisthenicsProgram: React.FC<CalisthenicsProgramProps> = ({
   };
 
   if (inSession && currentEx) {
+    const resting = restLeft > 0;
     return (
       <div className="max-w-2xl mx-auto space-y-4">
         <div className="glass-panel rounded-2xl p-5 sm:p-6 space-y-4">
@@ -250,6 +252,19 @@ export const CalisthenicsProgram: React.FC<CalisthenicsProgramProps> = ({
               Day {routine.programDay} · {routine.routineName}
             </span>
           </div>
+
+          <AnimatedWorkoutTrainer
+            pattern={currentEx.pattern}
+            isResting={resting}
+            isHold={Boolean(currentEx.isHold)}
+            label={
+              resting
+                ? 'Coach Aura: Nice work — shake out and breathe.'
+                : currentEx.isHold
+                  ? 'Coach Aura: Hold this shape with me.'
+                  : `Coach Aura: Match this ${currentEx.pattern.replace(/_/g, ' ')} rhythm.`
+            }
+          />
 
           <div>
             <p className="text-[11px] text-muted font-semibold uppercase tracking-wide mb-1">
@@ -267,7 +282,7 @@ export const CalisthenicsProgram: React.FC<CalisthenicsProgramProps> = ({
             </div>
           </div>
 
-          {restLeft > 0 ? (
+          {resting ? (
             <div className="rounded-xl border border-[var(--color-harmony)]/40 bg-[var(--color-harmony)]/10 p-4 text-center">
               <div className="inline-flex items-center gap-2 text-[var(--color-harmony)] font-semibold text-sm">
                 <Timer className="w-4 h-4" /> Rest
@@ -416,24 +431,32 @@ export const CalisthenicsProgram: React.FC<CalisthenicsProgramProps> = ({
             </div>
           </div>
         ) : (
-          <ul className="space-y-2">
-            {routine.exercises.map((ex) => (
-              <li
-                key={ex.exerciseId}
-                className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white">{ex.name}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    {ex.targetSets} sets · {ex.targetReps} · tempo {ex.tempo}
-                  </p>
-                </div>
-                <span className="text-[10px] uppercase tracking-wide text-slate-500 shrink-0">
-                  Rest {routine.recommendedRestSeconds}s
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="grid sm:grid-cols-[minmax(0,1fr)_11.5rem] gap-4 items-start">
+            <ul className="space-y-2 min-w-0">
+              {routine.exercises.map((ex) => (
+                <li
+                  key={ex.exerciseId}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-white">{ex.name}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      {ex.targetSets} sets · {ex.targetReps} · tempo {ex.tempo}
+                    </p>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wide text-slate-500 shrink-0">
+                    Rest {routine.recommendedRestSeconds}s
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <AnimatedWorkoutTrainer
+              className="hidden sm:block"
+              pattern={routine.exercises[0]?.pattern}
+              isHold={Boolean(routine.exercises[0]?.isHold)}
+              label="Coach Aura demos today’s first move."
+            />
+          </div>
         )}
 
         {!isDoneToday && routine.kind !== 'rest' && (
