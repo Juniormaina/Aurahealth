@@ -22,6 +22,8 @@ export const HABIT_REWARDS: Record<string, { xp: number; cowries: number }> = {
   meds: { xp: 80, cowries: 50 },
   sleep: { xp: 60, cowries: 40 },
   movement: { xp: 70, cowries: 45 },
+  /** Daily 90-day calisthenics workout (once per UTC day). */
+  calisthenics: { xp: 90, cowries: 55 },
 };
 
 export const QUICK_LOG_REWARDS: Record<string, { xp: number; cowries: number }> = {

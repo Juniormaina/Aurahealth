@@ -15,6 +15,7 @@ import {
   Zap,
   Watch,
   ShieldCheck,
+  Dumbbell,
 } from 'lucide-react';
 import { AuraLogo } from './AuraLogo';
 
@@ -33,6 +34,7 @@ interface SidebarProps {
 
 const NAV_ITEMS = [
   { id: 'companion', label: 'Companion', icon: Sparkles },
+  { id: 'train', label: 'Train', icon: Dumbbell },
   { id: 'coach', label: 'AI Coach', icon: MessageSquare },
   { id: 'wheel', label: 'Rewards', icon: Award },
   { id: 'about', label: 'About', icon: Info },

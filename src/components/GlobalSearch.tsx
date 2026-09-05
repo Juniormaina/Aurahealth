@@ -40,6 +40,14 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
       category: 'Navigation',
     },
     {
+      id: 'train',
+      title: '90-Day Calisthenics',
+      description: 'Progressive push, pull, legs, and mobility program',
+      icon: <span className="text-lg">🏋️</span>,
+      action: () => { onNavigate('train'); onClose(); },
+      category: 'Navigation',
+    },
+    {
       id: 'coach',
       title: 'AI Health Coach',
       description: 'Get personalized health insights and recommendations',

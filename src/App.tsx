@@ -10,6 +10,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { SpinWheelLootbox } from './components/SpinWheelLootbox';
 import { RewardsHub } from './components/RewardsHub';
 import { AIHealthCoach } from './components/AIHealthCoach';
+import { CalisthenicsProgram } from './components/CalisthenicsProgram';
 import { HealthCheckinModal } from './components/HealthCheckinModal';
 import { SettingsPanel } from './components/SettingsPanel';
 import { JiweEconomyDiagram } from './components/JiweEconomyDiagram';
@@ -76,7 +77,7 @@ import {
 import { onAuthStateChanged, User } from 'firebase/auth';
 
 import confetti from 'canvas-confetti';
-import { Compass, Home, Search, MessageSquare, Award } from 'lucide-react';
+import { Compass, Home, Search, MessageSquare, Award, Dumbbell } from 'lucide-react';
 
 function applyLedger(prev: EconomyStats, ledger: LedgerSnapshot): EconomyStats {
   return {
@@ -895,6 +896,10 @@ export default function App() {
     }
   };
 
+  const handleCalisthenicsWorkoutCompleted = async (_programDay: number, _activityMinutes: number) => {
+    await handleGoalUpdated('calisthenics');
+  };
+
   // Claim Sponsor Pool Reward
   const handleClaimReward = (poolId: string) => {
     const targetPool = pools.find((p) => p.id === poolId);
@@ -1124,6 +1129,14 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'train' && (
+          <CalisthenicsProgram
+            storageKey={`aura-calisthenics-v1:${commerceUserId}`}
+            onWorkoutCompleted={handleCalisthenicsWorkoutCompleted}
+            onShowToast={showToast}
+          />
+        )}
+
         {/* Tab 2: Rewards Wheel & Hub */}
         {activeTab === 'wheel' && (
           <div className="space-y-6">
@@ -1250,6 +1263,14 @@ export default function App() {
         >
           <Home className="w-5 h-5" />
           <span>Home</span>
+        </button>
+        <button
+          onClick={() => handleNavigateTab('train')}
+          className={`mobile-bottom-nav-item ${activeTab === 'train' ? 'active' : ''}`}
+          aria-label="Train"
+        >
+          <Dumbbell className="w-5 h-5" />
+          <span>Train</span>
         </button>
         <button
           onClick={() => handleNavigateTab('coach')}
