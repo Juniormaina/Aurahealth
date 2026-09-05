@@ -1,20 +1,20 @@
 /** Procedural overlays that mirror on-screen biomechanical text cues. */
 
-export type TrainerId = 'male' | 'female';
+export type TrainerId = 'aura' | 'aurora';
 
 export const TRAINER_MODELS: Record<
   TrainerId,
   { id: TrainerId; label: string; url: string; outfit: 'gym' | 'yoga' }
 > = {
-  male: {
-    id: 'male',
-    label: 'Male',
+  aura: {
+    id: 'aura',
+    label: 'Aura',
     url: '/models/male_trainer.glb',
     outfit: 'gym',
   },
-  female: {
-    id: 'female',
-    label: 'Female',
+  aurora: {
+    id: 'aurora',
+    label: 'Aurora',
     url: '/models/female_trainer.glb',
     outfit: 'yoga',
   },
@@ -25,11 +25,14 @@ const STORAGE_KEY = 'aura.trainerId';
 export function loadTrainerId(): TrainerId {
   try {
     const v = localStorage.getItem(STORAGE_KEY);
-    if (v === 'male' || v === 'female') return v;
+    if (v === 'aura' || v === 'aurora') return v;
+    // Migrate legacy male/female keys
+    if (v === 'male') return 'aura';
+    if (v === 'female') return 'aurora';
   } catch {
     /* ignore */
   }
-  return 'female';
+  return 'aurora';
 }
 
 export function saveTrainerId(id: TrainerId) {

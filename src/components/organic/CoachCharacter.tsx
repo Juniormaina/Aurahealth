@@ -52,8 +52,8 @@ export interface CoachCharacterProps {
 const _euler = new THREE.Euler();
 const _quat = new THREE.Quaternion();
 
-useGLTF.preload(TRAINER_MODELS.male.url);
-useGLTF.preload(TRAINER_MODELS.female.url);
+useGLTF.preload(TRAINER_MODELS.aura.url);
+useGLTF.preload(TRAINER_MODELS.aurora.url);
 
 function styleTrainerMaterials(root: THREE.Object3D, trainerId: TrainerId) {
   const outfit = TRAINER_MODELS[trainerId].outfit;
@@ -68,21 +68,21 @@ function styleTrainerMaterials(root: THREE.Object3D, trainerId: TrainerId) {
       const name = `${mesh.name} ${mat.name}`.toLowerCase();
       const isSkin = /skin|face|head|body/.test(name) && !/shirt|pant|shoe|hair|suit|vest/.test(name);
       if (isSkin) {
-        mat.color.set(trainerId === 'female' ? '#e8b898' : '#c68642');
+        mat.color.set(trainerId === 'aurora' ? '#e8b898' : '#c68642');
         mat.roughness = 0.44;
         mat.metalness = 0.04;
       } else if (/hair/.test(name)) {
-        mat.color.set(trainerId === 'female' ? '#1c1917' : '#0b3d2e');
+        mat.color.set(trainerId === 'aurora' ? '#1c1917' : '#0b3d2e');
         mat.roughness = 0.72;
       } else if (outfit === 'yoga') {
-        // Female: standardized yoga outfit — deep emerald set
+        // Aurora: standardized yoga outfit — deep emerald set
         mat.color.set(/pant|leg|short|shoe/.test(name) ? '#022c22' : '#064e3b');
         mat.emissive.set(EMERALD.accent);
         mat.emissiveIntensity = 0.035;
         mat.roughness = 0.4;
         mat.metalness = 0.14;
       } else {
-        // Male: gym vest + shorts
+        // Aura: gym vest + shorts
         mat.color.set(/pant|leg|short|shoe/.test(name) ? '#134e4a' : '#059669');
         mat.emissive.set(EMERALD.accent);
         mat.emissiveIntensity = 0.04;
@@ -136,7 +136,7 @@ function CoachCharacterInner(props: CoachCharacterProps) {
   const model = useMemo(() => {
     const cloned = cloneSkinned(scene) as THREE.Object3D;
     styleTrainerMaterials(cloned, trainerId);
-    if (trainerId === 'female') cloned.scale.set(0.96, 0.98, 0.96);
+    if (trainerId === 'aurora') cloned.scale.set(0.96, 0.98, 0.96);
     else cloned.scale.set(1, 1, 1);
     return cloned;
   }, [scene, trainerId]);
