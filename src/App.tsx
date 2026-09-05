@@ -10,7 +10,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { SpinWheelLootbox } from './components/SpinWheelLootbox';
 import { RewardsHub } from './components/RewardsHub';
 import { AIHealthCoach } from './components/AIHealthCoach';
-import { CalisthenicsProgram } from './components/CalisthenicsProgram';
+import { TrainHub } from './components/TrainHub';
 import { HealthCheckinModal } from './components/HealthCheckinModal';
 import { SettingsPanel } from './components/SettingsPanel';
 import { JiweEconomyDiagram } from './components/JiweEconomyDiagram';
@@ -900,6 +900,10 @@ export default function App() {
     await handleGoalUpdated('calisthenics');
   };
 
+  const handleYogaFlowCompleted = async (_sessionId: string, _minutes: number) => {
+    await handleGoalUpdated('yoga');
+  };
+
   // Claim Sponsor Pool Reward
   const handleClaimReward = (poolId: string) => {
     const targetPool = pools.find((p) => p.id === poolId);
@@ -1130,9 +1134,10 @@ export default function App() {
         )}
 
         {activeTab === 'train' && (
-          <CalisthenicsProgram
-            storageKey={`aura-calisthenics-v1:${commerceUserId}`}
-            onWorkoutCompleted={handleCalisthenicsWorkoutCompleted}
+          <TrainHub
+            userKey={commerceUserId}
+            onCalisthenicsCompleted={handleCalisthenicsWorkoutCompleted}
+            onYogaCompleted={handleYogaFlowCompleted}
             onShowToast={showToast}
           />
         )}

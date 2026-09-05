@@ -257,12 +257,14 @@ export const CalisthenicsProgram: React.FC<CalisthenicsProgramProps> = ({
             pattern={currentEx.pattern}
             isResting={resting}
             isHold={Boolean(currentEx.isHold)}
+            isMirroring={!resting}
+            exerciseName={currentEx.name}
             label={
               resting
-                ? 'Coach Aura: Nice work — shake out and breathe.'
+                ? 'Coach Aura recovers with you — shake out, then we go again.'
                 : currentEx.isHold
-                  ? 'Coach Aura: Hold this shape with me.'
-                  : `Coach Aura: Match this ${currentEx.pattern.replace(/_/g, ' ')} rhythm.`
+                  ? 'Hold this shape with Coach Aura — same posture, same breath.'
+                  : 'Coach Aura is doing the reps with you — mirror the motion.'
             }
           />
 

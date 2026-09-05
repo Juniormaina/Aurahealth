@@ -48,6 +48,14 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
       category: 'Navigation',
     },
     {
+      id: 'yoga',
+      title: 'Yoga & Breathwork',
+      description: 'Recovery flows, hip openers, and nervous-system reset',
+      icon: <span className="text-lg">🧘</span>,
+      action: () => { onNavigate('train'); onClose(); },
+      category: 'Navigation',
+    },
+    {
       id: 'coach',
       title: 'AI Health Coach',
       description: 'Get personalized health insights and recommendations',
