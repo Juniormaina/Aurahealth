@@ -1,7 +1,5 @@
-import React, { Suspense, useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, ContactShadows } from '@react-three/drei';
-import * as THREE from 'three';
+import React, { Suspense, useMemo } from 'react';
+import { Canvas } from '@react-three/fiber';
 import type { MovementPattern } from '../content/calisthenicsProgram';
 import {
   AnimationState,
@@ -11,6 +9,19 @@ import {
   phaseLabel,
   resolveExercise3DConfig,
 } from '../content/calisthenicsExercises3D';
+import {
+  OrganicAvatar,
+  OrganicSceneChrome,
+  OrganicViewportShell,
+  type MuscleSpot,
+} from './organic/OrganicAvatar';
+import {
+  BreathPhase,
+  ChainPose,
+  EMERALD,
+  blendChainPose,
+  standingChain,
+} from './organic/organicMotion';
 
 export interface Calisthenics3DViewportProps {
   exerciseId?: string;
@@ -30,591 +41,424 @@ export interface Calisthenics3DViewportProps {
   className?: string;
 }
 
-interface JointPose {
-  torso: [number, number, number];
-  head: [number, number, number];
-  leftArm: [number, number, number];
-  rightArm: [number, number, number];
-  leftLeg: [number, number, number];
-  rightLeg: [number, number, number];
-  rootY: number;
-  rootRot: [number, number, number];
-}
-
 const DEG = Math.PI / 180;
 
-/** A = top / extended, B = bottom / compressed for each animation family. */
-const POSE_A: Record<AnimationState, JointPose> = {
-  idle: {
-    torso: [0, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [0, 0, 14 * DEG],
-    rightArm: [0, 0, -14 * DEG],
-    leftLeg: [0, 0, 0],
-    rightLeg: [0, 0, 0],
-    rootY: 0,
-    rootRot: [0, 0, 0],
-  },
-  rest: {
-    torso: [0, 0, 0],
+const POSE_A: Record<AnimationState, ChainPose> = {
+  idle: standingChain(),
+  rest: standingChain({
     head: [0, 8 * DEG, 0],
-    leftArm: [20 * DEG, 0, 35 * DEG],
-    rightArm: [-15 * DEG, 0, -40 * DEG],
-    leftLeg: [0, 0, 8 * DEG],
-    rightLeg: [0, 0, -8 * DEG],
-    rootY: 0,
-    rootRot: [0, 12 * DEG, 0],
-  },
-  push_up: {
-    torso: [90 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [-90 * DEG, 0, 12 * DEG],
-    rightArm: [-90 * DEG, 0, -12 * DEG],
-    leftLeg: [0, 0, 0],
-    rightLeg: [0, 0, 0],
-    rootY: 0.55,
-    rootRot: [0, 0, 0],
-  },
-  pike_press: {
-    torso: [55 * DEG, 0, 0],
-    head: [25 * DEG, 0, 0],
-    leftArm: [-100 * DEG, 0, 10 * DEG],
-    rightArm: [-100 * DEG, 0, -10 * DEG],
-    leftLeg: [-40 * DEG, 0, 0],
-    rightLeg: [-40 * DEG, 0, 0],
-    rootY: 0.25,
-    rootRot: [0, 0, 0],
-  },
-  pull_up: {
-    torso: [0, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [-160 * DEG, 0, 20 * DEG],
-    rightArm: [-160 * DEG, 0, -20 * DEG],
-    leftLeg: [10 * DEG, 0, 8 * DEG],
-    rightLeg: [10 * DEG, 0, -8 * DEG],
-    rootY: 0.35,
-    rootRot: [0, 0, 0],
-  },
-  hang: {
-    torso: [0, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [-170 * DEG, 0, 15 * DEG],
-    rightArm: [-170 * DEG, 0, -15 * DEG],
-    leftLeg: [5 * DEG, 0, 6 * DEG],
-    rightLeg: [5 * DEG, 0, -6 * DEG],
-    rootY: 0.45,
-    rootRot: [0, 0, 0],
-  },
-  row: {
-    torso: [75 * DEG, 0, 0],
-    head: [10 * DEG, 0, 0],
-    leftArm: [-70 * DEG, 0, 15 * DEG],
-    rightArm: [-70 * DEG, 0, -15 * DEG],
-    leftLeg: [0, 0, 0],
-    rightLeg: [0, 0, 0],
-    rootY: 0.35,
-    rootRot: [0, 0, 0],
-  },
-  squat: {
-    torso: [8 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [0, 0, 25 * DEG],
-    rightArm: [0, 0, -25 * DEG],
-    leftLeg: [15 * DEG, 0, 0],
-    rightLeg: [15 * DEG, 0, 0],
-    rootY: 0,
-    rootRot: [0, 0, 0],
-  },
-  pistol_squat: {
-    torso: [10 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [0, 0, 30 * DEG],
-    rightArm: [-40 * DEG, 0, -20 * DEG],
-    leftLeg: [20 * DEG, 0, 0],
-    rightLeg: [-25 * DEG, 0, 0],
-    rootY: 0,
-    rootRot: [0, 0, 0],
-  },
-  split_squat: {
-    torso: [5 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [0, 0, 18 * DEG],
-    rightArm: [0, 0, -18 * DEG],
-    leftLeg: [25 * DEG, 0, 0],
-    rightLeg: [-20 * DEG, 0, 0],
-    rootY: -0.05,
-    rootRot: [0, 0, 0],
-  },
-  bridge: {
-    torso: [-15 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [0, 0, 20 * DEG],
-    rightArm: [0, 0, -20 * DEG],
-    leftLeg: [50 * DEG, 0, 0],
-    rightLeg: [50 * DEG, 0, 0],
-    rootY: -0.35,
-    rootRot: [0, 0, 0],
-  },
-  dip: {
-    torso: [5 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [-40 * DEG, 0, 55 * DEG],
-    rightArm: [-40 * DEG, 0, -55 * DEG],
-    leftLeg: [15 * DEG, 0, 8 * DEG],
-    rightLeg: [15 * DEG, 0, -8 * DEG],
-    rootY: 0.2,
-    rootRot: [0, 0, 0],
-  },
-  muscle_up: {
-    torso: [0, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [-150 * DEG, 0, 18 * DEG],
-    rightArm: [-150 * DEG, 0, -18 * DEG],
-    leftLeg: [20 * DEG, 0, 10 * DEG],
-    rightLeg: [20 * DEG, 0, -10 * DEG],
-    rootY: 0.3,
-    rootRot: [0, 0, 0],
-  },
-  plank: {
-    torso: [90 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [-90 * DEG, 0, 8 * DEG],
-    rightArm: [-90 * DEG, 0, -8 * DEG],
-    leftLeg: [0, 0, 0],
-    rightLeg: [0, 0, 0],
-    rootY: 0.4,
-    rootRot: [0, 0, 0],
-  },
-  knee_raise: {
-    torso: [0, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [-170 * DEG, 0, 12 * DEG],
-    rightArm: [-170 * DEG, 0, -12 * DEG],
-    leftLeg: [20 * DEG, 0, 5 * DEG],
-    rightLeg: [20 * DEG, 0, -5 * DEG],
-    rootY: 0.4,
-    rootRot: [0, 0, 0],
-  },
-  mobility: {
-    torso: [15 * DEG, 0, 0],
-    head: [0, 10 * DEG, 0],
-    leftArm: [-80 * DEG, 0, 25 * DEG],
-    rightArm: [30 * DEG, 0, -35 * DEG],
-    leftLeg: [40 * DEG, 0, 10 * DEG],
-    rightLeg: [0, 0, -8 * DEG],
-    rootY: -0.15,
-    rootRot: [0, 0, 0],
-  },
+    lShoulder: [18 * DEG, 0, 32 * DEG],
+    rShoulder: [-12 * DEG, 0, -38 * DEG],
+    lElbow: 0.35,
+    rElbow: 0.55,
+    lHip: [0, 0, 6 * DEG],
+    rHip: [0, 0, -6 * DEG],
+    rootRot: [0, 10 * DEG, 0],
+  }),
+  push_up: standingChain({
+    pelvis: [88 * DEG, 0, 0],
+    spine: [2 * DEG, 0, 0],
+    lShoulder: [-88 * DEG, 0, 10 * DEG],
+    rShoulder: [-88 * DEG, 0, -10 * DEG],
+    lElbow: 0.15,
+    rElbow: 0.15,
+    rootY: 0.52,
+  }),
+  pike_press: standingChain({
+    pelvis: [48 * DEG, 0, 0],
+    spine: [18 * DEG, 0, 0],
+    chest: [12 * DEG, 0, 0],
+    head: [22 * DEG, 0, 0],
+    lShoulder: [-98 * DEG, 0, 8 * DEG],
+    rShoulder: [-98 * DEG, 0, -8 * DEG],
+    lElbow: 0.2,
+    rElbow: 0.2,
+    lHip: [-35 * DEG, 0, 0],
+    rHip: [-35 * DEG, 0, 0],
+    rootY: 0.22,
+  }),
+  pull_up: standingChain({
+    lShoulder: [-158 * DEG, 0, 18 * DEG],
+    rShoulder: [-158 * DEG, 0, -18 * DEG],
+    lElbow: 0.25,
+    rElbow: 0.25,
+    lHip: [8 * DEG, 0, 6 * DEG],
+    rHip: [8 * DEG, 0, -6 * DEG],
+    rootY: 0.32,
+  }),
+  hang: standingChain({
+    lShoulder: [-168 * DEG, 0, 12 * DEG],
+    rShoulder: [-168 * DEG, 0, -12 * DEG],
+    lElbow: 0.08,
+    rElbow: 0.08,
+    rootY: 0.42,
+  }),
+  row: standingChain({
+    pelvis: [72 * DEG, 0, 0],
+    spine: [8 * DEG, 0, 0],
+    head: [8 * DEG, 0, 0],
+    lShoulder: [-68 * DEG, 0, 12 * DEG],
+    rShoulder: [-68 * DEG, 0, -12 * DEG],
+    lElbow: 0.35,
+    rElbow: 0.35,
+    rootY: 0.32,
+  }),
+  squat: standingChain({
+    spine: [6 * DEG, 0, 0],
+    chest: [4 * DEG, 0, 0],
+    lShoulder: [0, 0, 22 * DEG],
+    rShoulder: [0, 0, -22 * DEG],
+    lHip: [12 * DEG, 0, 0],
+    rHip: [12 * DEG, 0, 0],
+    lKnee: 0.2,
+    rKnee: 0.2,
+  }),
+  pistol_squat: standingChain({
+    spine: [8 * DEG, 0, 0],
+    lShoulder: [0, 0, 28 * DEG],
+    rShoulder: [-35 * DEG, 0, -18 * DEG],
+    lHip: [18 * DEG, 0, 0],
+    rHip: [-22 * DEG, 0, 0],
+    lKnee: 0.25,
+    rKnee: 0.1,
+  }),
+  split_squat: standingChain({
+    spine: [4 * DEG, 0, 0],
+    lShoulder: [0, 0, 16 * DEG],
+    rShoulder: [0, 0, -16 * DEG],
+    lHip: [22 * DEG, 0, 0],
+    rHip: [-18 * DEG, 0, 0],
+    lKnee: 0.3,
+    rKnee: 0.15,
+    rootY: -0.04,
+  }),
+  bridge: standingChain({
+    pelvis: [-12 * DEG, 0, 0],
+    spine: [-8 * DEG, 0, 0],
+    lShoulder: [0, 0, 18 * DEG],
+    rShoulder: [0, 0, -18 * DEG],
+    lHip: [45 * DEG, 0, 0],
+    rHip: [45 * DEG, 0, 0],
+    lKnee: 1.0,
+    rKnee: 1.0,
+    rootY: -0.32,
+  }),
+  dip: standingChain({
+    spine: [4 * DEG, 0, 0],
+    lShoulder: [-38 * DEG, 0, 50 * DEG],
+    rShoulder: [-38 * DEG, 0, -50 * DEG],
+    lElbow: 0.35,
+    rElbow: 0.35,
+    lHip: [12 * DEG, 0, 6 * DEG],
+    rHip: [12 * DEG, 0, -6 * DEG],
+    rootY: 0.18,
+  }),
+  muscle_up: standingChain({
+    lShoulder: [-148 * DEG, 0, 16 * DEG],
+    rShoulder: [-148 * DEG, 0, -16 * DEG],
+    lElbow: 0.45,
+    rElbow: 0.45,
+    lHip: [18 * DEG, 0, 8 * DEG],
+    rHip: [18 * DEG, 0, -8 * DEG],
+    rootY: 0.28,
+  }),
+  plank: standingChain({
+    pelvis: [88 * DEG, 0, 0],
+    lShoulder: [-88 * DEG, 0, 6 * DEG],
+    rShoulder: [-88 * DEG, 0, -6 * DEG],
+    lElbow: 1.05,
+    rElbow: 1.05,
+    rootY: 0.38,
+  }),
+  knee_raise: standingChain({
+    lShoulder: [-168 * DEG, 0, 10 * DEG],
+    rShoulder: [-168 * DEG, 0, -10 * DEG],
+    lHip: [18 * DEG, 0, 4 * DEG],
+    rHip: [18 * DEG, 0, -4 * DEG],
+    lKnee: 0.35,
+    rKnee: 0.35,
+    rootY: 0.38,
+  }),
+  mobility: standingChain({
+    spine: [12 * DEG, 0, 0],
+    chest: [8 * DEG, 8 * DEG, 0],
+    head: [0, 8 * DEG, 0],
+    lShoulder: [-78 * DEG, 0, 22 * DEG],
+    rShoulder: [28 * DEG, 0, -32 * DEG],
+    lElbow: 0.4,
+    rElbow: 0.55,
+    lHip: [35 * DEG, 0, 8 * DEG],
+    rHip: [0, 0, -6 * DEG],
+    lKnee: 0.55,
+    rootY: -0.12,
+  }),
 };
 
-const POSE_B: Record<AnimationState, JointPose> = {
+const POSE_B: Record<AnimationState, ChainPose> = {
   idle: POSE_A.idle,
   rest: POSE_A.rest,
-  push_up: {
-    torso: [90 * DEG, 0, 0],
-    head: [5 * DEG, 0, 0],
-    leftArm: [-45 * DEG, 0, 25 * DEG],
-    rightArm: [-45 * DEG, 0, -25 * DEG],
-    leftLeg: [0, 0, 0],
-    rightLeg: [0, 0, 0],
-    rootY: 0.22,
-    rootRot: [0, 0, 0],
-  },
-  pike_press: {
-    torso: [70 * DEG, 0, 0],
-    head: [35 * DEG, 0, 0],
-    leftArm: [-55 * DEG, 0, 18 * DEG],
-    rightArm: [-55 * DEG, 0, -18 * DEG],
-    leftLeg: [-35 * DEG, 0, 0],
-    rightLeg: [-35 * DEG, 0, 0],
-    rootY: 0.1,
-    rootRot: [0, 0, 0],
-  },
-  pull_up: {
-    torso: [8 * DEG, 0, 0],
-    head: [-5 * DEG, 0, 0],
-    leftArm: [-95 * DEG, 0, 35 * DEG],
-    rightArm: [-95 * DEG, 0, -35 * DEG],
-    leftLeg: [25 * DEG, 0, 10 * DEG],
-    rightLeg: [25 * DEG, 0, -10 * DEG],
-    rootY: 0.75,
-    rootRot: [0, 0, 0],
-  },
-  hang: {
-    torso: [5 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [-120 * DEG, 0, 25 * DEG],
-    rightArm: [-120 * DEG, 0, -25 * DEG],
-    leftLeg: [10 * DEG, 0, 6 * DEG],
-    rightLeg: [10 * DEG, 0, -6 * DEG],
-    rootY: 0.55,
-    rootRot: [0, 0, 0],
-  },
-  row: {
-    torso: [70 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [-110 * DEG, 0, 25 * DEG],
-    rightArm: [-110 * DEG, 0, -25 * DEG],
-    leftLeg: [0, 0, 0],
-    rightLeg: [0, 0, 0],
-    rootY: 0.55,
-    rootRot: [0, 0, 0],
-  },
-  squat: {
-    torso: [18 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [20 * DEG, 0, 30 * DEG],
-    rightArm: [20 * DEG, 0, -30 * DEG],
-    leftLeg: [95 * DEG, 0, 0],
-    rightLeg: [95 * DEG, 0, 0],
-    rootY: -0.45,
-    rootRot: [0, 0, 0],
-  },
-  pistol_squat: {
-    torso: [22 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [25 * DEG, 0, 35 * DEG],
-    rightArm: [-50 * DEG, 0, -25 * DEG],
-    leftLeg: [105 * DEG, 0, 0],
-    rightLeg: [-40 * DEG, 0, 0],
-    rootY: -0.5,
-    rootRot: [0, 0, 0],
-  },
-  split_squat: {
-    torso: [12 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [10 * DEG, 0, 22 * DEG],
-    rightArm: [10 * DEG, 0, -22 * DEG],
-    leftLeg: [95 * DEG, 0, 0],
-    rightLeg: [-35 * DEG, 0, 0],
-    rootY: -0.35,
-    rootRot: [0, 0, 0],
-  },
-  bridge: {
-    torso: [-35 * DEG, 0, 0],
-    head: [10 * DEG, 0, 0],
-    leftArm: [0, 0, 25 * DEG],
-    rightArm: [0, 0, -25 * DEG],
-    leftLeg: [70 * DEG, 0, 0],
-    rightLeg: [70 * DEG, 0, 0],
-    rootY: -0.05,
-    rootRot: [0, 0, 0],
-  },
-  dip: {
-    torso: [18 * DEG, 0, 0],
-    head: [5 * DEG, 0, 0],
-    leftArm: [15 * DEG, 0, 70 * DEG],
-    rightArm: [15 * DEG, 0, -70 * DEG],
-    leftLeg: [25 * DEG, 0, 10 * DEG],
-    rightLeg: [25 * DEG, 0, -10 * DEG],
-    rootY: -0.05,
-    rootRot: [0, 0, 0],
-  },
-  muscle_up: {
-    torso: [-8 * DEG, 0, 0],
-    head: [-5 * DEG, 0, 0],
-    leftArm: [-40 * DEG, 0, 45 * DEG],
-    rightArm: [-40 * DEG, 0, -45 * DEG],
-    leftLeg: [35 * DEG, 0, 12 * DEG],
-    rightLeg: [35 * DEG, 0, -12 * DEG],
-    rootY: 0.85,
-    rootRot: [0, 0, 0],
-  },
-  plank: {
-    torso: [90 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [-90 * DEG, 0, 8 * DEG],
-    rightArm: [-90 * DEG, 0, -8 * DEG],
-    leftLeg: [0, 0, 0],
-    rightLeg: [0, 0, 0],
+  push_up: standingChain({
+    pelvis: [88 * DEG, 0, 0],
+    spine: [6 * DEG, 0, 0],
+    chest: [4 * DEG, 0, 0],
+    head: [4 * DEG, 0, 0],
+    lShoulder: [-48 * DEG, 0, 22 * DEG],
+    rShoulder: [-48 * DEG, 0, -22 * DEG],
+    lElbow: 1.45,
+    rElbow: 1.45,
+    rootY: 0.2,
+  }),
+  pike_press: standingChain({
+    pelvis: [62 * DEG, 0, 0],
+    spine: [22 * DEG, 0, 0],
+    chest: [16 * DEG, 0, 0],
+    head: [32 * DEG, 0, 0],
+    lShoulder: [-55 * DEG, 0, 16 * DEG],
+    rShoulder: [-55 * DEG, 0, -16 * DEG],
+    lElbow: 1.25,
+    rElbow: 1.25,
+    lHip: [-30 * DEG, 0, 0],
+    rHip: [-30 * DEG, 0, 0],
+    rootY: 0.08,
+  }),
+  pull_up: standingChain({
+    spine: [6 * DEG, 0, 0],
+    chest: [4 * DEG, 0, 0],
+    head: [-4 * DEG, 0, 0],
+    lShoulder: [-95 * DEG, 0, 32 * DEG],
+    rShoulder: [-95 * DEG, 0, -32 * DEG],
+    lElbow: 1.55,
+    rElbow: 1.55,
+    lHip: [22 * DEG, 0, 8 * DEG],
+    rHip: [22 * DEG, 0, -8 * DEG],
+    rootY: 0.72,
+  }),
+  hang: standingChain({
+    spine: [4 * DEG, 0, 0],
+    lShoulder: [-118 * DEG, 0, 22 * DEG],
+    rShoulder: [-118 * DEG, 0, -22 * DEG],
+    lElbow: 1.1,
+    rElbow: 1.1,
+    rootY: 0.52,
+  }),
+  row: standingChain({
+    pelvis: [68 * DEG, 0, 0],
+    spine: [4 * DEG, 0, 0],
+    lShoulder: [-108 * DEG, 0, 22 * DEG],
+    rShoulder: [-108 * DEG, 0, -22 * DEG],
+    lElbow: 1.35,
+    rElbow: 1.35,
+    rootY: 0.52,
+  }),
+  squat: standingChain({
+    pelvis: [8 * DEG, 0, 0],
+    spine: [14 * DEG, 0, 0],
+    chest: [10 * DEG, 0, 0],
+    lShoulder: [18 * DEG, 0, 28 * DEG],
+    rShoulder: [18 * DEG, 0, -28 * DEG],
+    lHip: [88 * DEG, 0, 0],
+    rHip: [88 * DEG, 0, 0],
+    lKnee: 1.55,
+    rKnee: 1.55,
+    rootY: -0.42,
+  }),
+  pistol_squat: standingChain({
+    spine: [18 * DEG, 0, 0],
+    chest: [10 * DEG, 0, 0],
+    lShoulder: [22 * DEG, 0, 32 * DEG],
+    rShoulder: [-45 * DEG, 0, -22 * DEG],
+    lHip: [95 * DEG, 0, 0],
+    rHip: [-35 * DEG, 0, 0],
+    lKnee: 1.65,
+    rKnee: 0.15,
+    rootY: -0.48,
+  }),
+  split_squat: standingChain({
+    spine: [10 * DEG, 0, 0],
+    lShoulder: [8 * DEG, 0, 20 * DEG],
+    rShoulder: [8 * DEG, 0, -20 * DEG],
+    lHip: [88 * DEG, 0, 0],
+    rHip: [-32 * DEG, 0, 0],
+    lKnee: 1.55,
+    rKnee: 0.25,
+    rootY: -0.32,
+  }),
+  bridge: standingChain({
+    pelvis: [-28 * DEG, 0, 0],
+    spine: [-18 * DEG, 0, 0],
+    chest: [-10 * DEG, 0, 0],
+    lShoulder: [0, 0, 22 * DEG],
+    rShoulder: [0, 0, -22 * DEG],
+    lHip: [62 * DEG, 0, 0],
+    rHip: [62 * DEG, 0, 0],
+    lKnee: 1.15,
+    rKnee: 1.15,
+    rootY: -0.04,
+  }),
+  dip: standingChain({
+    spine: [14 * DEG, 0, 0],
+    chest: [8 * DEG, 0, 0],
+    head: [4 * DEG, 0, 0],
+    lShoulder: [12 * DEG, 0, 65 * DEG],
+    rShoulder: [12 * DEG, 0, -65 * DEG],
+    lElbow: 1.55,
+    rElbow: 1.55,
+    lHip: [22 * DEG, 0, 8 * DEG],
+    rHip: [22 * DEG, 0, -8 * DEG],
+    rootY: -0.04,
+  }),
+  muscle_up: standingChain({
+    spine: [-6 * DEG, 0, 0],
+    chest: [-4 * DEG, 0, 0],
+    head: [-4 * DEG, 0, 0],
+    lShoulder: [-38 * DEG, 0, 42 * DEG],
+    rShoulder: [-38 * DEG, 0, -42 * DEG],
+    lElbow: 0.55,
+    rElbow: 0.55,
+    lHip: [32 * DEG, 0, 10 * DEG],
+    rHip: [32 * DEG, 0, -10 * DEG],
+    rootY: 0.82,
+  }),
+  plank: standingChain({
+    pelvis: [88 * DEG, 0, 0],
+    spine: [2 * DEG, 0, 0],
+    lShoulder: [-88 * DEG, 0, 6 * DEG],
+    rShoulder: [-88 * DEG, 0, -6 * DEG],
+    lElbow: 1.05,
+    rElbow: 1.05,
+    rootY: 0.36,
+  }),
+  knee_raise: standingChain({
+    spine: [6 * DEG, 0, 0],
+    lShoulder: [-168 * DEG, 0, 10 * DEG],
+    rShoulder: [-168 * DEG, 0, -10 * DEG],
+    lHip: [88 * DEG, 0, 6 * DEG],
+    rHip: [88 * DEG, 0, -6 * DEG],
+    lKnee: 1.45,
+    rKnee: 1.45,
     rootY: 0.38,
-    rootRot: [0, 0, 0],
-  },
-  knee_raise: {
-    torso: [8 * DEG, 0, 0],
-    head: [0, 0, 0],
-    leftArm: [-170 * DEG, 0, 12 * DEG],
-    rightArm: [-170 * DEG, 0, -12 * DEG],
-    leftLeg: [95 * DEG, 0, 8 * DEG],
-    rightLeg: [95 * DEG, 0, -8 * DEG],
-    rootY: 0.4,
-    rootRot: [0, 0, 0],
-  },
-  mobility: {
-    torso: [35 * DEG, 15 * DEG, 0],
-    head: [0, 20 * DEG, 0],
-    leftArm: [-110 * DEG, 0, 30 * DEG],
-    rightArm: [50 * DEG, 0, -40 * DEG],
-    leftLeg: [70 * DEG, 0, 15 * DEG],
-    rightLeg: [10 * DEG, 0, -10 * DEG],
-    rootY: -0.25,
-    rootRot: [0, 8 * DEG, 0],
-  },
+  }),
+  mobility: standingChain({
+    pelvis: [8 * DEG, 6 * DEG, 0],
+    spine: [28 * DEG, 12 * DEG, 0],
+    chest: [18 * DEG, 14 * DEG, 0],
+    head: [0, 18 * DEG, 0],
+    lShoulder: [-105 * DEG, 0, 28 * DEG],
+    rShoulder: [45 * DEG, 0, -38 * DEG],
+    lElbow: 0.55,
+    rElbow: 0.7,
+    lHip: [62 * DEG, 0, 12 * DEG],
+    rHip: [8 * DEG, 0, -8 * DEG],
+    lKnee: 0.95,
+    rootY: -0.22,
+    rootRot: [0, 6 * DEG, 0],
+  }),
 };
 
 const MUSCLE_LOCAL: Record<MuscleGroup, [number, number, number]> = {
-  chest: [0, 0.38, 0.14],
-  front_delts: [0.22, 0.55, 0.1],
-  rear_delts: [0.22, 0.55, -0.1],
-  triceps: [0.28, 0.22, -0.04],
-  biceps: [0.28, 0.22, 0.08],
-  lats: [0.16, 0.28, -0.1],
-  upper_back: [0, 0.42, -0.14],
-  core: [0, 0.12, 0.12],
-  quads: [0.14, -0.4, 0.1],
-  hamstrings: [0.14, -0.4, -0.1],
-  glutes: [0, -0.12, -0.12],
-  calves: [0.12, -0.75, -0.04],
-  shoulders: [0.26, 0.58, 0],
+  chest: [0, 0.16, 0.14],
+  front_delts: [0.18, 0.28, 0.1],
+  rear_delts: [0.18, 0.28, -0.1],
+  triceps: [0.24, 0.05, -0.04],
+  biceps: [0.24, 0.05, 0.08],
+  lats: [0.14, 0.08, -0.1],
+  upper_back: [0, 0.2, -0.14],
+  core: [0, -0.02, 0.12],
+  quads: [0.12, -0.85, 0.1],
+  hamstrings: [0.12, -0.85, -0.1],
+  glutes: [0, -0.55, -0.12],
+  calves: [0.1, -1.15, -0.04],
+  shoulders: [0.22, 0.3, 0],
 };
 
-const BODY = '#64748b';
-const BODY_DEEP = '#475569';
-const SKIN = '#94a3b8';
-const ACCENT = '#38bdf8';
+const MIRROR_MUSCLES = new Set<MuscleGroup>([
+  'front_delts',
+  'rear_delts',
+  'triceps',
+  'biceps',
+  'lats',
+  'quads',
+  'hamstrings',
+  'calves',
+  'shoulders',
+]);
 
-function lerpTriplet(a: [number, number, number], b: [number, number, number], t: number): [number, number, number] {
-  return [
-    THREE.MathUtils.lerp(a[0], b[0], t),
-    THREE.MathUtils.lerp(a[1], b[1], t),
-    THREE.MathUtils.lerp(a[2], b[2], t),
-  ];
+function muscleSpotsFromGroups(primary: MuscleGroup[], secondary: MuscleGroup[]): MuscleSpot[] {
+  const spots: MuscleSpot[] = [];
+  for (const g of primary) {
+    spots.push({
+      id: g,
+      position: MUSCLE_LOCAL[g],
+      mirror: MIRROR_MUSCLES.has(g),
+      primary: true,
+    });
+  }
+  for (const g of secondary) {
+    if (primary.includes(g)) continue;
+    spots.push({
+      id: g,
+      position: MUSCLE_LOCAL[g],
+      mirror: MIRROR_MUSCLES.has(g),
+      primary: false,
+    });
+  }
+  return spots;
 }
 
-function blendPose(a: JointPose, b: JointPose, t: number): JointPose {
-  return {
-    torso: lerpTriplet(a.torso, b.torso, t),
-    head: lerpTriplet(a.head, b.head, t),
-    leftArm: lerpTriplet(a.leftArm, b.leftArm, t),
-    rightArm: lerpTriplet(a.rightArm, b.rightArm, t),
-    leftLeg: lerpTriplet(a.leftLeg, b.leftLeg, t),
-    rightLeg: lerpTriplet(a.rightLeg, b.rightLeg, t),
-    rootY: THREE.MathUtils.lerp(a.rootY, b.rootY, t),
-    rootRot: lerpTriplet(a.rootRot, b.rootRot, t),
-  };
+function phaseToBreath(phase: TempoPhase, isResting: boolean): BreathPhase {
+  if (isResting) return 'exhale';
+  switch (phase) {
+    case 'eccentric':
+      return 'inhale';
+    case 'pause_bottom':
+      return 'hold_top';
+    case 'concentric':
+      return 'exhale';
+    case 'pause_top':
+      return 'hold_bottom';
+    case 'hold':
+      return 'idle';
+    default:
+      return 'idle';
+  }
 }
 
-function applyEuler(obj: THREE.Object3D, e: [number, number, number], alpha: number) {
-  obj.rotation.x = THREE.MathUtils.lerp(obj.rotation.x, e[0], alpha);
-  obj.rotation.y = THREE.MathUtils.lerp(obj.rotation.y, e[1], alpha);
-  obj.rotation.z = THREE.MathUtils.lerp(obj.rotation.z, e[2], alpha);
-}
-
-function Limb({ length = 0.42, radius = 0.07, color = BODY }: { length?: number; radius?: number; color?: string }) {
-  return (
-    <mesh castShadow position={[0, -length / 2, 0]}>
-      <capsuleGeometry args={[radius, length, 6, 12]} />
-      <meshStandardMaterial color={color} roughness={0.5} metalness={0.2} />
-    </mesh>
-  );
-}
-
-function MuscleHotspot({
-  group,
-  primary,
-  secondary,
-  tension,
-}: {
-  group: MuscleGroup;
-  primary: MuscleGroup[];
-  secondary: MuscleGroup[];
-  tension: number;
-}) {
-  const matA = useRef<THREE.MeshStandardMaterial>(null);
-  const matB = useRef<THREE.MeshStandardMaterial>(null);
-  const isPrimary = primary.includes(group);
-  const isSecondary = secondary.includes(group);
-  const active = isPrimary || isSecondary;
-  const base = isPrimary ? 0.55 : 0.28;
-  const pos = MUSCLE_LOCAL[group];
-  const mirrorX =
-    group === 'front_delts' ||
-    group === 'rear_delts' ||
-    group === 'triceps' ||
-    group === 'biceps' ||
-    group === 'lats' ||
-    group === 'quads' ||
-    group === 'hamstrings' ||
-    group === 'calves' ||
-    group === 'shoulders';
-
-  useFrame(() => {
-    if (!active) return;
-    const pulse = base + tension * (isPrimary ? 0.85 : 0.45);
-    if (matA.current) {
-      matA.current.emissiveIntensity = THREE.MathUtils.lerp(matA.current.emissiveIntensity, pulse, 0.12);
-    }
-    if (matB.current) {
-      matB.current.emissiveIntensity = THREE.MathUtils.lerp(matB.current.emissiveIntensity, pulse, 0.12);
-    }
-  });
-
-  if (!active) return null;
-
-  const spots: Array<{ pos: [number, number, number]; ref: typeof matA }> = [
-    { pos: [pos[0], pos[1], pos[2]], ref: matA },
-  ];
-  if (mirrorX) spots.push({ pos: [-pos[0], pos[1], pos[2]], ref: matB });
-
-  return (
-    <>
-      {spots.map((s, i) => (
-        <mesh key={`${group}-${i}`} position={s.pos}>
-          <sphereGeometry args={[isPrimary ? 0.07 : 0.055, 12, 12]} />
-          <meshStandardMaterial
-            ref={s.ref}
-            color={ACCENT}
-            emissive={ACCENT}
-            emissiveIntensity={base}
-            transparent
-            opacity={0.75}
-            roughness={0.3}
-            metalness={0.1}
-          />
-        </mesh>
-      ))}
-    </>
-  );
-}
-
-function AthleteMesh({
+function AthleteFigure({
   animationState,
   progress,
   primaryMuscles,
   secondaryMuscles,
   tension,
+  breathPhase,
+  isResting,
 }: {
   animationState: AnimationState;
   progress: number;
   primaryMuscles: MuscleGroup[];
   secondaryMuscles: MuscleGroup[];
   tension: number;
+  breathPhase: BreathPhase;
+  isResting: boolean;
 }) {
-  const target = useMemo(
-    () => blendPose(POSE_A[animationState], POSE_B[animationState], progress),
+  const pose = useMemo(
+    () => blendChainPose(POSE_A[animationState], POSE_B[animationState], progress),
     [animationState, progress]
   );
-
-  const root = useRef<THREE.Group>(null);
-  const torso = useRef<THREE.Group>(null);
-  const head = useRef<THREE.Group>(null);
-  const leftArm = useRef<THREE.Group>(null);
-  const rightArm = useRef<THREE.Group>(null);
-  const leftLeg = useRef<THREE.Group>(null);
-  const rightLeg = useRef<THREE.Group>(null);
-
-  useFrame((_, delta) => {
-    const a = 1 - Math.exp(-6 * delta);
-    if (!root.current || !torso.current || !head.current) return;
-    if (!leftArm.current || !rightArm.current || !leftLeg.current || !rightLeg.current) return;
-
-    root.current.position.y = THREE.MathUtils.lerp(root.current.position.y, target.rootY, a);
-    applyEuler(root.current, target.rootRot, a);
-    applyEuler(torso.current, target.torso, a);
-    applyEuler(head.current, target.head, a);
-    applyEuler(leftArm.current, target.leftArm, a);
-    applyEuler(rightArm.current, target.rightArm, a);
-    applyEuler(leftLeg.current, target.leftLeg, a);
-    applyEuler(rightLeg.current, target.rightLeg, a);
-  });
-
-  const muscles = useMemo(
-    () => Array.from(new Set([...primaryMuscles, ...secondaryMuscles])),
+  const spots = useMemo(
+    () => muscleSpotsFromGroups(primaryMuscles, secondaryMuscles),
     [primaryMuscles, secondaryMuscles]
   );
 
   return (
-    <group ref={root}>
-      <group ref={leftLeg} position={[-0.14, 0.95, 0]}>
-        <Limb length={0.55} radius={0.075} />
-      </group>
-      <group ref={rightLeg} position={[0.14, 0.95, 0]}>
-        <Limb length={0.55} radius={0.075} />
-      </group>
-
-      <group ref={torso} position={[0, 1.05, 0]}>
-        <mesh castShadow position={[0, 0.35, 0]}>
-          <capsuleGeometry args={[0.16, 0.45, 8, 16]} />
-          <meshStandardMaterial color={BODY_DEEP} roughness={0.45} metalness={0.25} />
-        </mesh>
-
-        <group ref={leftArm} position={[-0.22, 0.55, 0]}>
-          <Limb length={0.4} radius={0.055} color={BODY} />
-        </group>
-        <group ref={rightArm} position={[0.22, 0.55, 0]}>
-          <Limb length={0.4} radius={0.055} color={BODY} />
-        </group>
-
-        <group ref={head} position={[0, 0.78, 0]}>
-          <mesh castShadow>
-            <sphereGeometry args={[0.14, 24, 24]} />
-            <meshStandardMaterial color={SKIN} roughness={0.4} metalness={0.08} />
-          </mesh>
-        </group>
-
-        {muscles.map((m) => (
-          <MuscleHotspot
-            key={m}
-            group={m}
-            primary={primaryMuscles}
-            secondary={secondaryMuscles}
-            tension={tension}
-          />
-        ))}
-      </group>
-    </group>
-  );
-}
-
-function Floor() {
-  return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow>
-      <circleGeometry args={[2.4, 48]} />
-      <meshStandardMaterial color="#0f172a" roughness={0.9} metalness={0.05} />
-    </mesh>
-  );
-}
-
-function Scene({
-  animationState,
-  progress,
-  primaryMuscles,
-  secondaryMuscles,
-  tension,
-}: {
-  animationState: AnimationState;
-  progress: number;
-  primaryMuscles: MuscleGroup[];
-  secondaryMuscles: MuscleGroup[];
-  tension: number;
-}) {
-  return (
-    <>
-      <color attach="background" args={['#0b192c']} />
-      <fog attach="fog" args={['#0b192c', 5.5, 14]} />
-      <ambientLight intensity={0.5} color="#cbd5e1" />
-      <directionalLight castShadow position={[3.5, 6, 2]} intensity={1.25} color="#f8fafc" shadow-mapSize={[1024, 1024]} />
-      <pointLight position={[-2.2, 2.2, -1]} intensity={0.4} color="#38bdf8" />
-      <Floor />
-      <AthleteMesh
-        animationState={animationState}
-        progress={progress}
-        primaryMuscles={primaryMuscles}
-        secondaryMuscles={secondaryMuscles}
-        tension={tension}
-      />
-      <ContactShadows position={[0, 0, 0]} opacity={0.5} scale={6} blur={2.5} far={4} color="#020617" />
-      <OrbitControls
-        makeDefault
-        enablePan={false}
-        enableZoom
-        minDistance={2.2}
-        maxDistance={6}
-        minPolarAngle={Math.PI / 3.2}
-        maxPolarAngle={Math.PI / 2.05}
-        target={[0, 0.85, 0]}
-      />
-    </>
+    <OrganicAvatar
+      pose={pose}
+      breathPhase={breathPhase}
+      isBreathing={!isResting}
+      swayAmp={isResting ? 1.25 : animationState === 'plank' || animationState === 'hang' ? 1.1 : 0.95}
+      tension={tension}
+      muscleSpots={spots}
+      accentColor={EMERALD.accent}
+    />
   );
 }
 
@@ -650,68 +494,67 @@ export const Calisthenics3DViewport: React.FC<Calisthenics3DViewportProps> = ({
   const animationState: AnimationState = isResting ? 'rest' : config.animationState;
   const phaseElapsed = Math.max(0, phaseTotal - phaseLeft);
   const progress = isResting ? 0 : motionProgress(phase, phaseElapsed, phaseTotal || 1);
+  const breathPhase = phaseToBreath(phase, isResting);
 
-  // Eccentric and bottom pause carry higher tissue tension for highlight intensity
   const tension = isResting
-    ? 0.15
+    ? 0.18
     : phase === 'eccentric'
-      ? 0.55 + progress * 0.45
+      ? 0.5 + progress * 0.5
       : phase === 'pause_bottom'
         ? 1
         : phase === 'concentric'
-          ? 0.7 - progress * 0.25
+          ? 0.75 - progress * 0.2
           : phase === 'hold'
-            ? 0.75
-            : 0.35;
+            ? 0.8
+            : 0.4;
 
   return (
-    <div
-      className={`relative overflow-hidden rounded-2xl border border-sky-500/20 bg-gradient-to-b from-[#12263f] to-[#0b192c] ${className}`}
-      style={{ minHeight: '14rem' }}
+    <OrganicViewportShell
+      className={className}
+      topLeft={
+        <span className="rounded-md bg-black/40 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-200/90 backdrop-blur-sm">
+          {label ?? (isResting ? 'Recovery' : 'Biomechanics · live')}
+        </span>
+      }
+      topRight={
+        <span className="rounded-md bg-emerald-950/55 px-2 py-1 text-[10px] font-medium tabular-nums text-emerald-50/90 backdrop-blur-sm">
+          Set {setIndex + 1}/{targetSets}
+          {!isHold && !isResting ? ` · Rep ${repCount}` : ''}
+          {targetRepsLabel && !isResting ? ` · ${targetRepsLabel}` : ''}
+        </span>
+      }
+      bottomLeft={
+        <>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-300/85">
+            {isResting ? 'Rest' : phaseLabel(phase)}
+            {!isResting && phaseTotal > 0 ? ` · ${phaseLeft}s` : ''}
+          </p>
+          <p className="mt-0.5 max-w-[70%] truncate text-[10px] text-emerald-200/55">
+            {exerciseName ?? config.displayName}
+          </p>
+        </>
+      }
     >
-      <div className="absolute inset-0 h-56 sm:h-64">
-        <Canvas
-          shadows
-          dpr={[1, 1.75]}
-          camera={{ position: [2.5, 1.85, 3.3], fov: 38, near: 0.1, far: 40 }}
-          gl={{ antialias: true, alpha: false }}
-        >
-          <Suspense fallback={null}>
-            <Scene
+      <Canvas
+        shadows
+        dpr={[1, 1.75]}
+        camera={{ position: [2.5, 1.85, 3.3], fov: 38, near: 0.1, far: 40 }}
+        gl={{ antialias: true, alpha: false }}
+      >
+        <Suspense fallback={null}>
+          <OrganicSceneChrome>
+            <AthleteFigure
               animationState={animationState}
               progress={progress}
               primaryMuscles={config.primaryMuscles}
               secondaryMuscles={config.secondaryMuscles}
               tension={tension}
+              breathPhase={breathPhase}
+              isResting={isResting}
             />
-          </Suspense>
-        </Canvas>
-      </div>
-
-      <div className="pointer-events-none relative z-10 flex h-56 sm:h-64 flex-col justify-between p-3">
-        <div className="flex items-start justify-between gap-2">
-          <span className="rounded-md bg-black/40 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-sky-200/90 backdrop-blur-sm">
-            {label ?? (isResting ? 'Recovery' : 'Biomechanics · live')}
-          </span>
-          <span className="rounded-md bg-slate-950/55 px-2 py-1 text-[10px] font-medium tabular-nums text-slate-100/90 backdrop-blur-sm">
-            Set {setIndex + 1}/{targetSets}
-            {!isHold && !isResting ? ` · Rep ${repCount}` : ''}
-            {targetRepsLabel && !isResting ? ` · ${targetRepsLabel}` : ''}
-          </span>
-        </div>
-        <div className="flex items-end justify-between gap-2">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-sky-300/80">
-              {isResting ? 'Rest' : phaseLabel(phase)}
-              {!isResting && phaseTotal > 0 ? ` · ${phaseLeft}s` : ''}
-            </p>
-            <p className="text-[10px] text-slate-400 mt-0.5 max-w-[70%] truncate">
-              {exerciseName ?? config.displayName}
-            </p>
-          </div>
-          <p className="text-[10px] text-slate-500">Drag · zoom</p>
-        </div>
-      </div>
-    </div>
+          </OrganicSceneChrome>
+        </Suspense>
+      </Canvas>
+    </OrganicViewportShell>
   );
 };
