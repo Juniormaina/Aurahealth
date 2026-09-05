@@ -653,7 +653,8 @@ export function buildPoseClip(name: string, from: RigPose, to: RigPose, duration
   }
 
   tracks.push(
-    new THREE.NumberKeyframeTrack('.position[y]', [0, duration], [from.rootY, to.rootY])
+    // Keep clip root on the floor — vertical grounding is handled by <Center bottom> + BB snap
+    new THREE.NumberKeyframeTrack('.position[y]', [0, duration], [0, 0])
   );
 
   return new THREE.AnimationClip(name, duration, tracks);

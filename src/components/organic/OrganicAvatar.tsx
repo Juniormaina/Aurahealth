@@ -291,14 +291,7 @@ export function OrganicSceneChrome({ children }: { children: React.ReactNode }) 
         <meshStandardMaterial color={EMERALD.bgMid} roughness={0.88} metalness={0.06} />
       </mesh>
       {children}
-      <ContactShadows
-        position={[0, 0, 0]}
-        opacity={0.48}
-        scale={6}
-        blur={2.6}
-        far={4.2}
-        color={EMERALD.bgDeep}
-      />
+      <ContactShadows position={[0, 0, 0]} opacity={0.5} scale={6} blur={2} far={4.2} color={EMERALD.bgDeep} />
       <OrbitControls
         makeDefault
         enablePan={false}
@@ -309,7 +302,7 @@ export function OrganicSceneChrome({ children }: { children: React.ReactNode }) 
         maxDistance={6}
         minPolarAngle={0.25}
         maxPolarAngle={Math.PI / 2}
-        target={[0, 0.85, 0]}
+        target={[0, 1, 0]}
       />
     </>
   );

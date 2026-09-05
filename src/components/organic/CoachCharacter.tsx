@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { ContactShadows, OrbitControls, useAnimations, useGLTF } from '@react-three/drei';
+import { Center, ContactShadows, OrbitControls, useAnimations, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import type { AnimationState } from '../../content/calisthenicsExercises3D';
@@ -132,9 +132,10 @@ function CoachCharacterInner(props: CoachCharacterProps) {
 
   const allClips = useMemo(() => [...animations, ...proceduralClips], [animations, proceduralClips]);
   const { actions, mixer, names } = useAnimations(allClips, group);
-  const rootY = useMemo(() => new SpringScalar(0), []);
   const breath = useMemo(() => new SpringScalar(0.4), []);
   const activeClip = useRef<string | null>(null);
+  const floorBox = useMemo(() => new THREE.Box3(), []);
+  const groundKey = `${mode}-${animationState}-${yogaAssetId ?? ''}-${isResting}-${Math.round(progress * 12)}`;
 
   useEffect(() => {
     if (!actions) return;
@@ -178,7 +179,8 @@ function CoachCharacterInner(props: CoachCharacterProps) {
     const dt = Math.min(delta, 0.05);
     const sway = posturalSway(state.clock.elapsedTime, swayAmp * (isResting ? 1.25 : 1));
 
-    group.current.position.y = rootY.step(target.rootY, dt, 16, 8);
+    // Orientation only — vertical placement is owned by <Center bottom> + BB snap
+    group.current.position.set(0, 0, 0);
     slerpEuler(group.current, target.rootRot, dt, 5.5);
 
     for (const [name, eulers] of Object.entries(target.bones)) {
@@ -217,12 +219,21 @@ function CoachCharacterInner(props: CoachCharacterProps) {
         action.paused = true;
       }
     }
+
+    // Continuous floor collision: lowest posed vertex sits on Y=0
+    group.current.updateWorldMatrix(true, true);
+    floorBox.setFromObject(group.current);
+    if (Number.isFinite(floorBox.min.y)) {
+      group.current.position.y = -floorBox.min.y;
+    }
   });
 
   return (
-    <group ref={group} dispose={null}>
-      <primitive object={model} />
-    </group>
+    <Center bottom precise cacheKey={groundKey}>
+      <group ref={group} dispose={null}>
+        <primitive object={model} />
+      </group>
+    </Center>
   );
 }
 
@@ -236,7 +247,7 @@ export function CoachCharacter(props: CoachCharacterProps) {
 
 export function StudioSceneChrome({
   children,
-  cameraTarget = [0, 0.9, 0] as [number, number, number],
+  cameraTarget = [0, 1, 0] as [number, number, number],
 }: {
   children: React.ReactNode;
   cameraTarget?: [number, number, number];
@@ -261,14 +272,7 @@ export function StudioSceneChrome({
         <meshStandardMaterial color={EMERALD.bgMid} roughness={0.9} metalness={0.05} />
       </mesh>
       {children}
-      <ContactShadows
-        position={[0, 0, 0]}
-        opacity={0.5}
-        scale={7}
-        blur={2.8}
-        far={4.5}
-        color={EMERALD.bgDeep}
-      />
+      <ContactShadows position={[0, 0, 0]} opacity={0.5} scale={7} blur={2} far={4.5} color={EMERALD.bgDeep} />
       <OrbitControls
         makeDefault
         enablePan={false}
