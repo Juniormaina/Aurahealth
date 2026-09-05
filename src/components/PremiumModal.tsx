@@ -21,7 +21,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
   const [tab, setTab] = useState<'personal' | 'corporate'>('personal');
   const [company, setCompany] = useState('');
   const [email, setEmail] = useState('');
-  const [packageId, setPackageId] = useState(CORPORATE_PACKAGES[0].id);
+  const [packageId, setPackageId] = useState<string>(CORPORATE_PACKAGES[0].id);
   const [sent, setSent] = useState(false);
 
   if (!isOpen) return null;
