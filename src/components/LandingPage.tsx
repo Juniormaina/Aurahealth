@@ -57,11 +57,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col justify-between landscape-shell">
+    <div className="min-h-dvh flex flex-col justify-between landscape-shell">
       <header className="landing-hero-header">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3 min-w-0">
+        <div className="layout-container py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
           <AuraLogo size="sm" inverted showSubtitle={false} className="min-w-0" />
-          <div className="flex items-center justify-end gap-5 sm:gap-8 min-w-0">
+          <div className="flex items-center justify-end gap-3 sm:gap-5 md:gap-8 min-w-0">
             <nav className="hidden md:flex items-center gap-6 lg:gap-8" aria-label="Page">
               {NAV_LINKS.map((link) => (
                 <a
@@ -95,7 +95,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             )}
           </div>
         </div>
-        <nav className="md:hidden flex items-center gap-4 overflow-x-auto px-4 pb-3 scrollbar-none" aria-label="Page">
+        <nav className="md:hidden flex items-center gap-4 overflow-x-auto layout-container pb-3 scrollbar-none" aria-label="Page">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
@@ -114,7 +114,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
       <Hero />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 flex-1 w-full min-w-0">
+      <main className="layout-container py-10 sm:py-12 md:py-16 flex-1 w-full min-w-0">
         <Features />
         <Trust />
       </main>
@@ -134,14 +134,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         signedInEmail={userAccount?.email}
       />
 
-      <footer className="border-t border-white/15 bg-[rgba(8,20,16,0.78)] backdrop-blur-[16px] py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-xs text-[#D5E4DC]">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <footer className="border-t border-white/15 bg-[rgba(8,20,16,0.78)] backdrop-blur-[16px] py-6 pb-[max(1.5rem,var(--safe-bottom))] text-center text-xs text-[#D5E4DC]">
+        <div className="layout-container flex flex-col sm:flex-row items-center justify-between gap-3">
           <strong className="text-[#F7FFFC]">Aura Health</strong>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
             <button
               type="button"
               onClick={onOpenAbout}
-              className="text-[11px] font-semibold text-[#D5E4DC] hover:text-[var(--color-harmony)] px-3 py-1.5"
+              className="text-[11px] font-semibold text-[#D5E4DC] hover:text-[var(--color-harmony)] px-3 py-2 min-h-[44px]"
             >
               About
             </button>
@@ -149,7 +149,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <button
                 type="button"
                 onClick={() => setShowAdminModal(true)}
-                className="flex items-center gap-1.5 text-[11px] font-semibold text-[#D5E4DC] hover:text-[var(--color-harmony)] px-3 py-1.5"
+                className="flex items-center gap-1.5 text-[11px] font-semibold text-[#D5E4DC] hover:text-[var(--color-harmony)] px-3 py-2 min-h-[44px]"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Staff admin

@@ -81,7 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               type="button"
               onClick={onToggleCollapse}
-              className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-white/70 hover:text-[#00FFC2] hover:bg-white/5"
+              className="hidden lg:flex items-center justify-center touch-target rounded-lg text-white/70 hover:text-[#00FFC2] hover:bg-white/5"
               aria-label="Collapse sidebar"
             >
               <PanelLeftClose className="w-4 h-4" />
@@ -90,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             type="button"
             onClick={onCloseMobile}
-            className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg text-white/70 hover:text-[#00FFC2]"
+            className="lg:hidden flex items-center justify-center touch-target rounded-lg text-white/70 hover:text-[#00FFC2]"
             aria-label="Close menu"
           >
             <X className="w-4 h-4" />

@@ -315,6 +315,7 @@ export function OrganicViewportShell({
   topRight,
   bottomLeft,
   bottomRight = 'Drag to orbit · scroll to zoom',
+  expanded = false,
 }: {
   className?: string;
   children: React.ReactNode;
@@ -322,21 +323,27 @@ export function OrganicViewportShell({
   topRight?: React.ReactNode;
   bottomLeft?: React.ReactNode;
   bottomRight?: React.ReactNode;
+  /** Taller canvas when gear editor is open (mobile-friendly). */
+  expanded?: boolean;
 }) {
+  const stageH = expanded
+    ? 'h-[min(70vw,22rem)] sm:h-80 md:h-[22rem]'
+    : 'h-56 sm:h-64';
+
   return (
     <div
       className={`relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-b from-[#022c22] to-[#064e3b] ${className}`}
-      style={{ minHeight: '14rem' }}
+      style={{ minHeight: expanded ? '18rem' : '14rem' }}
     >
-      <div className="absolute inset-0 h-56 sm:h-64">{children}</div>
-      <div className="pointer-events-none relative z-10 flex h-56 sm:h-64 flex-col justify-between p-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="pointer-events-auto flex flex-col gap-1.5">{topLeft}</div>
-          <div className="pointer-events-none">{topRight}</div>
+      <div className={`absolute inset-0 ${stageH}`}>{children}</div>
+      <div className={`pointer-events-none relative z-10 flex ${stageH} flex-col justify-between p-2.5 sm:p-3`}>
+        <div className="flex items-start justify-between gap-2 min-w-0">
+          <div className="pointer-events-auto flex min-w-0 max-w-[72%] flex-col gap-1.5">{topLeft}</div>
+          <div className="pointer-events-none shrink-0">{topRight}</div>
         </div>
         <div className="flex items-end justify-between gap-2">
-          <div>{bottomLeft}</div>
-          <p className="text-[10px] text-emerald-200/55">{bottomRight}</p>
+          <div className="min-w-0">{bottomLeft}</div>
+          <p className="shrink-0 text-[10px] text-emerald-200/55">{bottomRight}</p>
         </div>
       </div>
     </div>

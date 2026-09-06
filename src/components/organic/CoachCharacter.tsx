@@ -1,12 +1,18 @@
 import React, { Suspense, useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Center, ContactShadows, OrbitControls, useAnimations, useGLTF } from '@react-three/drei';
+import {
+  Center,
+  ContactShadows,
+  Environment,
+  OrbitControls,
+  useAnimations,
+  useGLTF,
+} from '@react-three/drei';
 import * as THREE from 'three';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import type { AnimationState } from '../../content/calisthenicsExercises3D';
 import {
   BreathPhase,
-  EMERALD,
   SpringScalar,
   breathInflation,
   posturalSway,
@@ -30,8 +36,18 @@ import {
   cueBoneOffsets,
   parseCueMotion,
 } from './trainerConfig';
+import type { CoachPropBinding } from './coachPropInteraction';
+import { dampVec3 } from './coachPropInteraction';
+import { applyHumanoidMaterials, applyMuscleDefinition } from './coachAvatarMaterials';
+import { applyPhysiqueProfile, applyTrainerWardrobe } from './coachWardrobe';
+import {
+  FacialRigController,
+  resolveFacialExpression,
+  type CoachMotionMode,
+} from './coachFacialRig';
+import { applyLimbIk, resolveIkContacts } from './coachLimbIK';
 
-export type CoachMotionMode = 'calisthenics' | 'yoga';
+export type { CoachMotionMode };
 
 export interface CoachCharacterProps {
   mode: CoachMotionMode;
@@ -40,13 +56,13 @@ export interface CoachCharacterProps {
   /** 0 = extended (A), 1 = bottom (B) for tempo-driven calisthenics */
   progress?: number;
   yogaAssetId?: string;
-  /** On-screen instructional text — drives procedural cue overlays. */
   instructionCue?: string;
   poseName?: string;
   breathPhase?: BreathPhase;
   isBreathing?: boolean;
   isResting?: boolean;
   swayAmp?: number;
+  propBinding?: CoachPropBinding | null;
 }
 
 const _euler = new THREE.Euler();
@@ -54,47 +70,6 @@ const _quat = new THREE.Quaternion();
 
 useGLTF.preload(TRAINER_MODELS.aura.url);
 useGLTF.preload(TRAINER_MODELS.aurora.url);
-
-function styleTrainerMaterials(root: THREE.Object3D, trainerId: TrainerId) {
-  const outfit = TRAINER_MODELS[trainerId].outfit;
-  root.traverse((obj) => {
-    if (!(obj as THREE.Mesh).isMesh) return;
-    const mesh = obj as THREE.Mesh;
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    const retint = (orig: THREE.Material): THREE.Material => {
-      if (!(orig as THREE.MeshStandardMaterial).isMeshStandardMaterial) return orig;
-      const mat = (orig as THREE.MeshStandardMaterial).clone();
-      const name = `${mesh.name} ${mat.name}`.toLowerCase();
-      const isSkin = /skin|face|head|body/.test(name) && !/shirt|pant|shoe|hair|suit|vest/.test(name);
-      if (isSkin) {
-        mat.color.set(trainerId === 'aurora' ? '#e8b898' : '#c68642');
-        mat.roughness = 0.44;
-        mat.metalness = 0.04;
-      } else if (/hair/.test(name)) {
-        mat.color.set(trainerId === 'aurora' ? '#1c1917' : '#0b3d2e');
-        mat.roughness = 0.72;
-      } else if (outfit === 'yoga') {
-        // Aurora: standardized yoga outfit — deep emerald set
-        mat.color.set(/pant|leg|short|shoe/.test(name) ? '#022c22' : '#064e3b');
-        mat.emissive.set(EMERALD.accent);
-        mat.emissiveIntensity = 0.035;
-        mat.roughness = 0.4;
-        mat.metalness = 0.14;
-      } else {
-        // Aura: gym vest + shorts
-        mat.color.set(/pant|leg|short|shoe/.test(name) ? '#134e4a' : '#059669');
-        mat.emissive.set(EMERALD.accent);
-        mat.emissiveIntensity = 0.04;
-        mat.roughness = 0.38;
-        mat.metalness = 0.16;
-      }
-      mat.needsUpdate = true;
-      return mat;
-    };
-    mesh.material = Array.isArray(mesh.material) ? mesh.material.map(retint) : retint(mesh.material);
-  });
-}
 
 function collectBones(root: THREE.Object3D): Map<string, THREE.Bone> {
   const map = new Map<string, THREE.Bone>();
@@ -127,25 +102,45 @@ function CoachCharacterInner(props: CoachCharacterProps) {
     isBreathing = false,
     isResting = false,
     swayAmp = 1,
+    propBinding = null,
   } = props;
 
   const modelUrl = TRAINER_MODELS[trainerId].url;
   const group = useRef<THREE.Group>(null);
+  const attachRef = useRef<THREE.Group>(null);
+  const attachPos = useRef(new THREE.Vector3(0, 0, 0));
+  const attachTarget = useRef(new THREE.Vector3(0, 0, 0));
+  const attachYaw = useRef(0);
   const { scene, animations } = useGLTF(modelUrl);
 
   const model = useMemo(() => {
     const cloned = cloneSkinned(scene) as THREE.Object3D;
-    styleTrainerMaterials(cloned, trainerId);
-    if (trainerId === 'aurora') cloned.scale.set(0.96, 0.98, 0.96);
-    else cloned.scale.set(1, 1, 1);
+    applyHumanoidMaterials(cloned, trainerId);
+    const boneMap = collectBones(cloned);
+    applyPhysiqueProfile(cloned, boneMap, trainerId);
+    applyTrainerWardrobe(cloned, boneMap, trainerId);
     return cloned;
   }, [scene, trainerId]);
 
   const bones = useMemo(() => collectBones(model), [model]);
+  const facial = useMemo(() => new FacialRigController(model), [model]);
 
   const cueFlags = useMemo(
     () => parseCueMotion(instructionCue, poseName, yogaAssetId),
     [instructionCue, poseName, yogaAssetId]
+  );
+
+  const facialTarget = useMemo(
+    () =>
+      resolveFacialExpression({
+        mode,
+        animationState,
+        breathPhase,
+        isBreathing,
+        isResting,
+        progress,
+      }),
+    [mode, animationState, breathPhase, isBreathing, isResting, progress]
   );
 
   const proceduralClips = useMemo(() => {
@@ -164,7 +159,7 @@ function CoachCharacterInner(props: CoachCharacterProps) {
   const breath = useMemo(() => new SpringScalar(0.4), []);
   const activeClip = useRef<string | null>(null);
   const floorBox = useMemo(() => new THREE.Box3(), []);
-  const groundKey = `${trainerId}-${mode}-${animationState}-${yogaAssetId ?? ''}-${isResting}-${Math.round(progress * 12)}`;
+  const groundKey = `${trainerId}-${mode}-${animationState}-${yogaAssetId ?? ''}-${isResting}-${Math.round(progress * 12)}-${propBinding?.mode ?? 'bw'}-${propBinding?.gearId ?? ''}`;
 
   useEffect(() => {
     if (!actions) return;
@@ -185,11 +180,12 @@ function CoachCharacterInner(props: CoachCharacterProps) {
     if (next === activeClip.current) return;
     const prev = activeClip.current ? actions[activeClip.current] : null;
     const upcoming = next ? actions[next] : null;
-    if (prev) prev.fadeOut(0.45);
+    if (prev) prev.fadeOut(0.4);
     if (upcoming) {
-      upcoming.reset().fadeIn(0.5).play();
-      upcoming.setEffectiveWeight(0.35);
-      upcoming.setEffectiveTimeScale(0.85);
+      upcoming.reset().fadeIn(0.45).play();
+      // Higher weight so skinned mesh deformation reads as organic, not stick-pose
+      upcoming.setEffectiveWeight(0.55);
+      upcoming.setEffectiveTimeScale(0.9);
       if (mode === 'yoga' || animationState === 'plank' || isResting) {
         upcoming.setLoop(THREE.LoopOnce, 1);
         upcoming.clampWhenFinished = true;
@@ -198,7 +194,7 @@ function CoachCharacterInner(props: CoachCharacterProps) {
       }
     }
     activeClip.current = next;
-  }, [actions, names, isResting, mode, yogaAssetId, animationState]);
+  }, [actions, names, isResting, mode, yogaAssetId, animationState, propBinding?.mode]);
 
   useFrame((state, delta) => {
     mixer?.update(delta);
@@ -208,10 +204,23 @@ function CoachCharacterInner(props: CoachCharacterProps) {
     const dt = Math.min(delta, 0.05);
     const sway = posturalSway(state.clock.elapsedTime, swayAmp * (isResting ? 1.25 : 1));
     const cueOffsets = cueBoneOffsets(cueFlags, state.clock.elapsedTime);
+    const propBones = propBinding?.boneOverlays ?? {};
 
-    group.current.position.set(0, 0, 0);
+    const tx = propBinding?.worldX ?? 0;
+    const tz = propBinding?.worldZ ?? 0;
+    const tyaw = ((propBinding?.yawDeg ?? 0) * Math.PI) / 180;
+    attachTarget.current.set(tx, 0, tz);
+    dampVec3(attachPos.current, attachTarget.current, 6.5, dt);
+    attachYaw.current = THREE.MathUtils.damp(attachYaw.current, tyaw, 6.5, dt);
+    if (attachRef.current) {
+      attachRef.current.position.copy(attachPos.current);
+      attachRef.current.rotation.y = attachYaw.current;
+    }
+
+    group.current.position.set(0, propBinding?.rootYBoost ?? 0, 0);
     slerpEuler(group.current, target.rootRot, dt, 5.2);
 
+    // Drive skinned skeleton from pose library
     for (const [name, eulers] of Object.entries(target.bones)) {
       const bone = bones.get(name);
       if (!bone) continue;
@@ -224,20 +233,42 @@ function CoachCharacterInner(props: CoachCharacterProps) {
         [sx, sy, sz] = sway.head;
       }
       const cue = cueOffsets[name] ?? [0, 0, 0];
-      _euler.set(eulers[0] + sx + cue[0], eulers[1] + sy + cue[1], eulers[2] + sz + cue[2], 'XYZ');
+      const prop = propBones[name] ?? [0, 0, 0];
+      _euler.set(
+        eulers[0] + sx + cue[0] + prop[0],
+        eulers[1] + sy + cue[1] + prop[1],
+        eulers[2] + sz + cue[2] + prop[2],
+        'XYZ'
+      );
       _quat.setFromEuler(_euler);
       bone.quaternion.slerp(_quat, 1 - Math.exp(-8.2 * dt));
     }
 
-    // Cue overlays for bones not in the base pose map (e.g. extra foot pedal on standing)
     for (const [name, cue] of Object.entries(cueOffsets)) {
-      if (target.bones[name]) continue;
+      if (target.bones[name] || propBones[name]) continue;
       const bone = bones.get(name);
       if (!bone) continue;
       _euler.set(bone.rotation.x + cue[0], bone.rotation.y + cue[1], bone.rotation.z + cue[2], 'XYZ');
       _quat.setFromEuler(_euler);
       bone.quaternion.slerp(_quat, 1 - Math.exp(-6.5 * dt));
     }
+
+    for (const [name, prop] of Object.entries(propBones)) {
+      if (target.bones[name]) continue;
+      const bone = bones.get(name);
+      if (!bone) continue;
+      _euler.set(bone.rotation.x + prop[0], bone.rotation.y + prop[1], bone.rotation.z + prop[2], 'XYZ');
+      _quat.setFromEuler(_euler);
+      bone.quaternion.slerp(_quat, 1 - Math.exp(-7 * dt));
+    }
+
+    // Prop contact IK — curve limbs toward bars / blocks / mat
+    group.current.updateWorldMatrix(true, true);
+    const contacts = resolveIkContacts(propBinding, attachPos.current, attachYaw.current);
+    applyLimbIk(bones, contacts);
+
+    // Facial micro-expressions (bone + morph targets when present)
+    facial.update(bones, facialTarget, dt, state.clock.elapsedTime);
 
     const b = breath.step(breathInflation(breathPhase, isBreathing), dt, 9, 6);
     const sx = 1 + b * 0.06;
@@ -251,6 +282,12 @@ function CoachCharacterInner(props: CoachCharacterProps) {
       bone.scale.z = THREE.MathUtils.damp(bone.scale.z, sz, 5, dt);
     }
 
+    const exertion =
+      isResting || mode === 'yoga'
+        ? facialTarget.exertion * 0.4
+        : Math.min(1, facialTarget.exertion + progress * 0.35);
+    applyMuscleDefinition(bones, exertion, dt, trainerId);
+
     if (mode === 'calisthenics' && !isResting && activeClip.current?.includes('_cycle')) {
       const action = actions?.[activeClip.current];
       if (action?.getClip()) {
@@ -260,20 +297,22 @@ function CoachCharacterInner(props: CoachCharacterProps) {
       }
     }
 
-    // Floor collision — lowest vertices on Y=0 regardless of pose
     group.current.updateWorldMatrix(true, true);
     floorBox.setFromObject(group.current);
     if (Number.isFinite(floorBox.min.y)) {
-      group.current.position.y = -floorBox.min.y;
+      const boost = propBinding?.rootYBoost ?? 0;
+      group.current.position.y = -floorBox.min.y + boost * 0.15;
     }
   });
 
   return (
-    <Center bottom precise cacheKey={groundKey}>
-      <group ref={group} dispose={null}>
-        <primitive object={model} />
-      </group>
-    </Center>
+    <group ref={attachRef}>
+      <Center bottom precise cacheKey={groundKey}>
+        <group ref={group} dispose={null}>
+          <primitive object={model} />
+        </group>
+      </Center>
+    </group>
   );
 }
 
@@ -287,42 +326,61 @@ export function CoachCharacter(props: CoachCharacterProps) {
 
 export function StudioSceneChrome({
   children,
-  cameraTarget = [0, 1, 0] as [number, number, number],
+  cameraTarget = [0, 1.1, 0] as [number, number, number],
+  omitFloor = false,
+  floorRadius = 2.6,
+  orbitEnabled = true,
 }: {
   children: React.ReactNode;
   cameraTarget?: [number, number, number];
+  omitFloor?: boolean;
+  floorRadius?: number;
+  orbitEnabled?: boolean;
 }) {
   return (
     <>
-      <color attach="background" args={[EMERALD.bgDeep]} />
-      <fog attach="fog" args={[EMERALD.fog, 5, 14]} />
-      <ambientLight intensity={0.42} color="#a7f3d0" />
+      <color attach="background" args={['#1a1d22']} />
+      <fog attach="fog" args={['#1f242b', 10, 28]} />
+      <Environment preset="warehouse" environmentIntensity={0.4} />
+      <ambientLight intensity={0.22} color="#c8d0da" />
+      {/* Cool-white key — industrial LED wash */}
       <directionalLight
         castShadow
-        position={[3.5, 6.2, 2.8]}
-        intensity={1.35}
-        color="#ecfdf5"
-        shadow-mapSize={[1024, 1024]}
-        shadow-bias={-0.0002}
+        position={[2.5, 5.8, 3.2]}
+        intensity={1.15}
+        color="#e8f0ff"
+        shadow-mapSize={[2048, 2048]}
+        shadow-bias={-0.00015}
+        shadow-normalBias={0.025}
+        shadow-camera-far={24}
+        shadow-camera-left={-8}
+        shadow-camera-right={8}
+        shadow-camera-top={8}
+        shadow-camera-bottom={-8}
       />
-      <directionalLight position={[-3, 3.5, -2]} intensity={0.45} color={EMERALD.rim} />
-      <pointLight position={[0.4, 2.2, 1.8]} intensity={0.65} color={EMERALD.accent} distance={9} />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-        <circleGeometry args={[2.6, 64]} />
-        <meshStandardMaterial color={EMERALD.bgMid} roughness={0.9} metalness={0.05} />
-      </mesh>
+      <directionalLight position={[-4, 3.5, -2]} intensity={0.35} color="#94a3b8" />
+      <directionalLight position={[0, 2.5, 5]} intensity={0.25} color="#cbd5e1" />
+      {/* Window fill — soft daylight from ribbon glazing */}
+      <directionalLight position={[6, 3.2, 0]} intensity={0.45} color="#b8c9b5" />
+      {!omitFloor && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
+          <circleGeometry args={[floorRadius, 64]} />
+          <meshStandardMaterial color="#3a3d42" roughness={0.92} metalness={0.05} />
+        </mesh>
+      )}
       {children}
-      <ContactShadows position={[0, 0, 0]} opacity={0.5} scale={7} blur={2} far={4.5} color={EMERALD.bgDeep} />
+      <ContactShadows position={[0, 0.01, 0]} opacity={0.65} scale={14} blur={2.4} far={6} color="#0a0a0a" />
       <OrbitControls
         makeDefault
+        enabled={orbitEnabled}
         enablePan={false}
         enableZoom
         enableDamping
         dampingFactor={0.05}
-        minDistance={2}
-        maxDistance={6.5}
-        minPolarAngle={0.2}
-        maxPolarAngle={Math.PI / 2}
+        minDistance={2.2}
+        maxDistance={9}
+        minPolarAngle={0.15}
+        maxPolarAngle={Math.PI / 2 - 0.05}
         target={cameraTarget}
       />
     </>

@@ -18,8 +18,8 @@ export const EmailVerifyBanner: React.FC<EmailVerifyBannerProps> = ({
   if (dismissed) return null;
 
   return (
-    <div className="border-b border-amber-400/30 bg-amber-400/10 py-2.5 px-4">
-      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+    <div className="border-b border-amber-400/30 bg-amber-400/10 py-2.5">
+      <div className="layout-container flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
         <div className="flex items-start sm:items-center gap-2 text-[#FFFAF4]">
           <Mail className="w-4 h-4 text-amber-300 shrink-0 mt-0.5 sm:mt-0" />
           <span>
@@ -27,19 +27,19 @@ export const EmailVerifyBanner: React.FC<EmailVerifyBannerProps> = ({
             your inbox (and spam) for the link we sent.
           </span>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-center">
           <button
             type="button"
             onClick={onResend}
             disabled={sending}
-            className="btn-ghost text-[11px] py-1 px-3"
+            className="btn-ghost text-[11px] py-1 px-3 min-h-[44px]"
           >
             {sending ? 'Sending…' : 'Resend email'}
           </button>
           <button
             type="button"
             onClick={onRefresh}
-            className="bg-primary text-[var(--color-primary-foreground)] font-bold px-3 py-1 rounded-[4px] text-[11px] whitespace-nowrap inline-flex items-center gap-1"
+            className="bg-primary text-[var(--color-primary-foreground)] font-bold px-3 py-1 rounded-[4px] text-[11px] whitespace-nowrap inline-flex items-center gap-1 min-h-[44px]"
           >
             <RefreshCw className="w-3 h-3" />
             I confirmed
@@ -47,7 +47,7 @@ export const EmailVerifyBanner: React.FC<EmailVerifyBannerProps> = ({
           <button
             type="button"
             onClick={() => setDismissed(true)}
-            className="text-[11px] text-slate-400 hover:text-white px-1"
+            className="text-[11px] text-slate-400 hover:text-white px-2 min-h-[44px]"
           >
             Later
           </button>

@@ -4,19 +4,27 @@ export type TrainerId = 'aura' | 'aurora';
 
 export const TRAINER_MODELS: Record<
   TrainerId,
-  { id: TrainerId; label: string; url: string; outfit: 'gym' | 'yoga' }
+  {
+    id: TrainerId;
+    label: string;
+    url: string;
+    outfit: 'gym' | 'yoga';
+    wardrobeLabel: string;
+  }
 > = {
   aura: {
     id: 'aura',
     label: 'Aura',
     url: '/models/male_trainer.glb',
     outfit: 'gym',
+    wardrobeLabel: 'Vest · shorts · sneakers',
   },
   aurora: {
     id: 'aurora',
     label: 'Aurora',
     url: '/models/female_trainer.glb',
     outfit: 'yoga',
+    wardrobeLabel: 'Sports bra · leggings · barefoot',
   },
 };
 

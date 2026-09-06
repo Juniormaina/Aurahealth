@@ -65,10 +65,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   ];
 
   return (
-    <div className="min-h-screen flex flex-col font-sans selection:bg-rose-500/40 bg-canvas text-white admin-shell">
+    <div className="min-h-dvh flex flex-col font-sans selection:bg-rose-500/40 bg-canvas text-white admin-shell">
       {/* Admin Header */}
-      <header className="border-b border-slate-800/80 bg-gradient-to-r from-slate-900 via-rose-950/40 to-slate-900 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3 min-w-0">
+      <header className="border-b border-slate-800/80 bg-gradient-to-r from-slate-900 via-rose-950/40 to-slate-900 backdrop-blur-md sticky top-0 z-40 pt-[var(--safe-top)]">
+        <div className="layout-container py-3 sm:py-4 flex items-center justify-between gap-3 min-w-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center justify-center shrink-0">
               <ShieldCheck className="w-5 h-5" />
@@ -82,7 +82,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={onBackToLanding}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5"
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 min-h-[44px]"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Back to Landing</span>
@@ -90,7 +90,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <button
               onClick={onSignOut}
-              className="bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-200 border border-slate-700 px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5"
+              className="bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-200 border border-slate-700 px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 min-h-[44px]"
             >
               <LogOut className="w-3.5 h-3.5 text-rose-400" />
               <span className="hidden sm:inline">Sign Out</span>
@@ -99,7 +99,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* Admin Sub-Navigation */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="layout-container">
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-3">
             {adminNavItems.map((item) => {
               const Icon = item.icon;
@@ -108,7 +108,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <button
                   key={item.id}
                   onClick={() => setAdminTab(item.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border min-h-[44px] ${
                     isActive
                       ? 'bg-rose-500 text-white border-rose-500 shadow-md'
                       : 'bg-slate-800/50 text-slate-300 border-slate-700 hover:bg-slate-700/60'
@@ -124,7 +124,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </header>
 
       {/* Admin Content Viewport */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 layout-container py-6 space-y-6 pb-[max(1.5rem,var(--safe-bottom))]">
         {adminTab === 'sponsors' && (
           <CommunitySponsorPools
             pools={pools}

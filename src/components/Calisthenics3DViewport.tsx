@@ -1,4 +1,4 @@
-import React, { Suspense, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import type { MovementPattern } from '../content/calisthenicsProgram';
 import {
@@ -11,6 +11,10 @@ import {
 import { OrganicViewportShell } from './organic/OrganicAvatar';
 import { CoachCharacter, StudioSceneChrome } from './organic/CoachCharacter';
 import { TrainerSelect } from './organic/TrainerSelect';
+import { StudioGearPanel } from './organic/StudioGearPanel';
+import { StudioPlayground } from './organic/StudioPlayground';
+import { useStudioPlayground } from './organic/useStudioPlayground';
+import { STUDIO_GRID } from './organic/studioPlaygroundState';
 import { loadTrainerId, saveTrainerId, type TrainerId } from './organic/trainerConfig';
 import type { BreathPhase } from './organic/organicMotion';
 
@@ -70,6 +74,7 @@ export const Calisthenics3DViewport: React.FC<Calisthenics3DViewportProps> = ({
   className = '',
 }) => {
   const [trainerId, setTrainerId] = useState<TrainerId>(() => loadTrainerId());
+  const playground = useStudioPlayground();
 
   const config = useMemo(
     () =>
@@ -87,6 +92,18 @@ export const Calisthenics3DViewport: React.FC<Calisthenics3DViewportProps> = ({
   const phaseElapsed = Math.max(0, phaseTotal - phaseLeft);
   const progress = isResting ? 0 : motionProgress(phase, phaseElapsed, phaseTotal || 1);
   const breathPhase = phaseToBreath(phase, isResting);
+  const exerciseKey = isResting ? 'rest' : config.id;
+
+  useEffect(() => {
+    playground.syncExercise({
+      mode: 'calisthenics',
+      exerciseKey,
+      animationState,
+      libraryId: config.id,
+      isResting,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync on module / rest transition
+  }, [exerciseKey, animationState, isResting, config.id]);
 
   const onTrainerChange = (id: TrainerId) => {
     setTrainerId(id);
@@ -96,11 +113,30 @@ export const Calisthenics3DViewport: React.FC<Calisthenics3DViewportProps> = ({
   return (
     <OrganicViewportShell
       className={className}
+      expanded={playground.state.editMode}
+      bottomRight={
+        playground.state.editMode
+          ? 'Drag props on grid · orbit disabled while dragging'
+          : playground.propBinding.mode !== 'bodyweight'
+            ? `Aligned · ${playground.propBinding.label}`
+            : 'Drag to orbit · scroll to zoom'
+      }
       topLeft={
         <>
           <TrainerSelect value={trainerId} onChange={onTrainerChange} />
+          <StudioGearPanel
+            mode="calisthenics"
+            state={playground.state}
+            aiStatus={playground.propBinding.label}
+            onToggleEdit={() => playground.setEditMode(!playground.state.editMode)}
+            onAdd={playground.addGear}
+            onApplyZone={playground.applyZone}
+            onRotate={playground.rotateSelected}
+            onRemove={playground.removeSelected}
+            onClear={playground.clearAll}
+          />
           <span className="rounded-md bg-black/40 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-200/90 backdrop-blur-sm w-fit">
-            {label ?? (isResting ? 'Recovery' : 'Coach Aura · live')}
+            {label ?? (isResting ? 'Recovery' : 'Aura studio · live')}
           </span>
         </>
       }
@@ -126,11 +162,29 @@ export const Calisthenics3DViewport: React.FC<Calisthenics3DViewportProps> = ({
       <Canvas
         shadows
         dpr={[1, 1.75]}
-        camera={{ position: [2.7, 1.75, 3.5], fov: 36, near: 0.1, far: 40 }}
+        camera={{ position: [3.4, 2.1, 4.2], fov: 38, near: 0.1, far: 50 }}
         gl={{ antialias: true, alpha: false }}
+        style={{ width: '100%', height: '100%', touchAction: playground.state.editMode ? 'none' : 'auto' }}
       >
         <Suspense fallback={null}>
-          <StudioSceneChrome>
+          <StudioSceneChrome
+            omitFloor
+            floorRadius={STUDIO_GRID.floorRadius}
+            orbitEnabled={!playground.dragging}
+          >
+            <StudioPlayground
+              instances={playground.state.instances}
+              selectedId={playground.state.selectedId}
+              editMode={playground.state.editMode}
+              onSelect={playground.select}
+              onMove={playground.moveInstance}
+              onDraggingChange={playground.setDragging}
+              showChair={
+                playground.state.sessionMeta?.bindMode === 'chair' ||
+                playground.state.sessionMeta?.activeGearId === 'gym_chair' ||
+                playground.propBinding.mode === 'chair'
+              }
+            />
             <CoachCharacter
               mode="calisthenics"
               trainerId={trainerId}
@@ -144,6 +198,7 @@ export const Calisthenics3DViewport: React.FC<Calisthenics3DViewportProps> = ({
               swayAmp={
                 isResting ? 1.25 : animationState === 'plank' || animationState === 'hang' ? 1.1 : 0.95
               }
+              propBinding={playground.propBinding}
             />
           </StudioSceneChrome>
         </Suspense>

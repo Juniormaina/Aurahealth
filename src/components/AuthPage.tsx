@@ -113,9 +113,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const displayError = emailError || authError;
 
   return (
-    <div className="min-h-screen min-h-[100dvh] landscape-shell flex flex-col">
+    <div className="min-h-dvh landscape-shell flex flex-col">
       <header className="sticky top-0 z-40 navbar-gradient">
-        <div className="max-w-lg mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+        <div className="layout-container-narrow py-3 flex items-center justify-between gap-3">
           <button type="button" onClick={onBack} className="btn-ghost text-xs">
             <ArrowLeft className="w-3.5 h-3.5" />
             Back
@@ -125,7 +125,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <main className="flex-1 w-full layout-container-narrow py-8 sm:py-12 pb-[max(2rem,var(--safe-bottom))]">
         <h1 className="view-title mb-2">
           {emailTab === 'signup' ? 'Create your Aura Health account' : 'Sign in to Aura Health'}
         </h1>

@@ -20,14 +20,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   return (
     <header className="navbar-gradient sticky top-0 z-30">
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-3">
-          <div className="flex items-center gap-2 min-w-0">
+      <div className="layout-container">
+        <div className="flex items-center justify-between min-h-16 h-16 gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             {onToggleMobileMenu && (
               <button
                 type="button"
                 onClick={onToggleMobileMenu}
-                className="lg:hidden p-2 text-white hover:text-[var(--color-harmony)]"
+                className="lg:hidden touch-target inline-flex items-center justify-center rounded-lg text-white hover:text-[var(--color-harmony)] -ml-1"
                 aria-label="Open menu"
               >
                 <Menu className="w-5 h-5" />
@@ -38,12 +38,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0 justify-end">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 justify-end min-w-0">
             {onOpenSearch && (
               <button
                 type="button"
                 onClick={onOpenSearch}
-                className="btn-ghost text-xs sm:text-sm"
+                className="btn-ghost text-xs sm:text-sm px-2 sm:px-4"
                 aria-label="Search (⌘K)"
               >
                 <Search className="w-4 h-4" />
@@ -57,14 +57,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onSignOut}
-                className="btn-ghost text-xs sm:text-sm"
+                className="btn-ghost text-xs sm:text-sm px-2 sm:px-4"
                 aria-label="Sign out"
               >
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">Sign out</span>
               </button>
             )}
-            <button type="button" onClick={onOpenCheckin} className="flex items-center gap-2 btn-primary shrink-0">
+            <button type="button" onClick={onOpenCheckin} className="flex items-center gap-2 btn-primary shrink-0 px-3 sm:px-5">
               <Sparkles className="w-4 h-4" />
               <span className="hidden sm:inline">+ Check-In</span>
               <span className="sm:hidden">+</span>

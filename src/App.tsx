@@ -1056,7 +1056,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex font-sans selection:bg-primary selection:text-primary-foreground landscape-shell">
+    <div className="min-h-dvh flex font-sans selection:bg-primary selection:text-primary-foreground landscape-shell">
       <Sidebar
         activeTab={activeTab}
         onNavigate={handleNavigateTab}
@@ -1073,7 +1073,7 @@ export default function App() {
         onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      <div className="flex-1 flex flex-col min-h-screen min-w-0 app-shell-main">
+      <div className="flex-1 flex flex-col min-h-dvh min-w-0 app-shell-main">
         <Navbar
           stats={stats}
           userName={userAccount?.name}
@@ -1084,8 +1084,8 @@ export default function App() {
         />
 
       {isDemoMode && !userAccount && (
-        <div className="trust-band border-b border-[#FFFAF4]/12 py-2.5 px-4">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+        <div className="trust-band border-b border-[#FFFAF4]/12 py-2.5">
+          <div className="layout-container flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2 text-[#FFFAF4]">
               <Compass className="w-4 h-4 text-[var(--color-harmony)] shrink-0" />
               <span>
@@ -1111,7 +1111,7 @@ export default function App() {
       )}
 
       {/* Main Content Viewport */}
-      <main className="flex-1 max-w-7xl w-full min-w-0 mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-28 lg:pb-6">
+      <main className="flex-1 layout-container min-w-0 py-4 sm:py-6 space-y-6 pb-[calc(var(--bottom-nav-h)+var(--safe-bottom)+1.25rem)] lg:pb-6">
         {activeTab === 'companion' && (
           <DashboardHome
             companion={companion}
@@ -1237,18 +1237,18 @@ export default function App() {
 
       {/* Footer */}
       <footer className="bg-navy py-6 text-center text-xs text-[#FFFAF4]/70">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+        <div className="layout-container flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap justify-center">
             <button
               onClick={handleBackToLanding}
-              className="text-[#FFFAF4]/80 hover:text-[var(--color-harmony)] underline text-xs"
+              className="text-[#FFFAF4]/80 hover:text-[var(--color-harmony)] underline text-xs min-h-[44px] px-1"
             >
               Back to Landing
             </button>
             <span>•</span>
             <strong className="text-[#FFFAF4]">Aura Health</strong> · Daily wellness
           </div>
-          <div className="flex items-center gap-4 text-[11px]">
+          <div className="flex items-center gap-4 text-[11px] flex-wrap justify-center">
             <span className="inline-flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
               Ledger Synced
