@@ -1,0 +1,15 @@
+{
+  "name": "local-free-motion",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Zero-cost local MCP server for Aura Health motion frames over stdio",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "smoke": "node smoke.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.2"
+  }
+}

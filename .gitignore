@@ -23,4 +23,6 @@ cache/
 typechain-types/
 .gstack/
 
+tmp/local-free-motion/
+
 .aura-security-check-server.log

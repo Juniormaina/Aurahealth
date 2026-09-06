@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "local-free-motion": {
+      "command": "node",
+      "args": [
+        "C:/Users/hp/Desktop/Aurahealth-2/mcp/local-free-motion/index.js"
+      ],
+      "env": {
+        "WORKSPACE_ROOT": "C:/Users/hp/Desktop/Aurahealth-2",
+        "LOCAL_MOTION_OUT": "C:/Users/hp/Desktop/Aurahealth-2/tmp/local-free-motion",
+        "PYTHONUTF8": "1"
+      }
+    }
+  }
+}
