@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { useReducedMotionPref } from '../../lib/motionPrefs';
 
 export const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -19,6 +20,7 @@ interface RevealProps {
 }
 
 export const Reveal: React.FC<RevealProps> = ({ children, className = '', id, as = 'section' }) => {
+  const reduce = useReducedMotionPref();
   const Tag = as === 'div' ? motion.div : motion.section;
   return (
     <Tag
@@ -27,7 +29,7 @@ export const Reveal: React.FC<RevealProps> = ({ children, className = '', id, as
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, amount: 0.18 }}
-      variants={stagger}
+      variants={reduce ? { hidden: {}, show: {} } : stagger}
     >
       {children}
     </Tag>

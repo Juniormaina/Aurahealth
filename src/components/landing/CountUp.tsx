@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { prefersReducedMotion } from '../../lib/motionPrefs';
 
 interface CountUpProps {
   to: number;
@@ -21,7 +22,7 @@ export const CountUp: React.FC<CountUpProps> = ({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = prefersReducedMotion();
     if (reduce) {
       setValue(to);
       return;

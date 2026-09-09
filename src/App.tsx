@@ -76,7 +76,7 @@ import {
 } from './services/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
-import confetti from 'canvas-confetti';
+import { celebrate, celebrateLevelUp } from './lib/celebrate';
 import { Compass, Home, Search, MessageSquare, Award, Dumbbell } from 'lucide-react';
 
 function applyLedger(prev: EconomyStats, ledger: LedgerSnapshot): EconomyStats {
