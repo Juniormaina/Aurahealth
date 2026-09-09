@@ -25,7 +25,7 @@ export const Yoga3DViewport: React.FC<Yoga3DViewportProps> = ({
   animationAssetId,
   poseName,
   instructionCue,
-  breathPhase = 'idle',
+  breathPhase: incomingBreath,
   isBreathing = false,
   label,
   className = '',
@@ -33,6 +33,8 @@ export const Yoga3DViewport: React.FC<Yoga3DViewportProps> = ({
   const [trainerId, setTrainerId] = useState<TrainerId>(() => loadTrainerId());
   const playground = useStudioPlayground();
   const reduceMotion = useReducedMotionPref();
+  const breathPhase: BreathPhase = incomingBreath ?? 'idle';
+  const coachBreath: BreathPhase = reduceMotion ? 'idle' : breathPhase;
 
   useEffect(() => {
     playground.syncExercise({
@@ -118,7 +120,7 @@ export const Yoga3DViewport: React.FC<Yoga3DViewportProps> = ({
               yogaAssetId={animationAssetId}
               poseName={poseName}
               instructionCue={instructionCue}
-              breathPhase={reduceMotion ? 'idle' : breathPhase}
+              breathPhase={coachBreath}
               isBreathing={isBreathing && !reduceMotion}
               swayAmp={reduceMotion ? 0 : breathPhase === 'idle' && !isBreathing ? 0.9 : 1.15}
               propBinding={playground.propBinding}
