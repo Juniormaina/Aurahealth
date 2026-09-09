@@ -76,7 +76,7 @@ import {
 } from './services/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
-import { celebrate, celebrateLevelUp } from './lib/celebrate';
+import { celebrateLevelUp } from './lib/celebrate';
 import { Compass, Home, Search, MessageSquare, Award, Dumbbell } from 'lucide-react';
 
 function applyLedger(prev: EconomyStats, ledger: LedgerSnapshot): EconomyStats {
@@ -322,12 +322,6 @@ export default function App() {
               ? `Welcome ${name}! Authenticated session active.`
               : `Welcome ${name}! Confirm the link we sent to ${user.email} to unlock Cowries and Astra chat.`
           );
-          confetti({
-            particleCount: 90,
-            spread: 80,
-            origin: { y: 0.6 },
-            colors: ['#e11d48', '#38bdf8', '#10b981', '#fbbf24'],
-          });
         }
       } catch (err: unknown) {
         authSyncedUidRef.current = null;
@@ -547,6 +541,7 @@ export default function App() {
             newLevel += 1;
             if (newLevel >= 5 && prev.stage === 'Hatchling') newStage = 'Spark Companion';
           }
+          celebrateLevelUp(prev.level, newLevel);
           const updated = {
             ...prev,
             totalCheckIns: prev.totalCheckIns + 1,
@@ -599,6 +594,7 @@ export default function App() {
           newLevel += 1;
           if (newLevel >= 5 && prev.stage === 'Hatchling') newStage = 'Spark Companion';
         }
+        celebrateLevelUp(prev.level, newLevel);
         const updated = {
           ...prev,
           totalCheckIns: prev.totalCheckIns + 1,
@@ -675,6 +671,7 @@ export default function App() {
         if (nextLevel >= 2 && prev.stage === 'Egg') nextStage = 'Hatchling';
         if (nextLevel >= 5 && prev.stage === 'Hatchling') nextStage = 'Spark Companion';
       }
+      celebrateLevelUp(prev.level, nextLevel);
       const updated = {
         ...prev,
         ...(extras ? extras(prev) : {}),
@@ -915,13 +912,6 @@ export default function App() {
       `Claimed ${targetPool.rewardPerMilestone} · not on-chain`
     );
     setTxLogs((prev) => [tx, ...prev]);
-
-    confetti({
-      particleCount: 100,
-      spread: 100,
-      origin: { y: 0.5 },
-      colors: ['#e11d48', '#fbbf24', '#10b981'],
-    });
 
     showToast(`Claimed ${targetPool.rewardPerMilestone} from ${targetPool.sponsorName}!`);
   };

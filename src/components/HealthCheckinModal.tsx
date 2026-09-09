@@ -6,7 +6,7 @@ import { WearablesSyncModal, SyncedBiometrics } from './WearablesSyncModal';
 import { useHealthData, HealthSource } from '../services/healthDataService';
 import { authorizedFetch } from '../services/commerce';
 import { checkinPayout } from '../server/rewardsCatalog';
-import confetti from 'canvas-confetti';
+import { celebrate } from '../lib/celebrate';
 
 interface HealthCheckinModalProps {
   isOpen: boolean;
@@ -155,12 +155,7 @@ export const HealthCheckinModal: React.FC<HealthCheckinModalProps> = ({
       aiFeedback,
     };
 
-    confetti({
-      particleCount: 70,
-      spread: 80,
-      origin: { y: 0.5 },
-      colors: ['#10b981', '#38bdf8', '#fbbf24', '#f43f5e'],
-    });
+    celebrate('checkin');
 
     setIsSubmitting(false);
     onSuccess(newCheckIn);

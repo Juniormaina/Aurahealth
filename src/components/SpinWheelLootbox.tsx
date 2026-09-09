@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { WHEEL_PRIZES } from '../data/initialData';
 import { WheelPrize } from '../types';
 import { Sparkles, Gift, X } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { celebrate } from '../lib/celebrate';
+import { prefersReducedMotion } from '../lib/motionPrefs';
 
 interface SpinWheelLootboxProps {
   onRequestSpin: () => Promise<WheelPrize>;
@@ -48,16 +49,12 @@ export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onRequestSpi
     const targetDegree = 360 * 5 + (360 - prizeIndex * degreesPerSlice - degreesPerSlice / 2);
     setRotation((prev) => prev + targetDegree);
 
+    const settleMs = prefersReducedMotion() ? 0 : 4000;
     window.setTimeout(() => {
       setIsSpinning(false);
       setSelectedPrize(won);
-      confetti({
-        particleCount: 80,
-        spread: 90,
-        origin: { y: 0.6 },
-        colors: ['#38bdf8', '#f59e0b', '#ec4899', '#10b981'],
-      });
-    }, 4000);
+      celebrate('wheel');
+    }, settleMs);
   };
 
   return (
@@ -78,7 +75,9 @@ export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onRequestSpi
 
       <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs text-slate-300">
         <span className="text-amber-300 font-bold mr-2">Live</span>
-        {COMMUNITY_WINS[tickerIndex]}
+        <span key={tickerIndex} className="wheel-ticker-fade">
+          {COMMUNITY_WINS[tickerIndex]}
+        </span>
       </div>
       <p className="text-[11px] text-slate-500">Balance: {cowriesBalance.toLocaleString()} Cowries · Up to 3 spins per day</p>
 
