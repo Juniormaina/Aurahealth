@@ -21,15 +21,7 @@ export interface StudioPlaygroundProps {
   showChair?: boolean;
 }
 
-function DraggableGear({
-  instance,
-  selected,
-  editMode,
-  others,
-  onSelect,
-  onMove,
-  onDraggingChange,
-}: {
+type DraggableGearProps = {
   instance: GearInstance;
   selected: boolean;
   editMode: boolean;
@@ -37,7 +29,17 @@ function DraggableGear({
   onSelect: (id: string | null) => void;
   onMove: (id: string, x: number, z: number) => void;
   onDraggingChange?: (dragging: boolean) => void;
-}) {
+};
+
+const DraggableGear: React.FC<DraggableGearProps> = ({
+  instance,
+  selected,
+  editMode,
+  others,
+  onSelect,
+  onMove,
+  onDraggingChange,
+}) => {
   const dragging = useRef(false);
   const instanceRef = useRef(instance);
   const othersRef = useRef(others);
@@ -121,7 +123,7 @@ function DraggableGear({
       />
     </group>
   );
-}
+};
 
 /** Industrial gym facility + session gear instances on rubber tile floor. */
 export function StudioPlayground({

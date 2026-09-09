@@ -88,46 +88,53 @@ export const Yoga3DViewport: React.FC<Yoga3DViewportProps> = ({
         ) : null
       }
     >
-      <Canvas
-        shadows
-        dpr={[1, 1.75]}
-        camera={{ position: [3.2, 2.0, 4.0], fov: 38, near: 0.1, far: 50 }}
-        gl={{ antialias: true, alpha: false }}
-        style={{ width: '100%', height: '100%', touchAction: playground.state.editMode ? 'none' : 'auto' }}
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          touchAction: playground.state.editMode ? 'none' : 'auto',
+        }}
       >
-        <Suspense fallback={null}>
-          <StudioSceneChrome
-            omitFloor
-            floorRadius={STUDIO_GRID.floorRadius}
-            orbitEnabled={!playground.dragging}
-          >
-            <StudioPlayground
-              instances={playground.state.instances}
-              selectedId={playground.state.selectedId}
-              editMode={playground.state.editMode}
-              onSelect={playground.select}
-              onMove={playground.moveInstance}
-              onDraggingChange={playground.setDragging}
-              showChair={
-                playground.state.sessionMeta?.bindMode === 'chair' ||
-                playground.state.sessionMeta?.activeGearId === 'gym_chair' ||
-                playground.propBinding.mode === 'chair'
-              }
-            />
-            <CoachCharacter
-              mode="yoga"
-              trainerId={trainerId}
-              yogaAssetId={animationAssetId}
-              poseName={poseName}
-              instructionCue={instructionCue}
-              breathPhase={coachBreath}
-              isBreathing={isBreathing && !reduceMotion}
-              swayAmp={reduceMotion ? 0 : breathPhase === 'idle' && !isBreathing ? 0.9 : 1.15}
-              propBinding={playground.propBinding}
-            />
-          </StudioSceneChrome>
-        </Suspense>
-      </Canvas>
+        <Canvas
+          shadows
+          dpr={[1, 1.75]}
+          camera={{ position: [3.2, 2.0, 4.0], fov: 38, near: 0.1, far: 50 }}
+          gl={{ antialias: true, alpha: false }}
+        >
+          <Suspense fallback={null}>
+            <StudioSceneChrome
+              omitFloor
+              floorRadius={STUDIO_GRID.floorRadius}
+              orbitEnabled={!playground.dragging}
+            >
+              <StudioPlayground
+                instances={playground.state.instances}
+                selectedId={playground.state.selectedId}
+                editMode={playground.state.editMode}
+                onSelect={playground.select}
+                onMove={playground.moveInstance}
+                onDraggingChange={playground.setDragging}
+                showChair={
+                  playground.state.sessionMeta?.bindMode === 'chair' ||
+                  playground.state.sessionMeta?.activeGearId === 'gym_chair' ||
+                  playground.propBinding.mode === 'chair'
+                }
+              />
+              <CoachCharacter
+                mode="yoga"
+                trainerId={trainerId}
+                yogaAssetId={animationAssetId}
+                poseName={poseName}
+                instructionCue={instructionCue}
+                breathPhase={coachBreath}
+                isBreathing={isBreathing && !reduceMotion}
+                swayAmp={reduceMotion ? 0 : breathPhase === 'idle' && !isBreathing ? 0.9 : 1.15}
+                propBinding={playground.propBinding}
+              />
+            </StudioSceneChrome>
+          </Suspense>
+        </Canvas>
+      </div>
     </OrganicViewportShell>
   );
 };

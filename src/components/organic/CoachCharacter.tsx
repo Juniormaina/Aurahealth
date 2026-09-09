@@ -318,8 +318,8 @@ function CoachCharacterInner(props: CoachCharacterProps) {
 
 export function CoachCharacter(props: CoachCharacterProps) {
   return (
-    <Suspense fallback={null}>
-      <CoachCharacterInner key={props.trainerId} {...props} />
+    <Suspense key={props.trainerId} fallback={null}>
+      <CoachCharacterInner {...props} />
     </Suspense>
   );
 }
