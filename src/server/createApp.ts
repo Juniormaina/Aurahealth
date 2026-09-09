@@ -33,17 +33,15 @@ import { applySecurityMiddleware, isSafeHttpUrl } from './securityMiddleware';
 import {
   aiHealthStatus,
   buildCheckinPrompt,
-  buildCoachInstruction,
   CHECKIN_RESPONSE_SCHEMA,
+  CoachGenerateError,
+  generateCoachReply,
   getGeminiAI,
   geminiModel,
   hasGeminiKey,
   heuristicCheckin,
   parseCheckinAttestation,
   parseCheckinImage,
-  resolveSessionLanguage,
-  shouldSearch,
-  tavilySearch,
 } from './ai';
 
 /** Express app with API routes only (no Vite / static). Used by Cloud Run and Vercel. */
@@ -333,8 +331,11 @@ export function createApiApp(): express.Express {
   app.post('/api/ai-coach', requireAuth, ...geminiLimit, async (req, res) => {
     try {
       const { userMessage, companionState, history, language, latestAnxiety } = req.body || {};
-      const userText = String(userMessage || '').slice(0, 4000);
-      const languageName = resolveSessionLanguage(language).native;
+      const userText = String(userMessage || '').trim().slice(0, 4000);
+
+      if (!userText) {
+        return res.status(400).json({ error: 'Message required', code: 'empty_message' });
+      }
 
       if (looksLikeCrisis(userText)) {
         return res.json({
@@ -359,43 +360,24 @@ export function createApiApp(): express.Express {
         });
       }
 
-      const ai = getGeminiAI();
-      const searchResults = shouldSearch(userText) ? await tavilySearch(userText) : [];
-      const baseInstruction = buildCoachInstruction({
+      const result = await generateCoachReply({
+        userMessage: userText,
+        history: Array.isArray(history) ? history : [],
         companionState,
+        language,
         latestAnxiety,
-        languageName,
-        hasSearch: searchResults.length > 0,
-      });
-
-      const userTurnText =
-        searchResults.length > 0
-          ? `${userText}\n\n[Live web search results for reference — use if relevant, ignore for casual chit-chat]\n${searchResults
-              .map((r, i) => `${i + 1}. ${r.title} (${r.url})\n${r.content}`)
-              .join('\n\n')}`
-          : userText;
-
-      const contents = [
-        ...(Array.isArray(history) ? history : []).slice(-12).map((m: { sender: string; text: string }) => ({
-          role: m.sender === 'user' ? 'user' : 'model',
-          parts: [{ text: String(m?.text || '').slice(0, 2000) }],
-        })),
-        { role: 'user', parts: [{ text: userTurnText }] },
-      ];
-
-      const response = await ai.models.generateContent({
-        model: geminiModel(),
-        contents,
-        config: { systemInstruction: baseInstruction },
       });
 
       res.json({
-        reply: response.text || "Astra beams with energy! Let's keep your health streak going!",
-        sources: searchResults
+        reply: result.reply,
+        sources: result.sources
           .filter((r) => isSafeHttpUrl(r.url))
           .map((r) => ({ title: String(r.title || '').slice(0, 200), uri: r.url })),
       });
     } catch (err) {
+      if (err instanceof CoachGenerateError && err.code === 'empty_message') {
+        return res.status(400).json({ error: err.message, code: err.code });
+      }
       console.warn('AI coach error:', err instanceof Error ? err.message : 'unknown');
       res.status(503).json({
         error: 'Astra could not reach the AI service just then. Please try again.',

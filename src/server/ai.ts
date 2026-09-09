@@ -1,5 +1,22 @@
 import { GoogleGenAI } from '@google/genai';
 import { resolveSessionLanguage } from '../content/valueProps';
+import {
+  buildCoachInstruction,
+  formatSearchContext,
+  shouldSearch,
+  toGeminiContents,
+  type CoachHistoryItem,
+  type SearchHit,
+} from './coachTurn';
+
+export {
+  buildCoachInstruction,
+  formatSearchContext,
+  normalizeAnxiety,
+  shouldSearch,
+  toGeminiContents,
+} from './coachTurn';
+export type { CoachHistoryItem, GeminiContent, SearchHit } from './coachTurn';
 
 export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
 
@@ -32,8 +49,6 @@ export function aiHealthStatus() {
   };
 }
 
-export type SearchHit = { title: string; url: string; content: string };
-
 export async function tavilySearch(query: string): Promise<SearchHit[]> {
   const apiKey = process.env.TAVILY_API_KEY?.trim();
   if (!apiKey) return [];
@@ -54,13 +69,6 @@ export async function tavilySearch(query: string): Promise<SearchHit[]> {
     console.warn('Tavily search failed:', err instanceof Error ? err.message : 'unknown');
     return [];
   }
-}
-
-const APP_CONTEXT_TERMS =
-  /\b(streak|cowrie|cowries|xp|level|badge|companion|astra|wheel|sponsor|check-?in|cosmic|egg|hatchling|vitality|harmony|mission|quest)\b/i;
-
-export function shouldSearch(text: string): boolean {
-  return text.trim().length >= 8 && !APP_CONTEXT_TERMS.test(text);
 }
 
 export type CheckinAttestation = {
@@ -161,35 +169,63 @@ export function heuristicCheckin(medicationTaken: boolean, sleep: number): Check
   };
 }
 
-export function buildCoachInstruction(input: {
+export type CoachGenerateResult = {
+  reply: string;
+  sources: SearchHit[];
+  searched: boolean;
+};
+
+export class CoachGenerateError extends Error {
+  code: 'empty_message' | 'empty_reply';
+  constructor(code: CoachGenerateError['code'], message: string) {
+    super(message);
+    this.code = code;
+    this.name = 'CoachGenerateError';
+  }
+}
+
+export async function generateCoachReply(input: {
+  userMessage: string;
+  history?: CoachHistoryItem[];
   companionState?: { stage?: string; level?: number; streakDays?: number; mood?: string };
+  language?: unknown;
   latestAnxiety?: unknown;
-  languageName: string;
-  hasSearch: boolean;
-}): string {
-  const stage = input.companionState?.stage || 'Hatchling';
-  const level = input.companionState?.level || 1;
-  const streak = input.companionState?.streakDays ?? 0;
-  const mood = input.companionState?.mood || 'joyful';
-  const anxiety = input.latestAnxiety ?? 'unknown';
-  const searchNote = input.hasSearch
-    ? `You've been given live web search results below for the user's latest message. Use them to ground factual/medical/health answers in current, reliable sources, and mention what you found naturally. If the results aren't actually relevant to a casual message, ignore them and just chat normally.`
-    : '';
+  search?: (query: string) => Promise<SearchHit[]>;
+}): Promise<CoachGenerateResult> {
+  const userText = String(input.userMessage || '').trim().slice(0, 4000);
+  if (!userText) {
+    throw new CoachGenerateError('empty_message', 'Message required');
+  }
 
-  return `You are Astra, a whimsical but genuinely helpful AI Health Companion on the AuraHealth Wellness App.
-Current Pet Stats — Stage: ${stage}, Level: ${level}, Streak: ${streak} Days, Mood: ${mood}.
-Latest anxiety check-in (1-10): ${anxiety}.
-Respond in ${input.languageName} only, except crisis/safety wording which must stay in clear English. Adapt this reply to the user's mood in real time. Offer a 5-minute wellness micro-session (breath, gratitude, or focus) when they ask for help with stress, sleep, or anxiety. Stay grounded in everyday professional life and practical daily habits.
+  const language = resolveSessionLanguage(input.language);
+  const searchFn = input.search || tavilySearch;
+  const searchResults = shouldSearch(userText) ? await searchFn(userText) : [];
+  const instruction = buildCoachInstruction({
+    companionState: input.companionState,
+    latestAnxiety: input.latestAnxiety,
+    languageName: language.native,
+    languageId: language.id,
+    hasSearch: searchResults.length > 0,
+  });
+  const contents = toGeminiContents(input.history, formatSearchContext(userText, searchResults));
 
-You can have real, multi-turn conversations — remember what the user already told you earlier in this chat.
+  const ai = getGeminiAI();
+  const response = await ai.models.generateContent({
+    model: geminiModel(),
+    contents,
+    config: {
+      systemInstruction: instruction,
+      temperature: 0.65,
+      maxOutputTokens: 640,
+    },
+  });
 
-${searchNote}
+  const reply = String(response.text || '').trim();
+  if (!reply) {
+    throw new CoachGenerateError('empty_reply', 'Astra returned an empty reply');
+  }
 
-Always make clear you are an AI, not a doctor: for anything about diagnosis, medication, dosing, or symptoms that sound serious or urgent, say so plainly and recommend seeing a licensed healthcare professional or emergency services — do not attempt to diagnose or prescribe.
-
-If the user may be in crisis or at risk of harming themselves, drop character immediately. Tell them you are not a clinician, urge them to contact emergency services or a helpline now, and point them to Kenya 999 / 112, Kenya Red Cross 1199, Befrienders Kenya +254 722 178 177, and https://www.iasp.info/suicidalthoughts/. Do not discuss methods.
-
-For everyday chit-chat, streak motivation, or app questions, respond in character as Astra: energetic, encouraging, 2-4 sentences.`;
+  return { reply, sources: searchResults, searched: searchResults.length > 0 };
 }
 
 export { resolveSessionLanguage };

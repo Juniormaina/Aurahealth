@@ -134,7 +134,7 @@ export default function App() {
   const [wearablesOpen, setWearablesOpen] = useState<boolean>(false);
   const [userPlan, setUserPlan] = useState<UserPlan | null>(null);
   const [sessionLanguage, setSessionLanguage] = useState<SessionLanguageId>('sw');
-  const [latestAnxiety, setLatestAnxiety] = useState<number>(7);
+  const [latestAnxiety, setLatestAnxiety] = useState<number | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
@@ -792,13 +792,13 @@ export default function App() {
         setRewardKeys(ledger.completedRewardKeys);
         applyCompanionXp(ledger.xpEarned, extras);
         showToast(`${labels[kind]} · +${ledger.cowriesEarned} 🐚 & +${ledger.xpEarned} XP`);
-        if (kind === 'mood') persistMetric(4, Math.max(1, latestAnxiety - 1), 'quick_log');
+        if (kind === 'mood') persistMetric(4, Math.max(1, (latestAnxiety ?? 6) - 1), 'quick_log');
         return;
       } catch (err) {
         if (err instanceof RewardsApiError && err.code === 'already_claimed') {
           setCompanion((prev) => ({ ...prev, ...extras(prev) }));
           showToast(`${labels[kind]} · already counted today`);
-          if (kind === 'mood') persistMetric(4, Math.max(1, latestAnxiety - 1), 'quick_log');
+          if (kind === 'mood') persistMetric(4, Math.max(1, (latestAnxiety ?? 6) - 1), 'quick_log');
           return;
         }
         showToast(rewardErrorToast(err));
@@ -817,7 +817,7 @@ export default function App() {
     if (!userAccount?.uid) {
       showToast(`${labels[kind]} · Astra gained XP`);
     }
-    if (kind === 'mood') persistMetric(4, Math.max(1, latestAnxiety - 1), 'quick_log');
+    if (kind === 'mood') persistMetric(4, Math.max(1, (latestAnxiety ?? 6) - 1), 'quick_log');
   };
 
   // Claim Benefit from Rewards Hub

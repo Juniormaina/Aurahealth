@@ -108,6 +108,14 @@ export async function fetchCoachReply(payload: Record<string, unknown>): Promise
       message: 'Confirm the link we sent to your email to unlock Astra chat. You can resend it from Settings.',
     };
   }
+  if (response.status === 400 && data.code === 'empty_message') {
+    return {
+      ok: false,
+      status: 400,
+      code: 'empty_message',
+      message: 'Type a message before sending.',
+    };
+  }
   if (response.status === 401) {
     return { ok: false, status: 401, message: 'Your session expired. Sign out and sign in again, then retry.' };
   }

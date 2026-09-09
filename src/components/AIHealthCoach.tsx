@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { HealthCompanion } from '../types';
 import { fetchCoachReply, isCoachReplyFailure } from '../services/commerce';
 import { CRISIS_REPLY, CRISIS_RESOURCES, looksLikeCrisis } from '../content/crisisSupport';
-import { resolveSessionLanguage, SessionLanguageId } from '../content/valueProps';
+import { coachGreeting, coachPromptChips } from '../content/coachCopy';
+import { SessionLanguageId } from '../content/valueProps';
 import {
   Send,
   Sparkles,
@@ -16,7 +17,7 @@ import {
 
 interface AIHealthCoachProps {
   companion: HealthCompanion;
-  latestAnxiety?: number;
+  latestAnxiety?: number | null;
   language?: SessionLanguageId;
   onShowToast?: (message: string) => void;
 }
@@ -31,18 +32,7 @@ interface ChatMessage {
   text: string;
   time: string;
   sources?: ChatSource[];
-}
-
-const PROMPT_CHIPS = [
-  'Start a 5-minute stress reset',
-  'Adapt a session to my mood',
-  'How do I boost my streak?',
-];
-
-function coachGreeting(latestAnxiety?: number, languageName = 'English'): string {
-  const languageNote =
-    languageName === 'English' ? '' : ` I can chat in ${languageName}.`;
-  return `Hello! I'm Astra. Today's anxiety check-in is ${latestAnxiety ?? 7}/10 — we can do a 5-minute reset together.${languageNote} I'm not a doctor; for diagnosis or medication, see a licensed professional.`;
+  kind?: 'greeting' | 'error';
 }
 
 function PromptChipRow({
@@ -79,12 +69,13 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
   language,
   onShowToast,
 }) => {
-  const languageName = resolveSessionLanguage(language).native;
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const chips = useMemo(() => coachPromptChips(language), [language]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       sender: 'astra',
-      text: coachGreeting(latestAnxiety, languageName),
+      text: coachGreeting(language, latestAnxiety),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      kind: 'greeting',
     },
   ]);
   const [inputMessage, setInputMessage] = useState('');
@@ -98,6 +89,15 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
   const levelPct = Math.min(100, (companion.xp / Math.max(1, companion.xpToNextLevel)) * 100);
 
   useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length !== 1 || prev[0].kind !== 'greeting') return prev;
+      const next = coachGreeting(language, latestAnxiety);
+      if (prev[0].text === next) return prev;
+      return [{ ...prev[0], text: next }];
+    });
+  }, [language, latestAnxiety]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
@@ -108,8 +108,13 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
     return -1;
   }, [messages]);
 
-  const appendAstraReply = (text: string, time: string, sources?: ChatSource[]) => {
-    setMessages((prev) => [...prev, { sender: 'astra', text, time, sources }]);
+  const appendAstraReply = (
+    text: string,
+    time: string,
+    sources?: ChatSource[],
+    kind?: ChatMessage['kind']
+  ) => {
+    setMessages((prev) => [...prev, { sender: 'astra', text, time, sources, kind }]);
   };
 
   const sendMessage = async (rawText: string) => {
@@ -117,7 +122,9 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
     if (!userText || isLoading) return;
 
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const history = messagesRef.current.map((m) => ({ sender: m.sender, text: m.text }));
+    const history = messagesRef.current
+      .filter((m) => m.kind !== 'greeting' && m.kind !== 'error')
+      .map((m) => ({ sender: m.sender, text: m.text }));
 
     setMessages((prev) => [...prev, { sender: 'user', text: userText, time }]);
     setInputMessage('');
@@ -151,7 +158,9 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
           result.status === 401
             ? `${result.message} Tap Enter Dashboard on the home page to sign in, then come back to Coach.`
             : result.message,
-          time
+          time,
+          undefined,
+          'error'
         );
       } else {
         appendAstraReply(
@@ -164,7 +173,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
       console.error('Failed to fetch AI response:', err);
       const message = 'Something went wrong reaching Astra. Try sending again.';
       onShowToast?.(message);
-      appendAstraReply(message, time);
+      appendAstraReply(message, time, undefined, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -315,7 +324,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
           <React.Fragment key={idx}>
             {renderMessage(m, idx)}
             {idx === lastAstraIndex && !isLoading && (
-              <PromptChipRow chips={PROMPT_CHIPS} disabled={isLoading} onSelect={sendMessage} />
+              <PromptChipRow chips={chips} disabled={isLoading} onSelect={sendMessage} />
             )}
           </React.Fragment>
         ))}
