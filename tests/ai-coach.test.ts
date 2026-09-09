@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
-import { looksLikeCrisis } from '../src/content/crisisSupport';
-import { coachGreeting, coachPromptChips } from '../src/content/coachCopy';
+import { looksLikeCrisis } from '../src/content/crisisSupport.ts';
+import { coachGreeting, coachPromptChips } from '../src/content/coachCopy.ts';
 import {
   buildCoachInstruction,
   formatSearchContext,
   normalizeAnxiety,
   shouldSearch,
   toGeminiContents,
-} from '../src/server/coachTurn';
+} from '../src/server/coachTurn.ts';
 
 function check(name: string, fn: () => void) {
   fn();

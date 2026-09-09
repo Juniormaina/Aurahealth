@@ -1,10 +1,21 @@
 import path from 'node:path';
-import dotenv from 'dotenv';
-import { shouldSearch } from '../src/server/coachTurn';
-import { generateCoachReply, hasGeminiKey } from '../src/server/ai';
+import { readFileSync, existsSync } from 'node:fs';
+import { shouldSearch } from '../src/server/coachTurn.ts';
 
-dotenv.config({ path: path.join(process.cwd(), 'src', '.env') });
-dotenv.config();
+function loadEnvFile(filePath: string) {
+  if (!existsSync(filePath)) return;
+  for (const line of readFileSync(filePath, 'utf8').split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue;
+    const eq = trimmed.indexOf('=');
+    const key = trimmed.slice(0, eq).trim();
+    const value = trimmed.slice(eq + 1).trim().replace(/^['"]|['"]$/g, '');
+    if (key && process.env[key] == null) process.env[key] = value;
+  }
+}
+
+loadEnvFile(path.join(process.cwd(), 'src', '.env'));
+loadEnvFile(path.join(process.cwd(), '.env'));
 
 const SCENARIOS = [
   {
@@ -37,22 +48,23 @@ const SCENARIOS = [
 ] as const;
 
 async function main() {
-  if (!hasGeminiKey()) {
-    console.log('Skipping live Gemini turns: GEMINI_API_KEY is not set.');
-    console.log('Unit heuristics:');
-    for (const scenario of SCENARIOS) {
-      const searched = shouldSearch(scenario.userMessage);
-      const mark = searched === scenario.expectSearch ? 'ok' : 'mismatch';
-      console.log(`  ${mark}  ${scenario.name}: shouldSearch=${searched}`);
-    }
-    process.exit(0);
+  console.log('Search heuristics:');
+  for (const scenario of SCENARIOS) {
+    const searched = shouldSearch(scenario.userMessage);
+    const mark = searched === scenario.expectSearch ? 'ok' : 'mismatch';
+    console.log(`  ${mark}  ${scenario.name}: shouldSearch=${searched}`);
   }
 
+  if (!process.env.GEMINI_API_KEY?.trim()) {
+    console.log('\nSkipping live Gemini turns: GEMINI_API_KEY is not set.');
+    console.log('Add it to src/.env, then re-run npm run test:coach:live.');
+    return;
+  }
+
+  const { generateCoachReply } = await import('../src/server/ai.ts');
   const companionState = { stage: 'Hatchling', level: 2, streakDays: 4, mood: 'joyful' as const };
   for (const scenario of SCENARIOS) {
     process.stdout.write(`\n== ${scenario.name} ==\n`);
-    const searched = shouldSearch(scenario.userMessage);
-    console.log(`shouldSearch=${searched} (expected ${scenario.expectSearch})`);
     const result = await generateCoachReply({
       userMessage: scenario.userMessage,
       history: [...scenario.history],

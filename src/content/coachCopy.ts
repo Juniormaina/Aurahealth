@@ -1,4 +1,5 @@
-import { resolveSessionLanguage, SessionLanguageId } from './valueProps';
+import type { SessionLanguageId } from './valueProps.ts';
+import { resolveSessionLanguage } from './valueProps.ts';
 
 const PROMPT_CHIPS: Record<SessionLanguageId, string[]> = {
   en: ['Start a 5-minute stress reset', 'Adapt a session to my mood', 'How do I boost my streak?'],

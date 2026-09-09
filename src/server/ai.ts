@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import { resolveSessionLanguage } from '../content/valueProps';
+import { moodAdaptiveSession, resolveSessionLanguage } from '../content/valueProps';
 import {
   buildCoachInstruction,
   formatSearchContext,
@@ -198,6 +198,8 @@ export async function generateCoachReply(input: {
   }
 
   const language = resolveSessionLanguage(input.language);
+  const mood = input.companionState?.mood || 'joyful';
+  const session = moodAdaptiveSession(mood, language.id);
   const searchFn = input.search || tavilySearch;
   const searchResults = shouldSearch(userText) ? await searchFn(userText) : [];
   const instruction = buildCoachInstruction({
@@ -206,6 +208,8 @@ export async function generateCoachReply(input: {
     languageName: language.native,
     languageId: language.id,
     hasSearch: searchResults.length > 0,
+    sessionTitle: session.title,
+    sessionScript: session.script,
   });
   const contents = toGeminiContents(input.history, formatSearchContext(userText, searchResults));
 

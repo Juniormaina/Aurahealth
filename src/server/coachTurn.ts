@@ -1,5 +1,3 @@
-import { moodAdaptiveSession, resolveSessionLanguage } from '../content/valueProps';
-
 export type SearchHit = { title: string; url: string; content: string };
 
 const APP_CONTEXT_TERMS =
@@ -82,6 +80,8 @@ export function buildCoachInstruction(input: {
   languageName: string;
   languageId?: string;
   hasSearch: boolean;
+  sessionTitle?: string;
+  sessionScript?: string;
 }): string {
   const stage = input.companionState?.stage || 'Hatchling';
   const level = input.companionState?.level || 1;
@@ -92,7 +92,10 @@ export function buildCoachInstruction(input: {
     anxiety == null
       ? 'No anxiety check-in yet — do not invent a number. You may ask once how they feel today.'
       : `Last self-reported anxiety check-in: ${anxiety}/10.`;
-  const session = moodAdaptiveSession(mood, resolveSessionLanguage(input.languageId || input.languageName).id);
+  const sessionTitle = input.sessionTitle || 'Ubuntu pause';
+  const sessionScript =
+    input.sessionScript ||
+    `A 5-minute joy practice in ${input.languageName}: smile, breath, and a short gratitude prompt.`;
   const searchNote = input.hasSearch
     ? `Live web snippets are attached to the latest user turn. Use them only for factual health questions. If they are off-topic, ignore them and coach normally. Never paste URLs as a dump — mention one useful takeaway.`
     : 'You do not have live web results for this turn. Do not invent studies, statistics, or news.';
@@ -108,7 +111,7 @@ App context you may mention when asked (never invent the user's balances)
 - Daily check-in, Cowries (points), XP and companion levels, streaks, loot wheel, Train (yoga/calisthenics).
 - Companion: Stage ${stage}, Level ${level}, Streak ${streak} days, Mood ${mood}.
 - ${anxietyLine}
-- Mood-matched 5-minute theme: "${session.title}" — ${session.script}
+- Mood-matched 5-minute theme: "${sessionTitle}" — ${sessionScript}
 
 Language
 - Reply in ${input.languageName} only. Crisis/safety wording stays in clear English.
