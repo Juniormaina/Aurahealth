@@ -261,7 +261,7 @@ Dev server: `http://localhost:3000` (`tsx server.ts`). Production: `npm run buil
 
 ## Vercel (aurahealth.co.ke)
 
-`www.aurahealth.co.ke` and `aurahealth-delta.vercel.app` are Vercel static hosts. Astra, check-ins, and plans call **same-origin** `/api/*`, so Vercel must run the Express app as a serverless function (`api/[...path].ts` in [`vercel.json`](vercel.json)). A frontend-only deploy 404s those routes.
+`www.aurahealth.co.ke` and `aurahealth-delta.vercel.app` are Vercel static hosts. Astra, check-ins, and plans call **same-origin** `/api/*`, so Vercel must run the Express app as a serverless function (`api/index.ts` in [`vercel.json`](vercel.json)). A frontend-only deploy 404s those routes.
 
 After this repo is deployed to the Vercel project that owns the domain:
 
