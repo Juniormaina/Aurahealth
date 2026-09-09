@@ -97,10 +97,12 @@ export const SpinWheelLootbox: React.FC<SpinWheelLootboxProps> = ({ onRequestSpi
               <div className="relative w-[min(18rem,calc(100vw-5rem))] h-[min(18rem,calc(100vw-5rem))] sm:w-80 sm:h-80 mx-auto flex items-center justify-center">
                 <div className="absolute -top-4 z-20 w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[24px] border-t-amber-400 drop-shadow-[0_0_12px_rgba(245,158,11,0.8)]" />
                 <div
-                  className="w-full h-full rounded-full border-4 border-amber-400/70 shadow-[0_0_40px_rgba(34,211,238,0.25)] relative overflow-hidden motion-safe:transition-transform motion-safe:duration-[4000ms]"
+                  className="w-full h-full rounded-full border-4 border-amber-400/70 shadow-[0_0_40px_rgba(34,211,238,0.25)] relative overflow-hidden"
                   style={{
                     transform: `rotate(${rotation}deg)`,
-                    transitionTimingFunction: prefersReducedMotion() ? undefined : 'cubic-bezier(0.15, 0.9, 0.2, 1)',
+                    transition: prefersReducedMotion()
+                      ? 'none'
+                      : 'transform 4000ms cubic-bezier(0.15, 0.9, 0.2, 1)',
                   }}
                 >
                   {WHEEL_PRIZES.map((prize, idx) => {
