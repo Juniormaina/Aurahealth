@@ -17,7 +17,6 @@ import {
   TrendingUp,
   Percent
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 interface RewardsHubProps {
   cowriesBalance: number;
@@ -173,12 +172,6 @@ export const RewardsHub: React.FC<RewardsHubProps> = ({
     }
 
     setClaimedBenefits((prev) => [...prev, item.id]);
-    confetti({
-      particleCount: 70,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#10b981', '#38bdf8', '#fbbf24'],
-    });
 
     if (!onClaimBenefit && onShowToast) {
       onShowToast(`Successfully redeemed "${item.title}"! Voucher code sent to your wallet.`);

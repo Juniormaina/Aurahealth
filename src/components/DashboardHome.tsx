@@ -82,6 +82,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       <section className="aura-module-card astra-hero p-6 relative overflow-hidden">
         <div className="flex flex-col items-center text-center relative z-10">
           <div className="relative">
+            <div className="astra-ambient absolute -inset-4 rounded-full bg-cyan-400/20 blur-xl pointer-events-none" />
             <div className="w-28 h-28 rounded-full border-2 border-cyan-300/40 overflow-hidden bg-white/5 shadow-[0_0_32px_rgba(34,211,238,0.25)]">
               <img src={companion.imageUrl} alt={companion.name} className="w-full h-full object-cover" />
             </div>

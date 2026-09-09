@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Users, Trophy, Flame, Shield, Sparkles, Target, ArrowUpRight, CheckCircle2, HeartPulse, Droplets, Award, MessageSquare, ChevronRight, PlusCircle, Building2, Gift, Loader2 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 export interface GuildMember {
   id: string;
@@ -121,12 +120,6 @@ export const CommunityLeaderboard: React.FC<CommunityLeaderboardProps> = ({
   const handleGlobalPledge = () => {
     const nextVal = Math.min(globalGoalTarget, globalGoalProgress + 25);
     setGlobalGoalProgress(nextVal);
-    confetti({
-      particleCount: 60,
-      spread: 70,
-      origin: { y: 0.5 },
-      colors: ['#10b981', '#f59e0b', '#3b82f6'],
-    });
     if (onShowToast) onShowToast(`Pledged +25 logs to the Global Cooperative Goal! Total: ${nextVal}/${globalGoalTarget}`);
   };
 
@@ -159,12 +152,6 @@ export const CommunityLeaderboard: React.FC<CommunityLeaderboardProps> = ({
       setNewDesc('');
       setNewSponsor('');
 
-      confetti({
-        particleCount: 70,
-        spread: 80,
-        origin: { y: 0.5 },
-        colors: ['#10b981', '#fbbf24', '#e11d48'],
-      });
       if (onShowToast) onShowToast(`Cooperative challenge "${created.title}" successfully created and live!`);
     }, 800);
   };
@@ -234,12 +221,6 @@ export const CommunityLeaderboard: React.FC<CommunityLeaderboardProps> = ({
         if (tc.id === id) {
           const joined = !tc.isJoined;
           if (joined) {
-            confetti({
-              particleCount: 50,
-              spread: 60,
-              origin: { y: 0.6 },
-              colors: ['#10b981', '#38bdf8', '#fbbf24'],
-            });
             if (onShowToast) onShowToast(`Joined "${tc.title}"! Your daily logs now count for the team.`);
           }
           return {
@@ -258,12 +239,6 @@ export const CommunityLeaderboard: React.FC<CommunityLeaderboardProps> = ({
       prev.map((tc) => {
         if (tc.id === id) {
           const nextVal = Math.min(tc.targetGoal, tc.currentProgress + 10);
-          confetti({
-            particleCount: 40,
-            spread: 50,
-            origin: { y: 0.6 },
-            colors: ['#38bdf8', '#10b981'],
-          });
           if (onShowToast) onShowToast(`Contributed 10 units to "${tc.title}"! Team Progress: ${nextVal}/${tc.targetGoal}`);
           return { ...tc, currentProgress: nextVal };
         }

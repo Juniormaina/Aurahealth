@@ -17,6 +17,7 @@ import { useStudioPlayground } from './organic/useStudioPlayground';
 import { STUDIO_GRID } from './organic/studioPlaygroundState';
 import { loadTrainerId, saveTrainerId, type TrainerId } from './organic/trainerConfig';
 import type { BreathPhase } from './organic/organicMotion';
+import { useReducedMotionPref } from '../lib/motionPrefs';
 
 export interface Calisthenics3DViewportProps {
   exerciseId?: string;
@@ -75,6 +76,7 @@ export const Calisthenics3DViewport: React.FC<Calisthenics3DViewportProps> = ({
 }) => {
   const [trainerId, setTrainerId] = useState<TrainerId>(() => loadTrainerId());
   const playground = useStudioPlayground();
+  const reduceMotion = useReducedMotionPref();
 
   const config = useMemo(
     () =>
@@ -192,11 +194,17 @@ export const Calisthenics3DViewport: React.FC<Calisthenics3DViewportProps> = ({
               progress={progress}
               poseName={exerciseName}
               instructionCue={instructionCue}
-              breathPhase={breathPhase}
-              isBreathing={!isResting}
+              breathPhase={reduceMotion ? 'idle' : breathPhase}
+              isBreathing={!isResting && !reduceMotion}
               isResting={isResting}
               swayAmp={
-                isResting ? 1.25 : animationState === 'plank' || animationState === 'hang' ? 1.1 : 0.95
+                reduceMotion
+                  ? 0
+                  : isResting
+                    ? 1.25
+                    : animationState === 'plank' || animationState === 'hang'
+                      ? 1.1
+                      : 0.95
               }
               propBinding={playground.propBinding}
             />

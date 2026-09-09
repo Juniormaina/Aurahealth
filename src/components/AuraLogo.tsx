@@ -1,4 +1,5 @@
 import React, { useId } from 'react';
+import { useReducedMotionPref } from '../lib/motionPrefs';
 
 interface AuraMarkProps {
   className?: string;
@@ -8,6 +9,7 @@ interface AuraMarkProps {
 /** Standalone circular mark — scalable as app icon or wordmark glyph. */
 export const AuraMark: React.FC<AuraMarkProps> = ({ className = '', title }) => {
   const rawId = useId().replace(/:/g, '');
+  const reduceMotion = useReducedMotionPref();
   const ring = `${rawId}-ring`;
   const aura = `${rawId}-aura`;
   const glow = `${rawId}-glow`;
@@ -79,14 +81,16 @@ export const AuraMark: React.FC<AuraMarkProps> = ({ className = '', title }) => 
           strokeLinecap="round"
           className="aura-logo-shimmer"
         >
-          <animateTransform
-            attributeName="transform"
-            type="rotate"
-            from="0 32 32"
-            to="360 32 32"
-            dur="7s"
-            repeatCount="indefinite"
-          />
+          {!reduceMotion && (
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 32 32"
+              to="360 32 32"
+              dur="7s"
+              repeatCount="indefinite"
+            />
+          )}
         </circle>
       </g>
 

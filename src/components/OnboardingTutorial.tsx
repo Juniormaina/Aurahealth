@@ -18,7 +18,6 @@ import {
   Info,
   X
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import { VALUE_PROPS } from '../content/valueProps';
 
 export interface OnboardingMission {
@@ -127,21 +126,8 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
     if (mission.completed) return;
 
     if (mission.actionType === 'awaken') {
-      // Complete awakening immediately with celebratory feedback
-      confetti({
-        particleCount: 50,
-        spread: 60,
-        origin: { y: 0.6 },
-        colors: ['#fbbf24', '#f59e0b', '#ec4899'],
-      });
       markMissionComplete(mission.id, mission.xpReward, mission.cowriesReward);
     } else if (mission.actionType === 'hydrate') {
-      confetti({
-        particleCount: 40,
-        spread: 50,
-        origin: { y: 0.6 },
-        colors: ['#38bdf8', '#0284c7'],
-      });
       markMissionComplete(mission.id, mission.xpReward, mission.cowriesReward);
     } else if (mission.actionType === 'checkin') {
       markMissionComplete(mission.id, mission.xpReward, mission.cowriesReward);
@@ -162,12 +148,6 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
   const handleClaimGrandReward = () => {
     if (grandRewardClaimed || completedCount < totalCount) return;
     setGrandRewardClaimed(true);
-    confetti({
-      particleCount: 120,
-      spread: 90,
-      origin: { y: 0.5 },
-      colors: ['#10b981', '#38bdf8', '#f59e0b', '#ec4899', '#8b5cf6'],
-    });
     onMissionCompleted(150, 100, 'grand_onboarding_completion');
   };
 

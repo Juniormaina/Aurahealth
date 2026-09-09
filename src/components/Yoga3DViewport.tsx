@@ -9,6 +9,7 @@ import { useStudioPlayground } from './organic/useStudioPlayground';
 import { STUDIO_GRID } from './organic/studioPlaygroundState';
 import { loadTrainerId, saveTrainerId, type TrainerId } from './organic/trainerConfig';
 import type { BreathPhase } from './organic/organicMotion';
+import { useReducedMotionPref } from '../lib/motionPrefs';
 
 export interface Yoga3DViewportProps {
   animationAssetId: string;
@@ -31,6 +32,7 @@ export const Yoga3DViewport: React.FC<Yoga3DViewportProps> = ({
 }) => {
   const [trainerId, setTrainerId] = useState<TrainerId>(() => loadTrainerId());
   const playground = useStudioPlayground();
+  const reduceMotion = useReducedMotionPref();
 
   useEffect(() => {
     playground.syncExercise({
@@ -116,9 +118,9 @@ export const Yoga3DViewport: React.FC<Yoga3DViewportProps> = ({
               yogaAssetId={animationAssetId}
               poseName={poseName}
               instructionCue={instructionCue}
-              breathPhase={breathPhase}
-              isBreathing={isBreathing}
-              swayAmp={breathPhase === 'idle' && !isBreathing ? 0.9 : 1.15}
+              breathPhase={reduceMotion ? 'idle' : breathPhase}
+              isBreathing={isBreathing && !reduceMotion}
+              swayAmp={reduceMotion ? 0 : breathPhase === 'idle' && !isBreathing ? 0.9 : 1.15}
               propBinding={playground.propBinding}
             />
           </StudioSceneChrome>

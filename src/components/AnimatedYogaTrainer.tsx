@@ -1,5 +1,6 @@
 import React, { useId } from 'react';
 import { motion } from 'motion/react';
+import { useReducedMotionPref } from '../lib/motionPrefs';
 
 interface AnimatedYogaTrainerProps {
   animationAssetId: string;
@@ -65,8 +66,17 @@ export const AnimatedYogaTrainer: React.FC<AnimatedYogaTrainerProps> = ({
   const skinId = `yogaSkin-${uid}`;
   const accentId = `yogaAccent-${uid}`;
   const family = familyFromAsset(animationAssetId);
+  const reduceMotion = useReducedMotionPref();
   const scale =
-    breathPhase === 'inhale' ? 1.04 : breathPhase === 'exhale' ? 0.97 : breathPhase === 'hold_top' ? 1.05 : 1;
+    reduceMotion || breathPhase === 'idle'
+      ? 1
+      : breathPhase === 'inhale'
+        ? 1.04
+        : breathPhase === 'exhale'
+          ? 0.97
+          : breathPhase === 'hold_top'
+            ? 1.05
+            : 1;
 
   return (
     <div
@@ -92,7 +102,13 @@ export const AnimatedYogaTrainer: React.FC<AnimatedYogaTrainerProps> = ({
               </linearGradient>
             </defs>
             <ellipse cx="60" cy="140" rx="36" ry="5" fill="rgba(154,212,200,0.16)" />
-            <YogaSilhouette family={family} skinId={skinId} accentId={accentId} breathing={Boolean(isBreathing)} />
+            <YogaSilhouette
+              family={family}
+              skinId={skinId}
+              accentId={accentId}
+              breathing={Boolean(isBreathing) && !reduceMotion}
+              reduceMotion={reduceMotion}
+            />
           </svg>
         </motion.div>
         {label && (
@@ -108,19 +124,24 @@ function YogaSilhouette({
   skinId,
   accentId,
   breathing,
+  reduceMotion,
 }: {
   family: YogaPoseFamily;
   skinId: string;
   accentId: string;
   breathing: boolean;
+  reduceMotion: boolean;
 }) {
   const stroke = `url(#${skinId})`;
-  const pulse = breathing ? { opacity: [0.85, 1, 0.85] } : { opacity: 1 };
+  const pulse = breathing && !reduceMotion ? { opacity: [0.85, 1, 0.85] } : { opacity: 1 };
 
   const paths = posePaths(family);
 
   return (
-    <motion.g animate={pulse} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}>
+    <motion.g
+      animate={pulse}
+      transition={reduceMotion ? { duration: 0 } : { duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+    >
       <circle cx={paths.head[0]} cy={paths.head[1]} r="10" fill={stroke} />
       <path d={`M${paths.head[0] - 8} ${paths.head[1] - 2} Q${paths.head[0]} ${paths.head[1] - 12} ${paths.head[0] + 8} ${paths.head[1] - 2}`} stroke={`url(#${accentId})`} strokeWidth="2.5" fill="none" strokeLinecap="round" />
       {paths.limbs.map((d, i) => (
@@ -132,8 +153,8 @@ function YogaSilhouette({
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
-          animate={family === 'breath' ? { d: [d, paths.limbsAlt?.[i] || d, d] } : undefined}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          animate={!reduceMotion && family === 'breath' ? { d: [d, paths.limbsAlt?.[i] || d, d] } : undefined}
+          transition={reduceMotion ? { duration: 0 } : { duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         />
       ))}
     </motion.g>

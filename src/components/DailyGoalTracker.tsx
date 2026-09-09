@@ -15,7 +15,6 @@ import {
   ChevronRight,
   ShieldCheck
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 export interface DailyGoalHabit {
   id: string;
@@ -154,20 +153,10 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
 
   const [popId, setPopId] = useState<string | null>(null);
 
-  const burst = () => {
-    confetti({
-      particleCount: 28,
-      spread: 70,
-      origin: { y: 0.7 },
-      colors: ['#2F7A73', '#5EC8B8', '#6E62C4'],
-    });
-  };
-
   const markComplete = (id: string) => {
     setHabits((prev) =>
       prev.map((habit) => {
         if (habit.id !== id || habit.completed) return habit;
-        burst();
         setPopId(id);
         window.setTimeout(() => setPopId(null), 550);
         if (onGoalUpdated) onGoalUpdated(habit.id);
@@ -184,7 +173,6 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
         const nowCompleted = newCurrent >= habit.target;
 
         if (!wasCompleted && nowCompleted) {
-          burst();
           setPopId(id);
           window.setTimeout(() => setPopId(null), 550);
           if (onGoalUpdated) onGoalUpdated(habit.id);
@@ -205,12 +193,6 @@ export const DailyGoalTracker: React.FC<DailyGoalTrackerProps> = ({
         if (h.id !== 'meds') return h;
         const nowCompleted = !h.completed;
         if (nowCompleted) {
-          confetti({
-            particleCount: 30,
-            spread: 50,
-            origin: { y: 0.7 },
-            colors: ['#FBAF40', '#009688'],
-          });
           if (onGoalUpdated) onGoalUpdated(h.id);
         }
         return {

@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { MovementPattern } from '../content/calisthenicsProgram';
+import { useReducedMotionPref } from '../lib/motionPrefs';
 
 type TrainerMode = MovementPattern | 'rest' | 'idle';
 
@@ -56,6 +57,7 @@ export const AnimatedWorkoutTrainer: React.FC<AnimatedWorkoutTrainerProps> = ({
   exerciseName,
 }) => {
   const uid = useId().replace(/:/g, '');
+  const reduceMotion = useReducedMotionPref();
   const skinId = `trainerSkin-${uid}`;
   const accentId = `trainerAccent-${uid}`;
   const mode = resolveMode(pattern, isResting);
@@ -65,10 +67,10 @@ export const AnimatedWorkoutTrainer: React.FC<AnimatedWorkoutTrainerProps> = ({
   const cycleSec = isHold || mode === 'core' ? 2.8 : mode === 'rest' ? 2.2 : 1.05;
 
   useEffect(() => {
-    if (!mirroring || isHold || mode === 'core' || mode === 'rest' || mode === 'idle') return;
+    if (reduceMotion || !mirroring || isHold || mode === 'core' || mode === 'rest' || mode === 'idle') return;
     const id = setInterval(() => setRepTick((n) => n + 1), cycleSec * 1000);
     return () => clearInterval(id);
-  }, [mirroring, isHold, mode, cycleSec]);
+  }, [reduceMotion, mirroring, isHold, mode, cycleSec]);
 
   useEffect(() => {
     setRepTick(0);
@@ -116,6 +118,7 @@ export const AnimatedWorkoutTrainer: React.FC<AnimatedWorkoutTrainerProps> = ({
           cycleSec={cycleSec}
           skinId={skinId}
           accentId={accentId}
+          reduceMotion={reduceMotion}
         />
         <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-harmony)]/90">
           {moveTitle(mode)}
@@ -136,6 +139,7 @@ function MirroringFigure({
   cycleSec,
   skinId,
   accentId,
+  reduceMotion,
 }: {
   mode: TrainerMode;
   isHold: boolean;
@@ -143,23 +147,25 @@ function MirroringFigure({
   cycleSec: number;
   skinId: string;
   accentId: string;
+  reduceMotion: boolean;
 }) {
   const poses = fullBodyPoses(mode);
   const holdStill = isHold || mode === 'core';
-  // Alternate A↔B for dynamic moves; holds breathe gently on A.
-  const animateKey: PoseKey[] = holdStill || mode === 'rest' || !mirroring ? ['a', 'a'] : ['a', 'b', 'a'];
+  const animateKey: PoseKey[] = holdStill || mode === 'rest' || !mirroring || reduceMotion ? ['a', 'a'] : ['a', 'b', 'a'];
+  const loop = reduceMotion
+    ? { duration: 0 }
+    : { duration: cycleSec, repeat: Infinity, ease: 'easeInOut' as const };
 
   return (
     <motion.div
       className="relative w-[150px] h-[170px] sm:w-[170px] sm:h-[190px]"
-      animate={
-        mirroring && !holdStill && mode !== 'rest'
+      animate={reduceMotion ? { y: 0 } : mirroring && !holdStill && mode !== 'rest'
           ? { y: [0, -2, 0] }
           : mode === 'rest'
             ? { y: [0, -5, 0] }
             : { y: [0, -2, 0] }
       }
-      transition={{ duration: cycleSec, repeat: Infinity, ease: 'easeInOut' }}
+      transition={loop}
     >
       <svg viewBox="0 0 120 150" className="w-full h-full drop-shadow-[0_10px_20px_rgba(47,122,115,0.4)]">
         <defs>
@@ -178,8 +184,8 @@ function MirroringFigure({
           cy="140"
           ry="5"
           fill="rgba(125,211,199,0.2)"
-          animate={{ rx: mirroring && !holdStill ? [30, 38, 30] : [32, 34, 32] }}
-          transition={{ duration: cycleSec, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ rx: mirroring && !holdStill && !reduceMotion ? [30, 38, 30] : 32 }}
+          transition={loop}
         />
 
         {/* Head */}
@@ -190,7 +196,7 @@ function MirroringFigure({
             cx: animateKey.map((k) => poses[k].head[0]),
             cy: animateKey.map((k) => poses[k].head[1]),
           }}
-          transition={{ duration: cycleSec, repeat: Infinity, ease: 'easeInOut' }}
+          transition={loop}
         />
         <motion.path
           stroke={`url(#${accentId})`}
@@ -203,7 +209,7 @@ function MirroringFigure({
               return `M${x - 9} ${y - 2} Q${x} ${y - 11} ${x + 9} ${y - 2}`;
             }),
           }}
-          transition={{ duration: cycleSec, repeat: Infinity, ease: 'easeInOut' }}
+          transition={loop}
         />
 
         {/* Torso */}
@@ -213,7 +219,7 @@ function MirroringFigure({
           strokeLinecap="round"
           fill="none"
           animate={{ d: animateKey.map((k) => poses[k].torso) }}
-          transition={{ duration: cycleSec, repeat: Infinity, ease: 'easeInOut' }}
+          transition={loop}
         />
 
         {/* Limbs */}
@@ -226,7 +232,7 @@ function MirroringFigure({
             strokeLinejoin="round"
             fill="none"
             animate={{ d: animateKey.map((k) => poses[k][limb]) }}
-            transition={{ duration: cycleSec, repeat: Infinity, ease: 'easeInOut' }}
+            transition={loop}
           />
         ))}
       </svg>

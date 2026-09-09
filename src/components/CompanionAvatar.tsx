@@ -3,7 +3,6 @@ import { HealthCompanion } from '../types';
 import { EVOLUTION_STAGES_INFO } from '../data/initialData';
 import { Heart, Zap, Sparkles, Shield, ChevronRight, Award, Utensils, RefreshCw, Flame, TrendingUp, Calendar, Activity } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import confetti from 'canvas-confetti';
 
 interface CompanionAvatarProps {
   companion: HealthCompanion;
@@ -65,12 +64,6 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
 
   const handlePetCompanion = () => {
     setIsInteracting(true);
-    confetti({
-      particleCount: 25,
-      spread: 60,
-      origin: { y: 0.6 },
-      colors: ['#71C7EC', '#FFD700', '#10b981'],
-    });
     setTimeout(() => setIsInteracting(false), 1200);
   };
 
@@ -152,7 +145,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
             }`}
           >
             {/* Ambient Aura Ring */}
-            <div className="absolute inset-0 rounded-full bg-sunlight/30 blur-xl opacity-40" />
+            <div className="astra-ambient absolute inset-0 rounded-full bg-sunlight/30 blur-xl" />
 
             {/* Avatar Graphic */}
             <div className="relative w-44 h-44 rounded-full border-4 border-peach bg-ivory overflow-hidden flex items-center justify-center">
@@ -163,7 +156,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
               />
               {/* Overlay Interactive Heart */}
               {isInteracting && (
-                <div className="absolute inset-0 flex items-center justify-center bg-rose-900/50 backdrop-blur-xs animate-bounce">
+                <div className="absolute inset-0 flex items-center justify-center bg-rose-900/50 backdrop-blur-xs">
                   <Heart className="w-16 h-16 text-rose-300 fill-rose-400" />
                 </div>
               )}

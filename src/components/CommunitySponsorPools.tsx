@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { SponsorPool } from '../types';
 import { Coins, PlusCircle, Building2, Sparkles, Loader2 } from 'lucide-react';
 import { CommunityLeaderboard } from './CommunityLeaderboard';
-import confetti from 'canvas-confetti';
 
 interface CommunitySponsorPoolsProps {
   pools: SponsorPool[];
@@ -57,13 +56,6 @@ export const CommunitySponsorPools: React.FC<CommunitySponsorPoolsProps> = ({
     onAddSponsorPool(newPool);
     setIsCreating(false);
     setIsDepositOpen(false);
-
-    confetti({
-      particleCount: 50,
-      spread: 60,
-      origin: { y: 0.5 },
-      colors: ['#e11d48', '#38bdf8', '#fbbf24'],
-    });
   };
 
   return (

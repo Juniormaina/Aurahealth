@@ -14,7 +14,6 @@ import {
   Send,
   AlertCircle
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 interface ReminderSchedule {
   id: string;
@@ -94,12 +93,6 @@ export const StreakReminderManager: React.FC<StreakReminderManagerProps> = ({
       setPermissionStatus(permission);
       if (permission === 'granted') {
         setNotificationsEnabled(true);
-        confetti({
-          particleCount: 50,
-          spread: 60,
-          origin: { y: 0.6 },
-          colors: ['#10b981', '#38bdf8'],
-        });
         if (onShowToast) onShowToast('Browser Push Notifications Enabled! You will receive gentle streak alerts.');
       } else {
         if (onShowToast) onShowToast('Notification permission denied by browser.');
@@ -137,13 +130,6 @@ export const StreakReminderManager: React.FC<StreakReminderManagerProps> = ({
     if (onShowToast) {
       onShowToast(`🔔 [GENTLE REMINDER] ${rem.message}`);
     }
-
-    confetti({
-      particleCount: 30,
-      spread: 40,
-      origin: { y: 0.6 },
-      colors: ['#38bdf8', '#fbbf24'],
-    });
   };
 
   return (
@@ -159,7 +145,7 @@ export const StreakReminderManager: React.FC<StreakReminderManagerProps> = ({
           </div>
           <h3 className="text-xl font-black text-white flex items-center gap-2">
             <span>Streak Preservation & Push Reminders</span>
-            <BellRing className="w-5 h-5 text-amber-400 animate-bounce" />
+            <BellRing className="w-5 h-5 text-amber-400" />
           </h3>
           <p className="text-xs text-slate-300 mt-1 max-w-xl">
             Never miss a daily vitals log! Set gentle reminders to preserve your <strong>{currentStreak}-day health streak</strong> and keep {companionName} glowing with optimal health integrity.
