@@ -147,11 +147,6 @@ export default function App() {
     setActiveTab(tab);
   };
 
-  const handleOpenAbout = () => {
-    setIsLanding(false);
-    setActiveTab('about');
-  };
-
   const handleAdminLogin = () => {
     setShowAuth(false);
     setIsAdmin(true);
@@ -1004,7 +999,6 @@ export default function App() {
       <div className="min-h-screen landscape-shell">
         <LandingPage
           onOpenAuth={() => setShowAuth(true)}
-          onOpenAbout={handleOpenAbout}
           userAccount={userAccount}
           isDemoMode={isDemoMode}
           onEnterDashboard={() => setIsLanding(false)}

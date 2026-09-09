@@ -1,5 +1,5 @@
 import React from 'react';
-import { Droplets, Sparkles, MessageCircle, Building2 } from 'lucide-react';
+import { Droplets, Sparkles, MessageCircle, Dumbbell } from 'lucide-react';
 import { motion } from 'motion/react';
 import { fadeUp, Reveal } from './Reveal';
 import { IconBadge, IconBadgeVariant } from '../ui/IconBadge';
@@ -8,26 +8,26 @@ import { SectionHeading } from './SectionHeading';
 const FEATURES: { icon: typeof Droplets; title: string; copy: string; variant: IconBadgeVariant }[] = [
   {
     icon: Droplets,
-    title: 'Track daily wellness',
-    copy: 'Log water, sleep, mood, and medication in seconds. Wearable sync is a simulated preview until HealthKit and Fit ship.',
+    title: 'Daily check-ins',
+    copy: 'Log water, sleep, mood, and medication in seconds. Streaks and quick logs keep the habit small enough for a busy day.',
     variant: 'teal',
   },
   {
     icon: Sparkles,
     title: 'Evolve Astra',
-    copy: 'Your companion grows with consistent check-ins so staying on track feels like play.',
+    copy: 'Your companion grows with consistent check-ins so staying on track feels like play, not another dashboard.',
     variant: 'violet',
   },
   {
     icon: MessageCircle,
-    title: 'Natural-language sessions',
-    copy: 'AI-guided 5-minute micro-sessions that adapt to how you feel, in the language you speak.',
+    title: 'AI Coach in your language',
+    copy: 'Chat with Astra for 5-minute micro-sessions that adapt to how you feel — in English, Kiswahili, and vernacular.',
     variant: 'teal',
   },
   {
-    icon: Building2,
-    title: 'Corporate wellness',
-    copy: 'Bulk signups for teams — culturally relevant sessions and shared impact reports.',
+    icon: Dumbbell,
+    title: 'Train with Aura & Aurora',
+    copy: 'Guided calisthenics and yoga with 3D coaches — bodyweight strength and breath work you can follow on screen.',
     variant: 'violet',
   },
 ];
@@ -37,7 +37,7 @@ export const Features: React.FC = () => (
     <SectionHeading
       kicker="Features"
       title="Four ways to stay well"
-      copy="Glass modules for the daily habit, Astra, language-first sessions, and team programs."
+      copy="Check-ins, Astra, language-first coaching, and guided training with Aura and Aurora."
     />
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {FEATURES.map((item) => (

@@ -8,7 +8,6 @@ import { ShieldCheck, LogOut } from 'lucide-react';
 
 interface LandingPageProps {
   onOpenAuth: () => void;
-  onOpenAbout: () => void;
   userAccount?: { name: string; email: string; isGoogle: boolean; uid?: string; photoURL?: string } | null;
   isDemoMode?: boolean;
   onEnterDashboard?: () => void;
@@ -21,7 +20,6 @@ const NAV_LINKS = [{ href: '#features', id: 'features', label: 'Features' }];
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenAuth,
-  onOpenAbout,
   userAccount,
   isDemoMode,
   onEnterDashboard,
@@ -73,9 +71,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   {link.label}
                 </a>
               ))}
-              <button type="button" onClick={onOpenAbout} className="landing-nav-link">
-                About
-              </button>
             </nav>
             {signedIn ? (
               <div className="flex items-center gap-2 shrink-0">
@@ -106,9 +101,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               {link.label}
             </a>
           ))}
-          <button type="button" onClick={onOpenAbout} className="landing-nav-link whitespace-nowrap">
-            About
-          </button>
         </nav>
       </header>
 
@@ -138,13 +130,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="layout-container flex flex-col sm:flex-row items-center justify-between gap-3">
           <strong className="text-[#F7FFFC]">Aura Health</strong>
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
-            <button
-              type="button"
-              onClick={onOpenAbout}
-              className="text-[11px] font-semibold text-[#D5E4DC] hover:text-[var(--color-harmony)] px-3 py-2 min-h-[44px]"
-            >
-              About
-            </button>
             {onAdminLogin && (
               <button
                 type="button"
