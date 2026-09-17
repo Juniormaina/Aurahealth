@@ -1,7 +1,7 @@
 # Aura Health Roadmap
 
 **Status:** MVP live at [aurahealth-delta.vercel.app](https://aurahealth-delta.vercel.app/)  
-**Last updated:** August 2026
+**Last updated:** September 2026
 
 This roadmap takes Aura Health from the current MVP to a production-complete
 wellness product: durable data, real payments, verified health integrations,
@@ -19,6 +19,7 @@ Shipped and demoable today:
 | **Auth** | Google / email / guest walkthrough (Firebase) |
 | **Companion** | Astra dashboard, habits (litres / glasses), quick log, streaks |
 | **AI Coach** | Gemini-backed chat + mood-adaptive 5-minute sessions |
+| **Train** | Calisthenics + yoga with 3D instructors **Aura** and **Aurora** (mesh pipeline + WebGL viewports) |
 | **Check-ins** | Water (L), sleep, meds, mood, anxiety; AI attestation |
 | **Rewards UI** | Cowries, loot wheel, conversion calculator, voucher cards |
 | **Settings** | Plan, language, Health Pass / wearables placeholders |
@@ -53,12 +54,50 @@ teams in Africa-first markets:
 - [x] Landing + in-app shell on forest glass theme
 - [x] Guest / Google / email entry paths
 - [x] Companion, Coach, Rewards, Settings surfaces
+- [x] Train hub: 3D character mesh pipeline + responsive WebGL viewports for Aura and Aurora
 - [x] Fuji contracts deployed & source-verified
 - [x] Public proof metrics + soft claim disclaimers
 - [ ] Tag `v0.1.0-mvp` release; freeze feature scope for pilot demos
 - [ ] Short pilot FAQ + “not a medical device” footer on auth & settings
 
 **Exit:** One-click guest walkthrough that never blocks on wallet or payment.
+
+---
+
+## Next phase — Virtual instructors & pose intelligence *(upcoming)*
+
+**Goal:** Turn the Aura / Aurora studio from a follow-along viewport into a
+coach that can see form, correct posture, and schedule workouts in conversation.
+
+### Platform architecture *(shipped)*
+
+Successfully designed and built the core web application infrastructure,
+incorporating 3D character mesh pipelines and responsive WebGL viewports to
+lay the foundation for virtual fitness instructors Aura and Aurora.
+
+- [x] Industrial gym playground, prop-aware avatars, and session-bound gear
+- [x] Yoga and calisthenics 3D viewports (R3F / WebGL)
+- [x] Trainer toggle (Aura / Aurora) with wardrobe and physique profiles
+
+### Architecture planning *(this phase)*
+
+Established technical blueprints and frameworks for upcoming front-end and AI
+workflows to handle real-time pose tracking, posture estimation, and
+conversational workout scheduling.
+
+- [ ] Blueprint for on-device or in-browser **pose tracking** (camera → skeleton)
+      aligned to the existing Aura / Aurora rig
+- [ ] **Posture estimation** pipeline: compare user joints to the active
+      exercise / asana, with calm, non-clinical form cues
+- [ ] Front-end frame budget and privacy model (camera stays local; no
+      silent video upload)
+- [ ] AI workflow for **conversational workout scheduling** (Coach proposes
+      the next Train day, rest, or yoga flow from check-ins + program state)
+- [ ] Shared session contract between Train, Astra chat, and the 3D viewport
+      (exercise id, tempo, pose family, prop bind)
+
+**Exit:** Written architecture + spike that tracks a single pose in the
+viewport and lets Astra schedule tomorrow’s Train block from chat.
 
 ---
 
@@ -222,11 +261,13 @@ insurance partners, multi-country billing, Astra voice mode, etc.).
 ## Suggested timeline (indicative)
 
 ```text
-2026 Q3          MVP freeze + Phase 1 (persistence & billing)
-2026 Q4          Phase 2 (habit / Astra) + start Phase 3 (wearables)
-2027 Q1          Phase 3 complete + Phase 4 (redeemable rewards)
-2027 Q2          Phase 5 (corporate) + Phase 6 (mobile)
-2027 Q3          Phase 7 hardening → v1.0.0 full build
+2026 Q3          MVP freeze + Train 3D foundation (Aura / Aurora)
+2026 Q4          Next phase (pose / posture / conversational scheduling)
+                 in parallel with Phase 1 (persistence & billing)
+2027 Q1          Phase 2 (habit / Astra) + start Phase 3 (wearables)
+2027 Q2          Phase 3 complete + Phase 4 (redeemable rewards)
+2027 Q3          Phase 5 (corporate) + Phase 6 (mobile)
+2027 Q4          Phase 7 hardening → v1.0.0 full build
 ```
 
 Dates flex with pilot partners and payment-provider approval.
@@ -255,13 +296,15 @@ Dates flex with pilot partners and payment-provider approval.
 | Rewards chain | Stay Fuji / go mainnet / off-chain ledger | Phase 4 |
 | Data residency | Single region vs multi-region | Phase 3 |
 | Clinical partners | Research MoU vs none for v1 | Phase 7 |
+| Pose runtime | On-device MediaPipe vs server vision vs none for v1 | Next phase (pose) |
 
 ---
 
 ## How to use this doc
 
-- Ship work against the **current phase** checklist; avoid jumping to Phase 4+
-  UX before Phase 1 persistence.
+- Ship work against the **current phase** checklist; the next phase is virtual
+  instructors (pose / posture / scheduling). Avoid jumping to Phase 4+ UX
+  before Phase 1 persistence.
 - When a phase exits, move its leftover items explicitly into the next phase
   or into **Open decisions**.
 - Keep README screenshots (`docs/readme/`) updated at each major phase exit:
