@@ -16,6 +16,9 @@ import {
   Watch,
   ShieldCheck,
   Dumbbell,
+  Footprints,
+  Utensils,
+  HeartPulse,
 } from 'lucide-react';
 import { AuraLogo } from './AuraLogo';
 
@@ -33,7 +36,10 @@ interface SidebarProps {
 }
 
 const NAV_ITEMS = [
-  { id: 'companion', label: 'Companion', icon: Sparkles },
+  { id: 'companion', label: 'Home', icon: Sparkles },
+  { id: 'shamba', label: 'Shamba Fit', icon: Footprints },
+  { id: 'nutrition', label: 'Nutrition', icon: Utensils },
+  { id: 'uko', label: 'Uko Sawa?', icon: HeartPulse },
   { id: 'train', label: 'Train', icon: Dumbbell },
   { id: 'coach', label: 'AI Coach', icon: MessageSquare },
   { id: 'wheel', label: 'Rewards', icon: Award },

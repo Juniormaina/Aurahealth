@@ -11,6 +11,9 @@ import { SpinWheelLootbox } from './components/SpinWheelLootbox';
 import { RewardsHub } from './components/RewardsHub';
 import { AIHealthCoach } from './components/AIHealthCoach';
 import { TrainHub } from './components/TrainHub';
+import { ShambaFit } from './components/ShambaFit';
+import { FoodLens } from './components/FoodLens';
+import { UkoSawa } from './components/UkoSawa';
 import { HealthCheckinModal } from './components/HealthCheckinModal';
 import { SettingsPanel } from './components/SettingsPanel';
 import { JiweEconomyDiagram } from './components/JiweEconomyDiagram';
@@ -77,7 +80,8 @@ import {
 import { onAuthStateChanged, User } from 'firebase/auth';
 
 import { celebrateLevelUp } from './lib/celebrate';
-import { Compass, Home, Search, MessageSquare, Award, Dumbbell } from 'lucide-react';
+import { Compass, Home, Search, MessageSquare, Award, Dumbbell, Footprints } from 'lucide-react';
+import { formatLifestyleContextForAstra } from './lib/lifestyleStorage';
 
 function applyLedger(prev: EconomyStats, ledger: LedgerSnapshot): EconomyStats {
   return {
@@ -139,6 +143,8 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [astraReaction, setAstraReaction] = useState<string | null>(null);
+  const [lifestyleRevision, setLifestyleRevision] = useState(0);
+  const bumpLifestyle = () => setLifestyleRevision((n) => n + 1);
 
   const [wallet, setWallet] = useState<WalletState>(SANDBOX_WALLET);
   const [activeTab, setActiveTab] = useState<string>('companion');
@@ -1114,7 +1120,20 @@ export default function App() {
             onUpgrade={() => setPremiumOpen(true)}
             sessionLanguage={sessionLanguage}
             onGoalUpdated={handleGoalUpdated}
+            lifestyleRevision={lifestyleRevision}
           />
+        )}
+
+        {activeTab === 'shamba' && (
+          <ShambaFit userKey={commerceUserId} onChanged={bumpLifestyle} />
+        )}
+
+        {activeTab === 'nutrition' && (
+          <FoodLens userKey={commerceUserId} onChanged={bumpLifestyle} />
+        )}
+
+        {activeTab === 'uko' && (
+          <UkoSawa userKey={commerceUserId} onChanged={bumpLifestyle} />
         )}
 
         {activeTab === 'train' && (
@@ -1162,6 +1181,7 @@ export default function App() {
             latestAnxiety={latestAnxiety}
             language={sessionLanguage}
             onShowToast={showToast}
+            lifestyleContext={formatLifestyleContextForAstra(commerceUserId)}
           />
         )}
 
@@ -1262,6 +1282,14 @@ export default function App() {
           <span>Train</span>
         </button>
         <button
+          onClick={() => handleNavigateTab('shamba')}
+          className={`mobile-bottom-nav-item ${activeTab === 'shamba' ? 'active' : ''}`}
+          aria-label="Shamba Fit"
+        >
+          <Footprints className="w-5 h-5" />
+          <span>Move</span>
+        </button>
+        <button
           onClick={() => handleNavigateTab('coach')}
           className={`mobile-bottom-nav-item ${activeTab === 'coach' ? 'active' : ''}`}
           aria-label="AI Coach"
@@ -1270,20 +1298,12 @@ export default function App() {
           <span>Coach</span>
         </button>
         <button
-          onClick={() => handleNavigateTab('wheel')}
-          className={`mobile-bottom-nav-item ${activeTab === 'wheel' ? 'active' : ''}`}
-          aria-label="Rewards"
-        >
-          <Award className="w-5 h-5" />
-          <span>Rewards</span>
-        </button>
-        <button
           onClick={() => setSearchOpen(true)}
           className="mobile-bottom-nav-item"
           aria-label="Search"
         >
           <Search className="w-5 h-5" />
-          <span>Search</span>
+          <span>More</span>
         </button>
       </nav>
 

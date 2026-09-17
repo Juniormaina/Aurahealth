@@ -784,19 +784,21 @@ p, li, label {
   position: relative;
   z-index: 1;
   margin: 0;
+  max-width: 18ch;
   font-family: "Cormorant Garamond", "Times New Roman", serif;
   font-weight: 700;
-  font-size: clamp(2.15rem, 7.2vw, 5.6rem);
-  line-height: 0.95;
+  font-size: clamp(2.15rem, 6.4vw, 5rem);
+  line-height: 1.05;
   letter-spacing: -0.02em;
   color: #F7FFFC;
   -webkit-text-fill-color: #F7FFFC;
   text-shadow: 0 0 1px rgba(255, 255, 255, 0.85);
+  text-wrap: balance;
 }
 
 .hero-sub {
   margin: 0 auto;
-  max-width: 36rem;
+  max-width: 40rem;
   font-family: Inter, "Segoe UI", sans-serif;
   font-size: clamp(0.95rem, 1.6vw, 1.15rem);
   font-weight: 500;

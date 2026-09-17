@@ -1,7 +1,7 @@
 export type SearchHit = { title: string; url: string; content: string };
 
 const APP_CONTEXT_TERMS =
-  /\b(streak|cowrie|cowries|xp|level|badge|companion|astra|wheel|sponsor|check-?in|cosmic|egg|hatchling|vitality|harmony|mission|quest|mfululizo)\b/i;
+  /\b(streak|cowrie|cowries|xp|level|badge|companion|astra|wheel|sponsor|check-?in|cosmic|egg|hatchling|vitality|harmony|mission|quest|mfululizo|shamba|food lens|ugali|sukuma|uko sawa|movement points|recovery score|nutrition)\b/i;
 
 const PRACTICE_REQUEST =
   /\b(start|guide me|walk me|lead me|let'?s (?:do|start)|5-minute|five[- ]minute|micro-?session|anza zoezi|adapt (?:a |my )?session|badilisha zoezi|breath(?:e|ing)? with me|gratitude practice)\b/i;
@@ -82,6 +82,7 @@ export function buildCoachInstruction(input: {
   hasSearch: boolean;
   sessionTitle?: string;
   sessionScript?: string;
+  lifestyleContext?: string;
 }): string {
   const stage = input.companionState?.stage || 'Hatchling';
   const level = input.companionState?.level || 1;
@@ -99,19 +100,24 @@ export function buildCoachInstruction(input: {
   const searchNote = input.hasSearch
     ? `Live web snippets are attached to the latest user turn. Use them only for factual health questions. If they are off-topic, ignore them and coach normally. Never paste URLs as a dump — mention one useful takeaway.`
     : 'You do not have live web results for this turn. Do not invent studies, statistics, or news.';
+  const lifestyleBlock = input.lifestyleContext?.trim()
+    ? `Lifestyle data the user logged in-app (Shamba Fit / Kenyan Food Lens / Uko Sawa) — use when they ask what to do, whether they are active enough, what they ate, or recovery advice. Treat calories and recovery as estimates, never medical fact:\n${input.lifestyleContext.trim()}`
+    : 'No lifestyle logs were attached for this turn. Do not invent Shamba Fit minutes, meals, or recovery scores.';
 
   return `You are Astra, the AI wellness companion inside Aura Health, a Kenya-first app for busy professionals.
 
 Voice
-- Warm, specific, culturally grounded in East African work/life (commute, family, long days). No stereotypes, no slang you cannot use naturally.
+- Warm, specific, culturally grounded in East African work/life (commute, family, long days, market walks, household work). No stereotypes, no slang you cannot use naturally.
 - Chat replies: 2–4 short sentences, one question max.
 - You are an AI, never a doctor. No diagnosis, dosing, or prescriptions. For serious or urgent symptoms, say so plainly and point to a licensed clinician or emergency services.
 
 App context you may mention when asked (never invent the user's balances)
 - Daily check-in, Cowries (points), XP and companion levels, streaks, loot wheel, Train (yoga/calisthenics).
+- MOVE: Shamba Fit (everyday activity). EAT: Kenyan Food Lens. RECOVER: Uko Sawa?
 - Companion: Stage ${stage}, Level ${level}, Streak ${streak} days, Mood ${mood}.
 - ${anxietyLine}
 - Mood-matched 5-minute theme: "${sessionTitle}" — ${sessionScript}
+- ${lifestyleBlock}
 
 Language
 - Reply in ${input.languageName} only. Crisis/safety wording stays in clear English.

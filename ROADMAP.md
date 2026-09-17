@@ -5,7 +5,8 @@
 
 This roadmap takes Aura Health from the current MVP to a production-complete
 wellness product: durable data, real payments, verified health integrations,
-a production rewards rail, and a shippable corporate + consumer experience.
+a Kenya/Africa lifestyle loop (MOVE → EAT → RECOVER → ASTRA), a production
+rewards rail, and a shippable corporate + consumer experience.
 
 ---
 
@@ -15,10 +16,13 @@ Shipped and demoable today:
 
 | Area | MVP state |
 |---|---|
-| **Landing & brand** | Forest glass marketing site, proof chart, pricing, sticky nav |
+| **Landing & brand** | Forest glass marketing site; Features + Trust on landing; Proof / Pricing in-app About |
 | **Auth** | Google / email / guest walkthrough (Firebase) |
-| **Companion** | Astra dashboard, habits (litres / glasses), quick log, streaks |
-| **AI Coach** | Gemini-backed chat + mood-adaptive 5-minute sessions |
+| **Home / Companion** | Astra dashboard + **Today** lifestyle strip, Aura’s Insight, Health Brief |
+| **Shamba Fit (MOVE)** | Everyday Kenyan activity logging, Movement Points, estimated kcal (local) |
+| **Kenyan Food Lens (EAT)** | Local food DB + meal builder; photo → manual confirm (no CV API) |
+| **Uko Sawa? (RECOVER)** | Daily wellness check + Recovery Score (rule-based, non-clinical) |
+| **AI Coach** | Gemini-backed Astra chat; consumes lifestyle context for recommendations |
 | **Train** | Calisthenics + yoga with 3D instructors **Aura** and **Aurora** (mesh pipeline + WebGL viewports) |
 | **Check-ins** | Water (L), sleep, meds, mood, anxiety; AI attestation |
 | **Rewards UI** | Cowries, loot wheel, conversion calculator, voucher cards |
@@ -28,7 +32,9 @@ Shipped and demoable today:
 
 Known MVP gaps: simulated wearables & sponsor economy, no durable Postgres
 wiring in production, issuer-gated on-chain rewards need a backend signer,
-clinical claims remain soft / self-reported.
+lifestyle logs are **device-local** until cloud sync ships, clinical claims
+remain soft / self-reported. Food Lens and motion detection are manual-first
+(no paid computer-vision or continuous location tracking).
 
 ---
 
@@ -38,12 +44,14 @@ Aura Health becomes a **production wellness companion** for professionals and
 teams in Africa-first markets:
 
 1. Users keep a durable daily habit with Astra (sessions, check-ins, language).
-2. Progress is private by default, exportable, and optionally attested on-chain.
-3. Premium and corporate seats are paid through a real billing stack.
-4. Wearables and Health Pass sync real metrics (hydration in L / glasses).
-5. Rewards redeem into real partner value (clinic vouchers, data, gym) with
+2. Everyday life is first-class: **Shamba Fit** movement, **Kenyan Food Lens**
+   meals, and **Uko Sawa?** recovery feed Astra — not only gym / step counters.
+3. Progress is private by default, exportable, and optionally attested on-chain.
+4. Premium and corporate seats are paid through a real billing stack.
+5. Wearables and Health Pass sync real metrics (hydration in L / glasses).
+6. Rewards redeem into real partner value (clinic vouchers, data, gym) with
    auditable issuance — without turning the home screen into a crypto wallet.
-6. Employers get impact reports that stay wellness-framed, not clinical claims.
+7. Employers get impact reports that stay wellness-framed, not clinical claims.
 
 ---
 
@@ -55,12 +63,46 @@ teams in Africa-first markets:
 - [x] Guest / Google / email entry paths
 - [x] Companion, Coach, Rewards, Settings surfaces
 - [x] Train hub: 3D character mesh pipeline + responsive WebGL viewports for Aura and Aurora
+- [x] Kenya/Africa lifestyle loop: Shamba Fit, Kenyan Food Lens, Uko Sawa? → Astra
+- [x] Offline-capable local lifestyle storage + curated `/api/health-brief`
 - [x] Fuji contracts deployed & source-verified
 - [x] Public proof metrics + soft claim disclaimers
 - [ ] Tag `v0.1.0-mvp` release; freeze feature scope for pilot demos
 - [ ] Short pilot FAQ + “not a medical device” footer on auth & settings
+- [ ] Cloud sync for lifestyle logs (activities / meals / Uko Sawa) when signed in
 
 **Exit:** One-click guest walkthrough that never blocks on wallet or payment.
+
+---
+
+## Lifestyle layer — MOVE → EAT → RECOVER → ASTRA *(shipped MVP)*
+
+**Product message:** AuraHealth doesn’t just count steps — it understands
+how people live, move, eat, and recover.
+
+| Pillar | Surface | MVP behavior |
+|---|---|---|
+| **MOVE** | Shamba Fit | Manual everyday activities; local Movement Points + estimated kcal |
+| **EAT** | Kenyan Food Lens | Expandable local food DB + meal builder; camera opens manual confirm |
+| **RECOVER** | Uko Sawa? | Feeling + optional sleep/energy/stress; Recovery Score guidance |
+| **ASTRA** | AI Coach + Home Insight | Lifestyle context in coach prompt; deterministic Insight fallback |
+
+### Shipped engineering
+
+- Types: `src/types/lifestyle.ts`
+- Calcs: `src/lib/lifestyleCalculations.ts` (deterministic, testable)
+- Storage: `src/lib/lifestyleStorage.ts` (localStorage, offline-first)
+- Content: `src/content/shambaActivities.ts`, `kenyanFoods.ts`, `healthBriefContent.ts`
+- Provider stubs: `src/services/foodRecognition.ts` (manual), `activityMotion.ts` (optional hint)
+- API: `GET /api/health-brief` (backend-curated tips; no frontend API keys)
+
+### Follow-ons (do not block pilots)
+
+- [ ] Sync lifestyle logs to Firestore / Postgres per account
+- [ ] Optional AI food recognition behind `FoodRecognitionProvider` (consent + cost gated)
+- [ ] Richer device pedometer / Health Connect mapping into Shamba Fit
+- [ ] Weather-aware activity suggestions (optional, not required for MVP)
+- [ ] Voice check-in analysis research path (never claim medical detection)
 
 ---
 
@@ -106,7 +148,8 @@ viewport and lets Astra schedule tomorrow’s Train block from chat.
 **Goal:** Real accounts, real persistence, safe billing path.
 
 ### Product
-- Durable user profile, check-in history, and Astra state per account
+- Durable user profile, check-in history, Astra state, and **lifestyle logs**
+  (Shamba / Food / Uko Sawa) per account
 - Replace in-memory commerce with Postgres (schema already sketched in
   `src/db/schema.sql`)
 - Stripe (or Paystack / Flutterwave for regional cards) for:
@@ -115,10 +158,11 @@ viewport and lets Astra schedule tomorrow’s Train block from chat.
   - lifetime
   - corporate seat packs
 - Email receipts + plan status in Settings
-- Offline-tolerant quick log with sync queue
+- Offline-tolerant quick log **and lifestyle queue** with sync when online
 
 ### Engineering
 - Wire `commerceStore` to Postgres / managed SQL
+- Persist `aura-lifestyle-v1:*` local payloads to the signed-in user profile
 - Session & subscription webhooks
 - Environment-based feature flags (guest demo vs paid)
 - Error monitoring (Sentry) + basic product analytics (funnel events already stubbed)
@@ -247,8 +291,10 @@ viewport and lets Astra schedule tomorrow’s Train block from chat.
 
 ### v1.0 definition of done
 1. A new user can sign up, finish onboarding, complete a 5-minute session,
-   log hydration in **litres / glasses**, and see a personal 14-day trend.
-2. A premium user can pay, cancel, and retain history.
+   log hydration in **litres / glasses**, log Shamba / Food / Uko Sawa, and
+   see a personal 14-day trend plus Astra using that lifestyle context.
+2. A premium user can pay, cancel, and retain history (including synced
+   lifestyle logs).
 3. A rewards user can redeem a real partner perk without installing a wallet.
 4. A company admin can invite seats and download an anonymized monthly report.
 5. Ops can rotate keys, pause redemptions, and support a user data-deletion request.
@@ -261,9 +307,8 @@ insurance partners, multi-country billing, Astra voice mode, etc.).
 ## Suggested timeline (indicative)
 
 ```text
-2026 Q3          MVP freeze + Train 3D foundation (Aura / Aurora)
-2026 Q4          Next phase (pose / posture / conversational scheduling)
-                 in parallel with Phase 1 (persistence & billing)
+2026 Q3          MVP freeze + Train 3D + lifestyle loop (Shamba / Food / Uko Sawa)
+2026 Q4          Pose / posture planning + Phase 1 (persistence, billing, lifestyle sync)
 2027 Q1          Phase 2 (habit / Astra) + start Phase 3 (wearables)
 2027 Q2          Phase 3 complete + Phase 4 (redeemable rewards)
 2027 Q3          Phase 5 (corporate) + Phase 6 (mobile)
@@ -277,13 +322,17 @@ Dates flex with pilot partners and payment-provider approval.
 ## Principles (do not break while building)
 
 1. **Wellness first, Web3 optional** — Companion never requires a wallet.
-2. **No clinical overclaim** — self-reported trends ≠ medical outcomes.
+2. **No clinical overclaim** — self-reported trends ≠ medical outcomes;
+   calories, nutrition, and recovery scores are **estimates**.
 3. **Metric honesty** — hydration in **litres / glasses**, not ounces.
-4. **Calm brand** — forest glass, teal primary; rewards stay in their own band.
-5. **Africa-first languages & partners** — sessions and perks stay culturally
-   grounded.
-6. **Privacy by design** — share Health Pass and employer reports only with
-   explicit opt-in.
+4. **Lifestyle before gym-only** — everyday movement, local food, and recovery
+   feed Astra; do not fake AI vision or diagnosis.
+5. **Calm brand** — forest glass, teal primary; rewards stay in their own band.
+6. **Africa-first languages & partners** — sessions, foods, and perks stay
+   culturally grounded without stereotype decoration.
+7. **Privacy by design** — share Health Pass and employer reports only with
+   explicit opt-in; no silent camera/video upload.
+8. **Affordable MVP** — no paid CV / food-recognition dependency for core flows.
 
 ---
 
@@ -297,14 +346,17 @@ Dates flex with pilot partners and payment-provider approval.
 | Data residency | Single region vs multi-region | Phase 3 |
 | Clinical partners | Research MoU vs none for v1 | Phase 7 |
 | Pose runtime | On-device MediaPipe vs server vision vs none for v1 | Next phase (pose) |
+| Food recognition | Stay manual vs optional AI provider (cost / consent) | Lifestyle follow-on |
+| Lifestyle sync | Firestore vs Postgres vs hybrid | Phase 1 |
 
 ---
 
 ## How to use this doc
 
-- Ship work against the **current phase** checklist; the next phase is virtual
-  instructors (pose / posture / scheduling). Avoid jumping to Phase 4+ UX
-  before Phase 1 persistence.
+- Ship work against the **current phase** checklist. Lifestyle MOVE/EAT/RECOVER
+  is shipped at MVP depth; next engineering focus is Phase 1 persistence /
+  billing / sync, then pose intelligence. Avoid jumping to Phase 4+ UX before
+  Phase 1 persistence.
 - When a phase exits, move its leftover items explicitly into the next phase
   or into **Open decisions**.
 - Keep README screenshots (`docs/readme/`) updated at each major phase exit:

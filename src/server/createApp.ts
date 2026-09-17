@@ -18,6 +18,7 @@ import {
 } from './commerceStore';
 import { CORPORATE_PACKAGES, SUBSCRIPTION_TIERS, VALUE_PROPS } from '../content/valueProps';
 import { CRISIS_REPLY, CRISIS_RESOURCES, looksLikeCrisis } from '../content/crisisSupport';
+import { HEALTH_BRIEF_ITEMS } from '../content/healthBriefContent';
 import {
   clientIp,
   ipKey,
@@ -328,9 +329,14 @@ export function createApiApp(): express.Express {
     res.json({ packages: CORPORATE_PACKAGES });
   });
 
+  /** Curated wellness brief — backend-owned content; swap source later without frontend changes */
+  app.get('/api/health-brief', (_req, res) => {
+    res.json({ items: HEALTH_BRIEF_ITEMS, source: 'aura-curated' });
+  });
+
   app.post('/api/ai-coach', requireAuth, ...geminiLimit, async (req, res) => {
     try {
-      const { userMessage, companionState, history, language, latestAnxiety } = req.body || {};
+      const { userMessage, companionState, history, language, latestAnxiety, lifestyleContext } = req.body || {};
       const userText = String(userMessage || '').trim().slice(0, 4000);
 
       if (!userText) {
@@ -366,6 +372,7 @@ export function createApiApp(): express.Express {
         companionState,
         language,
         latestAnxiety,
+        lifestyleContext: typeof lifestyleContext === 'string' ? lifestyleContext.slice(0, 2000) : undefined,
       });
 
       res.json({

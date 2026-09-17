@@ -190,6 +190,7 @@ export async function generateCoachReply(input: {
   companionState?: { stage?: string; level?: number; streakDays?: number; mood?: string };
   language?: unknown;
   latestAnxiety?: unknown;
+  lifestyleContext?: string;
   search?: (query: string) => Promise<SearchHit[]>;
 }): Promise<CoachGenerateResult> {
   const userText = String(input.userMessage || '').trim().slice(0, 4000);
@@ -210,6 +211,7 @@ export async function generateCoachReply(input: {
     hasSearch: searchResults.length > 0,
     sessionTitle: session.title,
     sessionScript: session.script,
+    lifestyleContext: typeof input.lifestyleContext === 'string' ? input.lifestyleContext.slice(0, 2000) : undefined,
   });
   const contents = toGeminiContents(input.history, formatSearchContext(userText, searchResults));
 

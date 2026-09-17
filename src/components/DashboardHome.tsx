@@ -10,6 +10,7 @@ import { ImpactDashboard } from './ImpactDashboard';
 import { UpgradePrompt } from './UpgradePrompt';
 import { moodAdaptiveSession, SessionLanguageId, VALUE_PROPS } from '../content/valueProps';
 import { IconBadge } from './ui/IconBadge';
+import { LifestyleToday } from './LifestyleToday';
 
 interface DashboardHomeProps {
   companion: HealthCompanion;
@@ -28,6 +29,7 @@ interface DashboardHomeProps {
   showUpgrade: boolean;
   onUpgrade: () => void;
   sessionLanguage: SessionLanguageId;
+  lifestyleRevision?: number;
 }
 
 const MOOD_EMOJI: Record<HealthCompanion['mood'], string> = {
@@ -55,6 +57,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   showUpgrade,
   onUpgrade,
   sessionLanguage,
+  lifestyleRevision = 0,
 }) => {
   const [missionsExpanded, setMissionsExpanded] = useState(false);
   const xpPct = Math.min(100, (companion.xp / Math.max(1, companion.xpToNextLevel)) * 100);
@@ -78,6 +81,11 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   return (
     <div className="space-y-6">
       {showUpgrade && <UpgradePrompt onUpgrade={onUpgrade} />}
+      <LifestyleToday
+        userKey={userId}
+        revision={lifestyleRevision}
+        onNavigateTab={onNavigateTab}
+      />
       <p className="text-sm text-slate-400 leading-[1.6]">{VALUE_PROPS.heroSubtext}</p>
       <section className="aura-module-card astra-hero p-6 relative overflow-hidden">
         <div className="flex flex-col items-center text-center relative z-10">

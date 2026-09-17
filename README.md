@@ -8,11 +8,16 @@
 
 **Live app:** [aurahealth.co.ke](https://www.aurahealth.co.ke/) · [aurahealth-delta.vercel.app](https://aurahealth-delta.vercel.app/)
 
-Aura Health is a **dark-only** gamified daily health app: an evolving companion
-(**Astra**), a Health Cowries economy, sponsor rewards, and an AI coach (Astra)
-— backed by real, verified smart contracts on **Avalanche Fuji testnet**. Sign
-in with Google or email, or use **Continue as Guest** / **Guest Walkthrough**
-to try the product without an account.
+Aura Health is a **dark-only** Kenya/Africa-first wellness app: an evolving
+companion (**Astra**), everyday lifestyle tracking (**Shamba Fit**, **Kenyan
+Food Lens**, **Uko Sawa?**), Train with 3D instructors Aura & Aurora, a Health
+Cowries economy, and an AI coach — backed by real, verified smart contracts on
+**Avalanche Fuji testnet**. Sign in with Google or email, or use **Continue as
+Guest** / **Guest Walkthrough** to try the product without an account.
+
+> **AuraHealth doesn’t just count your steps. It understands your lifestyle.**
+>
+> **MOVE → EAT → RECOVER → ASTRA**
 
 ## Screenshots
 
@@ -36,10 +41,9 @@ to try the product without an account.
 Copy lives in [`src/content/valueProps.ts`](src/content/valueProps.ts) and is
 shown in the UI, not only in marketing docs:
 
-1. **Hero headline:** Reduce Stress in 5 Minutes a Day (36–48px). **Subhead:**
-   AI-guided micro-sessions in natural language built for busy professionals
-   (`#9CA3AF`). CTA: **Start Free Trial**. Astra preview is a glass card with
-   a pulsing aura and typewriter prompts (`src/components/landing/Hero.tsx`).
+1. **Hero headline:** Your Life. Your Wellness. Your Aura. **Subhead:**
+   AI-powered wellness that understands how you actually live, move, eat, and
+   recover (`src/components/landing/Hero.tsx`).
 2. **Proof:** culturally relevant tools for sleep and focus within 7 days;
    mood-adaptive anxiety reduction in two weeks — sparkline metric cards
    (e.g. **−50% Anxiety in 14 Days**) plus a Recharts sleep vs anxiety chart
@@ -48,24 +52,48 @@ shown in the UI, not only in marketing docs:
    [`PremiumModal`](src/components/PremiumModal.tsx) and the landing **Pricing**
    section (`src/components/landing/Pricing.tsx`).
 
-Landing flow: **Hero → Features → Proof → Rewards → Pricing → CTA**. Header
-nav is **Features**, **Proof**, **Rewards**, **Pricing** (smooth-scroll).
-**Sign In** is a ghost pill; **Start Free Trial** is the solid gold CTA.
-Cowries count-up and Loot Wheel teaser sit on the landing **Rewards** block;
-full wheel / marketplace stay on the in-app Rewards tab.
+Landing flow (marketing): **Hero → Features → Trust**. Proof, Rewards, and
+Pricing live in the in-app **About** tab so the homepage stays focused.
+In-app Features highlight check-ins, Astra, language-first coaching, and Train
+with Aura & Aurora (`src/components/landing/Features.tsx`).
 
 ## Product
 
 | Surface | What it does |
 |---|---|
-| **Landing** | Nav + ghost Sign In / trial CTA; hero + Astra glass; 2×2 features; proof sparklines; Cowries / Loot Wheel; pricing; Firebase auth |
-| **Companion** | Astra-first dashboard, mood-adaptive 5-min session, anxiety impact chart, habit cards, quick log |
-| **AI Coach** | Astra chat in the user’s session language; mood-adapted micro-sessions |
+| **Landing** | Hero + Features + Trust; Enter Dashboard / auth; staff admin in footer |
+| **Home** | Astra companion, **Today** (movement / nutrition / recovery / hydration), Aura’s Insight, Health Brief, habits & quick log |
+| **Shamba Fit** | Everyday Kenyan activity log (market walks, chores, water, stairs, shamba…). Local Movement Points + **estimated** kcal |
+| **Nutrition** | Kenyan Food Lens — local food DB (ugali, sukuma, omena…), meal builder, portions. Photo path is **manual confirm** (no CV API) |
+| **Uko Sawa?** | “Uko aje leo?” wellness check + Recovery Score guidance (not a diagnosis) |
+| **Train** | Calisthenics + yoga with 3D coaches Aura / Aurora |
+| **AI Coach** | Astra chat in the user’s session language; uses lifestyle context when available |
 | **Rewards** | Cowries balance, loot-wheel modal, community ticker, voucher marketplace |
+| **About** | Proof charts, rewards teaser, pricing / trial |
 | **Settings** | Plan, session language (Kiswahili / vernacular), Health Pass, Fitbit / Apple Watch |
 
-Primary nav is **Companion**, **AI Coach**, **Rewards**, and **Settings**. Profile,
-Health Pass, and Wearables are settings sections, not top-level tabs.
+Primary nav: **Home**, **Shamba Fit**, **Nutrition**, **Uko Sawa?**, **Train**,
+**AI Coach**, **Rewards**, **About**, **Settings**. Mobile bottom bar prioritizes
+Home · Train · Move · Coach · More (search). Profile, Health Pass, and Wearables
+remain settings sections.
+
+### Lifestyle loop (MOVE → EAT → RECOVER → ASTRA)
+
+Calculations are local and labeled as estimates — not medical measurements.
+
+| Module | Code |
+|---|---|
+| Types | [`src/types/lifestyle.ts`](src/types/lifestyle.ts) |
+| Activity / food / recovery math | [`src/lib/lifestyleCalculations.ts`](src/lib/lifestyleCalculations.ts) |
+| Offline storage | [`src/lib/lifestyleStorage.ts`](src/lib/lifestyleStorage.ts) (`localStorage`) |
+| Insight fallback | [`src/lib/lifestyleInsight.ts`](src/lib/lifestyleInsight.ts) |
+| Activity catalog | [`src/content/shambaActivities.ts`](src/content/shambaActivities.ts) |
+| Food database | [`src/content/kenyanFoods.ts`](src/content/kenyanFoods.ts) |
+| Food recognition stub | [`src/services/foodRecognition.ts`](src/services/foodRecognition.ts) |
+| Motion capability check | [`src/services/activityMotion.ts`](src/services/activityMotion.ts) |
+
+Automatic activity detection and AI food vision are **optional / future**. The
+MVP stays fully usable with manual logging and no expensive third-party APIs.
 
 ### Premium, trial, and plans
 
@@ -90,9 +118,13 @@ Schema: [`src/db/schema.sql`](src/db/schema.sql). Store: [`src/server/commerceSt
 | `POST` | `/api/funnel/event` | Engagement / conversion events |
 | `GET` | `/api/funnel/summary` | Trial → conversion counts |
 | `POST` | `/api/corporate` | Team wellness signup |
+| `GET` | `/api/health-brief` | Curated wellness tips (backend-owned; no frontend API keys) |
+| `POST` | `/api/ai-coach` | Astra reply (auth); accepts optional `lifestyleContext` |
 
 Check-ins include an anxiety 1–10 slider. Coach and session cards adapt to
-Astra’s mood and Settings language.
+Astra’s mood and Settings language. When the user has logged Shamba Fit /
+Food Lens / Uko Sawa data, the coach request includes a compact lifestyle
+summary so Astra can answer “what should I do today?” from real logs.
 
 ### App shell
 
@@ -101,8 +133,13 @@ Astra’s mood and Settings language.
 - Header: search, tabular Cowries, **+ Check-In** (icon-only on small screens).
 - **Quick log** bar for hydration, meds, sleep, and mood, with an Astra reaction
   and XP / Cowries bump.
+- Home surfaces the lifestyle **Today** strip and **Aura’s Insight** (local
+  rules if Astra is offline).
+- Offline lifestyle writes stay on-device; a subtle banner notes offline save.
 - **Upgrade to Premium** card at the bottom of the sidebar (paywall, not a
   silent toggle).
+
+Roadmap: [`ROADMAP.md`](ROADMAP.md).
 
 ## Design system
 
@@ -347,30 +384,38 @@ them requires `forge install foundry-rs/forge-std` first.
 ```
 public/             favicon.svg (app icon) and aurahealth-logo.svg (wordmark)
 src/
-  content/          Value props, session languages, subscription tier catalog
+  content/          Value props, languages, shamba activities, kenyan foods, health brief
+  types/            Lifestyle domain types (Activity, Meal, WellnessCheck, …)
+  lib/              Lifestyle calcs, storage, insight fallback; celebrate / motion prefs
   db/schema.sql     Plans, user_metrics, funnel_events, corporate_leads
-  server/           In-memory commerce/metrics store used by Express; gemini coach helpers in ai.ts
+  server/           Commerce/metrics store; coachTurn + ai.ts; /api/health-brief
   contracts/        Solidity sources (LoyaltyPoints, AchievementBadges, StreakTracker, TierSystem, IncentiveToken)
   script/           Foundry deployment scripts (optional, requires forge-std)
   Scripts/          Hardhat deployment/verification scripts (.cjs)
-  services/         avalanche.ts, firebase.ts, healthDataService.ts, commerce.ts (API client)
-  components/       React UI (landing Hero/Features/Proof/Rewards/Pricing/Cta, paywall, impact, sidebar, coach, rewards)
+  services/         avalanche, firebase, commerce, foodRecognition, activityMotion, healthBrief
+  components/       Landing, shell, ShambaFit, FoodLens, UkoSawa, LifestyleToday, Train, coach, rewards
   App.tsx           App shell, auth, plans, and tab routing
   index.css         Dark design tokens, energy bars, chat bubbles, gold panels
 server.ts           Express (Gemini, metrics, subscriptions, funnel, Vite/static)
 hardhat.config.cjs  Hardhat network + Routescan verification config
 deployments.json    Deployed contract addresses (this repo's live Fuji deployment)
+ROADMAP.md          Phased plan including lifestyle follow-ons and pose intelligence
 ```
 
 ## Notes
 
-Monetization (current): three value props in hero, onboarding, paywall, and
-impact chart; trial → auto-subscribe; corporate package endpoint; mood/anxiety
+Monetization (current): value props in hero, onboarding, paywall, and impact
+chart; trial → auto-subscribe; corporate package endpoint; mood/anxiety
 logging. Plan state is process-local until a real billing provider is wired.
 
+Lifestyle (current): Shamba Fit / Kenyan Food Lens / Uko Sawa? are offline-first
+on the device. Astra consumes a text lifestyle snapshot when coaching. Cloud
+sync of those logs is Phase 1 roadmap work. Do not present calorie, nutrition,
+or recovery numbers as clinical measurements.
+
 UI: locked carbon-mint dark theme; collapsible pushing sidebar; Astra-first
-companion home; quick log; loot wheel as a modal; verification in the landing
-footer and settings drawer — not in the hero.
+home with lifestyle Today strip; quick log; loot wheel as a modal; verification
+in the landing footer and settings drawer — not in the hero.
 
 Contracts (earlier): Hardhat toolchain, Routescan verification, and the five
 live Fuji addresses in `src/services/avalanche.ts`. Fictional contract

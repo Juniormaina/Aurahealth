@@ -39,7 +39,7 @@ def main() -> int:
         page = context.new_page()
         page.set_default_timeout(25000)
         page.goto(args.url, wait_until="load")
-        page.get_by_role("heading", name="Reduce Stress in 5 Minutes a Day").wait_for()
+        page.get_by_role("heading", name="Your Life. Your Wellness. Your Aura.").wait_for()
         wait(page, 1200)
 
         # 1 Landing hero

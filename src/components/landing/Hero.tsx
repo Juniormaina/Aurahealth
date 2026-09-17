@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { fadeUp } from './Reveal';
 
-const TITLE = 'Reduce Stress in 5 Minutes a Day';
+const TITLE = 'Your Life. Your Wellness. Your Aura.';
 
 export const Hero: React.FC = () => (
   <section className="hero-scene" aria-labelledby="hero-title">
@@ -35,7 +35,7 @@ export const Hero: React.FC = () => (
         transition={{ delay: 0.12 }}
         className="hero-sub"
       >
-        AI-guided micro-sessions in natural language built for busy professionals.
+        AI-powered wellness that understands how you actually live, move, eat, and recover.
       </motion.p>
     </div>
   </section>

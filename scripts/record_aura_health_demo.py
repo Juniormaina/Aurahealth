@@ -298,7 +298,7 @@ def main() -> int:
             page.set_default_timeout(25000)
             print(f"[rec] loading {args.url}")
             page.goto(args.url, wait_until="load")
-            page.get_by_role("heading", name="Reduce Stress in 5 Minutes a Day").wait_for(timeout=20000)
+            page.get_by_role("heading", name="Your Life. Your Wellness. Your Aura.").wait_for(timeout=20000)
             run_walkthrough(page)
             # Finalize WebM before converting.
             page.close()

@@ -20,6 +20,8 @@ interface AIHealthCoachProps {
   latestAnxiety?: number | null;
   language?: SessionLanguageId;
   onShowToast?: (message: string) => void;
+  /** Compact MOVE/EAT/RECOVER context for Astra */
+  lifestyleContext?: string;
 }
 
 interface ChatSource {
@@ -68,6 +70,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
   latestAnxiety,
   language,
   onShowToast,
+  lifestyleContext,
 }) => {
   const chips = useMemo(() => coachPromptChips(language), [language]);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
@@ -149,6 +152,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
         },
         language,
         latestAnxiety,
+        lifestyleContext: lifestyleContext || undefined,
       });
 
       if (isCoachReplyFailure(result)) {
