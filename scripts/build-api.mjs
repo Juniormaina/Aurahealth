@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outFile = path.join(root, 'api', 'index.cjs');
+const outFile = path.join(root, 'api', 'index.js');
 
 esbuild.buildSync({
   entryPoints: [path.join(root, 'src', 'server', 'vercelHandler.ts')],
@@ -23,7 +23,7 @@ esbuild.buildSync({
 
 const exported = require(outFile);
 if (typeof exported !== 'function') {
-  console.error('api/index.cjs did not export a function handler, got', typeof exported);
+  console.error('api/index.js did not export a function handler, got', typeof exported);
   process.exit(1);
 }
 
