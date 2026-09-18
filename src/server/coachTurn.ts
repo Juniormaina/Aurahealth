@@ -11,10 +11,10 @@ const FACTUAL_QUESTION =
 
 /** Health, medical, and Aura wellness topics Astra is allowed to discuss. */
 const HEALTH_SCOPE =
-  /\b(health|medical|medicin(?:e|al)?|clinic|doctor|hospital|physician|nurse|symptom|pain|ache|fever|cough|nausea|vomit|injur(?:y|ies|ed)?|wound|sleep|insomni|stress|anxi(?:ety|ous)?|depress(?:ion|ed)?|mood|mental|hydrat(?:e|ion)?|water|nutrition|diet|calorie|protein|carb(?:s|ohydrate)?s?|meal|food|eat(?:ing)?|ugali|sukuma|exercise|workout|fitness|train(?:ing)?|yoga|calisthen|breath|meditat|recover(?:y|ing)?|sore(?:ness)?|fatigue|tired|energy|mobility|stretch|wellness|session|reset|shamba|uko\s*sawa|food\s*lens|vitality|harmony|medication|pill|dose|dosing|tablet|supplement|vitamin|melatonin|ibuprofen|paracetamol|panadol|antibiotic|blood\s*pressure|diabetes|heart|stomach|headache|back\s*pain|period|pregnan|allerg(?:y|ies|ic)?|illness|sick|ill\b|cold\b|flu\b|infection|inflam|hydration|glasses of water|litres?|liters?)\b/i;
+  /\b(health|medical|medicin(?:e|al)?|clinic|doctor|hospital|physician|nurse|symptom|pains?|aches?|fever|cough|nausea|vomit|injur(?:y|ies|ed)?|wound|sleep|insomni|stress|anxi(?:ety|ous)?|depress(?:ion|ed)?|mood|mental|hydrat(?:e|ion)?|water|nutrition|diet|calorie|protein|carb(?:s|ohydrate)?s?|meal|food|eat(?:ing)?|ugali|sukuma|exercise|workout|fitness|train(?:ing)?|yoga|calisthen|breath|meditat|recover(?:y|ing)?|sore(?:ness)?|fatigue|tired|energy|mobility|stretch|wellness|session|reset|shamba|uko\s*sawa|food\s*lens|vitality|harmony|medication|pill|dose|dosing|tablet|supplement|vitamin|melatonin|ibuprofen|paracetamol|panadol|antibiotic|blood\s*pressure|diabetes|heart|stomach|headaches?|migraines?|dizz(?:y|iness)|back\s*pains?|period|pregnan|allerg(?:y|ies|ic)?|illness|sick|ill\b|cold\b|flu\b|infection|inflam|hydration|glasses of water|litres?|liters?|kichwa|maumivu|ninaumwa|umwa|homa|tumbo|maji|usingizi|kulala|msongo|wasiwasi|chakula|lishe|mazoezi|zoezi|afya|daktari|hospitali|dawa)\b/i;
 
 const FEELING_SHARE =
-  /\b(i (?:feel|am|'m|have)|i'm|im |feeling|nimechoka|nina wasiwasi|sijalala|my (?:body|head|back|chest|stomach|sleep|mood|anxiety|stress|energy))\b/i;
+  /\b(i (?:feel|am|'m|have)|i'm|im |feeling|nimechoka|ninaumwa|nina wasiwasi|sijalala|my (?:body|head|back|chest|stomach|sleep|mood|anxiety|stress|energy))\b/i;
 
 /** Short turns that continue an in-progress wellness practice or check-in. */
 const SESSION_CONTINUATION =

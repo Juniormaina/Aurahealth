@@ -260,7 +260,7 @@ Create `src/.env` (already gitignored) with:
 ```bash
 # Frontend / server
 GEMINI_API_KEY=your-gemini-api-key
-# Optional: GEMINI_MODEL=gemini-2.5-flash
+# Optional: GEMINI_MODEL=gemini-3.6-flash
 # Optional: TAVILY_API_KEY=your-tavily-key
 
 # Contract deployment (Avalanche Fuji testnet)

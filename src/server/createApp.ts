@@ -385,10 +385,14 @@ export function createApiApp(): express.Express {
       if (err instanceof CoachGenerateError && err.code === 'empty_message') {
         return res.status(400).json({ error: err.message, code: err.code });
       }
-      console.warn('AI coach error:', err instanceof Error ? err.message : 'unknown');
+      const detail = err instanceof Error ? err.message : 'unknown';
+      console.warn('AI coach error:', detail);
+      const overloaded = /503|unavailable|high demand|resource.?exhausted|overloaded|quota/i.test(detail);
       res.status(503).json({
-        error: 'Astra could not reach the AI service just then. Please try again.',
-        code: 'ai_unavailable',
+        error: overloaded
+          ? 'Astra’s AI provider is busy right now. Please try again in a moment.'
+          : 'Astra could not reach the AI service just then. Please try again.',
+        code: overloaded ? 'ai_overloaded' : 'ai_unavailable',
       });
     }
   });

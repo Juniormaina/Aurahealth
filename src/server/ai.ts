@@ -22,7 +22,7 @@ export {
 } from './coachTurn';
 export type { CoachHistoryItem, GeminiContent, SearchHit } from './coachTurn';
 
-export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+export const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
 
 export function geminiModel(): string {
   const fromEnv = process.env.GEMINI_MODEL?.trim();

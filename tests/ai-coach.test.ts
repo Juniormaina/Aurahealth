@@ -35,6 +35,10 @@ check('shouldSearch allows factual health questions', () => {
 
 check('isHealthScopedMessage allows health and blocks off-topic', () => {
   assert.equal(isHealthScopedMessage('I have a headache'), true);
+  assert.equal(isHealthScopedMessage('headaches'), true);
+  assert.equal(isHealthScopedMessage('migraine'), true);
+  assert.equal(isHealthScopedMessage('Ninaumwa na kichwa baada ya kulala vibaya'), true);
+  assert.equal(isHealthScopedMessage('Ninafaa kunywa maji kiasi gani leo?'), true);
   assert.equal(isHealthScopedMessage('How much water should I drink?'), true);
   assert.equal(isHealthScopedMessage('Start a 5-minute stress reset'), true);
   assert.equal(isHealthScopedMessage('ok'), true);

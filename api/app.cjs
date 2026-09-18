@@ -1000,8 +1000,8 @@ var import_genai = require("@google/genai");
 var APP_CONTEXT_TERMS = /\b(streak|cowrie|cowries|xp|level|badge|companion|astra|wheel|sponsor|check-?in|cosmic|egg|hatchling|vitality|harmony|mission|quest|mfululizo|shamba|food lens|ugali|sukuma|uko sawa|movement points|recovery score|nutrition)\b/i;
 var PRACTICE_REQUEST = /\b(start|guide me|walk me|lead me|let'?s (?:do|start)|5-minute|five[- ]minute|micro-?session|anza zoezi|adapt (?:a |my )?session|badilisha zoezi|breath(?:e|ing)? with me|gratitude practice)\b/i;
 var FACTUAL_QUESTION = /\b(?:what(?:'s| is| are)|how (?:much|many|long)\b|why (?:is|does|do)\b|is it (?:safe|true|normal|ok)|side effects?|according to|who (?:says|recommends)|latest (?:research|study|guidelines?)|recommended (?:dose|amount|hours))\b/i;
-var HEALTH_SCOPE = /\b(health|medical|medicin(?:e|al)?|clinic|doctor|hospital|physician|nurse|symptom|pain|ache|fever|cough|nausea|vomit|injur(?:y|ies|ed)?|wound|sleep|insomni|stress|anxi(?:ety|ous)?|depress(?:ion|ed)?|mood|mental|hydrat(?:e|ion)?|water|nutrition|diet|calorie|protein|carb(?:s|ohydrate)?s?|meal|food|eat(?:ing)?|ugali|sukuma|exercise|workout|fitness|train(?:ing)?|yoga|calisthen|breath|meditat|recover(?:y|ing)?|sore(?:ness)?|fatigue|tired|energy|mobility|stretch|wellness|session|reset|shamba|uko\s*sawa|food\s*lens|vitality|harmony|medication|pill|dose|dosing|tablet|supplement|vitamin|melatonin|ibuprofen|paracetamol|panadol|antibiotic|blood\s*pressure|diabetes|heart|stomach|headache|back\s*pain|period|pregnan|allerg(?:y|ies|ic)?|illness|sick|ill\b|cold\b|flu\b|infection|inflam|hydration|glasses of water|litres?|liters?)\b/i;
-var FEELING_SHARE = /\b(i (?:feel|am|'m|have)|i'm|im |feeling|nimechoka|nina wasiwasi|sijalala|my (?:body|head|back|chest|stomach|sleep|mood|anxiety|stress|energy))\b/i;
+var HEALTH_SCOPE = /\b(health|medical|medicin(?:e|al)?|clinic|doctor|hospital|physician|nurse|symptom|pains?|aches?|fever|cough|nausea|vomit|injur(?:y|ies|ed)?|wound|sleep|insomni|stress|anxi(?:ety|ous)?|depress(?:ion|ed)?|mood|mental|hydrat(?:e|ion)?|water|nutrition|diet|calorie|protein|carb(?:s|ohydrate)?s?|meal|food|eat(?:ing)?|ugali|sukuma|exercise|workout|fitness|train(?:ing)?|yoga|calisthen|breath|meditat|recover(?:y|ing)?|sore(?:ness)?|fatigue|tired|energy|mobility|stretch|wellness|session|reset|shamba|uko\s*sawa|food\s*lens|vitality|harmony|medication|pill|dose|dosing|tablet|supplement|vitamin|melatonin|ibuprofen|paracetamol|panadol|antibiotic|blood\s*pressure|diabetes|heart|stomach|headaches?|migraines?|dizz(?:y|iness)|back\s*pains?|period|pregnan|allerg(?:y|ies|ic)?|illness|sick|ill\b|cold\b|flu\b|infection|inflam|hydration|glasses of water|litres?|liters?|kichwa|maumivu|ninaumwa|umwa|homa|tumbo|maji|usingizi|kulala|msongo|wasiwasi|chakula|lishe|mazoezi|zoezi|afya|daktari|hospitali|dawa)\b/i;
+var FEELING_SHARE = /\b(i (?:feel|am|'m|have)|i'm|im |feeling|nimechoka|ninaumwa|nina wasiwasi|sijalala|my (?:body|head|back|chest|stomach|sleep|mood|anxiety|stress|energy))\b/i;
 var SESSION_CONTINUATION = /^(ok|okay|yes|yeah|yep|yup|done|next|ready|continue|go|sure|sawa|ndiyo|proceed|thanks|thank you|asante|got it|continue)[.!]?$/i;
 var OFF_TOPIC_HEALTH_REPLY = "I only answer health and wellness questions \u2014 symptoms to discuss with a clinician, sleep, stress, nutrition, movement, recovery, and Aura Health habits. I'm not a doctor and I don't cover off-topic chat. What health topic can I help with?";
 function isHealthScopedMessage(text) {
@@ -1114,7 +1114,7 @@ Memory
 }
 
 // src/server/ai.ts
-var DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
+var DEFAULT_GEMINI_MODEL = "gemini-3.6-flash";
 function geminiModel() {
   const fromEnv = process.env.GEMINI_MODEL?.trim();
   return fromEnv || DEFAULT_GEMINI_MODEL;
@@ -1572,10 +1572,12 @@ function createApiApp() {
       if (err instanceof CoachGenerateError && err.code === "empty_message") {
         return res.status(400).json({ error: err.message, code: err.code });
       }
-      console.warn("AI coach error:", err instanceof Error ? err.message : "unknown");
+      const detail = err instanceof Error ? err.message : "unknown";
+      console.warn("AI coach error:", detail);
+      const overloaded = /503|unavailable|high demand|resource.?exhausted|overloaded|quota/i.test(detail);
       res.status(503).json({
-        error: "Astra could not reach the AI service just then. Please try again.",
-        code: "ai_unavailable"
+        error: overloaded ? "Astra\u2019s AI provider is busy right now. Please try again in a moment." : "Astra could not reach the AI service just then. Please try again.",
+        code: overloaded ? "ai_overloaded" : "ai_unavailable"
       });
     }
   });
