@@ -56,7 +56,7 @@ export function seedDemoMetrics(userId: string = PUBLIC_PROOF_USER_ID) {
       anxietyLevel: Math.round(8.4 - (1 - t) * 4.4),
       sleepQuality: Math.round(5.2 + (1 - t) * 3.4),
       sessionDate: isoDate(-i),
-      language: 'sw',
+      language: 'en',
       source: 'seed',
     });
   }

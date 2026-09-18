@@ -168,7 +168,7 @@ function seedDemoMetrics(userId = PUBLIC_PROOF_USER_ID) {
       anxietyLevel: Math.round(8.4 - (1 - t) * 4.4),
       sleepQuality: Math.round(5.2 + (1 - t) * 3.4),
       sessionDate: isoDate(-i),
-      language: "sw",
+      language: "en",
       source: "seed"
     });
   }
@@ -369,27 +369,9 @@ var VALUE_PROPS = {
   ctaHeadline: "Ready to reduce stress and improve focus?"
 };
 var SESSION_LANGUAGES = [
-  { id: "en", label: "English", native: "English" },
-  { id: "sw", label: "Swahili", native: "Kiswahili" },
-  { id: "luo", label: "Luo", native: "Dholuo" },
-  { id: "kik", label: "Kikuyu", native: "G\u0129k\u0169y\u0169" },
-  { id: "yo", label: "Yoruba", native: "Yor\xF9b\xE1" },
-  { id: "ha", label: "Hausa", native: "Hausa" }
+  { id: "en", label: "English", native: "English" }
 ];
-function isSessionLanguageId(value) {
-  return typeof value === "string" && SESSION_LANGUAGES.some((lang) => lang.id === value);
-}
-function resolveSessionLanguage(value) {
-  if (isSessionLanguageId(value)) {
-    return SESSION_LANGUAGES.find((lang) => lang.id === value) ?? SESSION_LANGUAGES[0];
-  }
-  if (typeof value === "string") {
-    const needle = value.trim().toLowerCase();
-    const match = SESSION_LANGUAGES.find(
-      (lang) => lang.native.toLowerCase() === needle || lang.label.toLowerCase() === needle
-    );
-    if (match) return match;
-  }
+function resolveSessionLanguage(_value) {
   return SESSION_LANGUAGES[0];
 }
 var SUBSCRIPTION_TIERS = [
@@ -1096,7 +1078,7 @@ App context you may mention when asked (never invent the user's balances)
 - ${lifestyleBlock}
 
 Language
-- Reply in ${input.languageName} only. Crisis/safety wording stays in clear English.
+- Reply in English only. If the user writes in another language, still answer in clear English.
 
 Micro-sessions (stress, sleep, anxiety, or "start a reset")
 - Run a 5-minute practice as 3\u20134 steps of about 30\u201360 seconds each.
@@ -1243,16 +1225,16 @@ async function generateCoachReply(input) {
   if (!isHealthScopedMessage(userText)) {
     return { reply: OFF_TOPIC_HEALTH_REPLY, sources: [], searched: false };
   }
-  const language = resolveSessionLanguage(input.language);
+  const language = resolveSessionLanguage("en");
   const mood = input.companionState?.mood || "joyful";
-  const session = moodAdaptiveSession(mood, language.id);
+  const session = moodAdaptiveSession(mood, "en");
   const searchFn = input.search || tavilySearch;
   const searchResults = shouldSearch(userText) ? await searchFn(userText) : [];
   const instruction = buildCoachInstruction({
     companionState: input.companionState,
     latestAnxiety: input.latestAnxiety,
-    languageName: language.native,
-    languageId: language.id,
+    languageName: "English",
+    languageId: "en",
     hasSearch: searchResults.length > 0,
     sessionTitle: session.title,
     sessionScript: session.script,

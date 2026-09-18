@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Bell, ShieldCheck, Heart, Globe, ChevronDown, Watch } from 'lucide-react';
-import { SESSION_LANGUAGES, SessionLanguageId, VALUE_PROPS } from '../content/valueProps';
+import { VALUE_PROPS } from '../content/valueProps';
 
 interface SettingsPanelProps {
   userName: string;
@@ -9,8 +9,6 @@ interface SettingsPanelProps {
   onResendVerification?: () => void;
   onRefreshVerification?: () => void;
   verifyBusy?: boolean;
-  sessionLanguage: SessionLanguageId;
-  onLanguageChange: (id: SessionLanguageId) => void;
   onOpenWearables: () => void;
   onOpenPremium: () => void;
   planLabel: string;
@@ -23,8 +21,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onResendVerification,
   onRefreshVerification,
   verifyBusy = false,
-  sessionLanguage,
-  onLanguageChange,
   onOpenWearables,
   onOpenPremium,
   planLabel,
@@ -80,18 +76,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <h2 className="text-lg font-bold text-white">Session language</h2>
         </div>
         <p className="text-sm text-slate-400 leading-[1.6]">
-          Guided micro-sessions in English, Kiswahili, and vernacular.
+          Astra replies in English only.
         </p>
-        <select
-          className="aura-input"
-          value={sessionLanguage}
-          onChange={(e) => onLanguageChange(e.target.value as SessionLanguageId)}
-        >
-          {SESSION_LANGUAGES.map((lang) => (
-            <option key={lang.id} value={lang.id}>
-              {lang.native} ({lang.label})
-            </option>
-          ))}
+        <select className="aura-input" value="en" disabled aria-label="Session language">
+          <option value="en">English</option>
         </select>
       </section>
 

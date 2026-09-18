@@ -153,7 +153,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
 
   const tutorialSteps = [
     {
-      title: '5 minutes a day, in your language',
+      title: '5 minutes a day, in English',
       icon: '✨',
       subtitle: 'First step',
       description: VALUE_PROPS.microSessions,

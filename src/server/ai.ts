@@ -206,16 +206,16 @@ export async function generateCoachReply(input: {
     return { reply: OFF_TOPIC_HEALTH_REPLY, sources: [], searched: false };
   }
 
-  const language = resolveSessionLanguage(input.language);
+  const language = resolveSessionLanguage('en');
   const mood = input.companionState?.mood || 'joyful';
-  const session = moodAdaptiveSession(mood, language.id);
+  const session = moodAdaptiveSession(mood, 'en');
   const searchFn = input.search || tavilySearch;
   const searchResults = shouldSearch(userText) ? await searchFn(userText) : [];
   const instruction = buildCoachInstruction({
     companionState: input.companionState,
     latestAnxiety: input.latestAnxiety,
-    languageName: language.native,
-    languageId: language.id,
+    languageName: 'English',
+    languageId: 'en',
     hasSearch: searchResults.length > 0,
     sessionTitle: session.title,
     sessionScript: session.script,

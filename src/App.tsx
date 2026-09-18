@@ -21,7 +21,7 @@ import { QuickLogKind } from './components/QuickLogBar';
 import { PremiumModal } from './components/PremiumModal';
 import { UpgradePrompt } from './components/UpgradePrompt';
 import { WearablesSyncModal } from './components/WearablesSyncModal';
-import { SESSION_LANGUAGES, SessionLanguageId } from './content/valueProps';
+import { SessionLanguageId } from './content/valueProps';
 import { checkout, fetchPlan, logMetric, requestCorporatePackage, startTrial, trackFunnel } from './services/commerce';
 import { persistCheckinRewards, persistGrant, persistSpend, persistWheelSpin, RewardsApiError } from './services/rewards';
 import { fetchAdminSession } from './services/adminAuth';
@@ -137,7 +137,7 @@ export default function App() {
   const [premiumOpen, setPremiumOpen] = useState<boolean>(false);
   const [wearablesOpen, setWearablesOpen] = useState<boolean>(false);
   const [userPlan, setUserPlan] = useState<UserPlan | null>(null);
-  const [sessionLanguage, setSessionLanguage] = useState<SessionLanguageId>('sw');
+  const [sessionLanguage] = useState<SessionLanguageId>('en');
   const [latestAnxiety, setLatestAnxiety] = useState<number | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
@@ -1206,8 +1206,6 @@ export default function App() {
             onResendVerification={() => void handleResendVerification()}
             onRefreshVerification={() => void handleConfirmVerified()}
             verifyBusy={verifyBusy}
-            sessionLanguage={sessionLanguage}
-            onLanguageChange={setSessionLanguage}
             onOpenWearables={() => setWearablesOpen(true)}
             onOpenPremium={() => setPremiumOpen(true)}
             planLabel={userPlan?.plan || 'free'}

@@ -101,14 +101,14 @@ check('normalizeAnxiety ignores the old defaulted unknown', () => {
 
 check('buildCoachInstruction enforces medical scope', () => {
   const prompt = buildCoachInstruction({
-    languageName: 'Kiswahili',
-    languageId: 'sw',
+    languageName: 'English',
+    languageId: 'en',
     hasSearch: false,
     companionState: { stage: 'Hatchling', level: 2, streakDays: 3, mood: 'joyful' },
   });
   assert.match(prompt, /No anxiety check-in yet/);
   assert.doesNotMatch(prompt, /Latest anxiety check-in \(1-10\): unknown/);
-  assert.match(prompt, /Kiswahili/);
+  assert.match(prompt, /Reply in English only/i);
   assert.match(prompt, /Give ONLY the next step/);
   assert.match(prompt, /medical and wellness only/i);
   assert.match(prompt, /refuse briefly/i);
@@ -124,11 +124,13 @@ check('crisis detector still catches Swahili and English', () => {
   assert.equal(looksLikeCrisis('Start a 5-minute stress reset'), false);
 });
 
-check('greeting is localized and honest about missing check-ins', () => {
-  assert.match(coachGreeting('sw'), /si daktari/);
-  assert.doesNotMatch(coachGreeting('sw'), /7\/10/);
+check('greeting is English-only and honest about missing check-ins', () => {
+  assert.match(coachGreeting('sw'), /not a doctor/i);
+  assert.doesNotMatch(coachGreeting('sw'), /si daktari/);
+  assert.doesNotMatch(coachGreeting('en'), /7\/10/);
   assert.match(coachGreeting('en', 4), /4\/10/);
   assert.equal(coachPromptChips('sw').length, 3);
+  assert.match(coachPromptChips('sw')[0]!, /headache/i);
 });
 
 console.log('\nAll AI coach tests passed.');

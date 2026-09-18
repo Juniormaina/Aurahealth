@@ -20,8 +20,8 @@ const FEATURES: { icon: typeof Droplets; title: string; copy: string; variant: I
   },
   {
     icon: MessageCircle,
-    title: 'AI Coach in your language',
-    copy: 'Chat with Astra for 5-minute micro-sessions that adapt to how you feel — in English, Kiswahili, and vernacular.',
+    title: 'AI Coach in English',
+    copy: 'Chat with Astra for 5-minute micro-sessions that adapt to how you feel — clear English guidance for sleep, stress, and recovery.',
     variant: 'teal',
   },
   {
@@ -37,7 +37,7 @@ export const Features: React.FC = () => (
     <SectionHeading
       kicker="Features"
       title="Four ways to stay well"
-      copy="Check-ins, Astra, language-first coaching, and guided training with Aura and Aurora."
+      copy="Check-ins, Astra coaching in English, and guided training with Aura and Aurora."
     />
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {FEATURES.map((item) => (
