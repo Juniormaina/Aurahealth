@@ -9,13 +9,43 @@ const PRACTICE_REQUEST =
 const FACTUAL_QUESTION =
   /\b(?:what(?:'s| is| are)|how (?:much|many|long)\b|why (?:is|does|do)\b|is it (?:safe|true|normal|ok)|side effects?|according to|who (?:says|recommends)|latest (?:research|study|guidelines?)|recommended (?:dose|amount|hours))\b/i;
 
-/** Search only for knowledge questions — not chat, app help, or guided practices. */
+/** Health, medical, and Aura wellness topics Astra is allowed to discuss. */
+const HEALTH_SCOPE =
+  /\b(health|medical|medicin(?:e|al)?|clinic|doctor|hospital|physician|nurse|symptom|pain|ache|fever|cough|nausea|vomit|injur(?:y|ies|ed)?|wound|sleep|insomni|stress|anxi(?:ety|ous)?|depress(?:ion|ed)?|mood|mental|hydrat(?:e|ion)?|water|nutrition|diet|calorie|protein|carb(?:s|ohydrate)?s?|meal|food|eat(?:ing)?|ugali|sukuma|exercise|workout|fitness|train(?:ing)?|yoga|calisthen|breath|meditat|recover(?:y|ing)?|sore(?:ness)?|fatigue|tired|energy|mobility|stretch|wellness|session|reset|shamba|uko\s*sawa|food\s*lens|vitality|harmony|medication|pill|dose|dosing|tablet|supplement|vitamin|melatonin|ibuprofen|paracetamol|panadol|antibiotic|blood\s*pressure|diabetes|heart|stomach|headache|back\s*pain|period|pregnan|allerg(?:y|ies|ic)?|illness|sick|ill\b|cold\b|flu\b|infection|inflam|hydration|glasses of water|litres?|liters?)\b/i;
+
+const FEELING_SHARE =
+  /\b(i (?:feel|am|'m|have)|i'm|im |feeling|nimechoka|nina wasiwasi|sijalala|my (?:body|head|back|chest|stomach|sleep|mood|anxiety|stress|energy))\b/i;
+
+/** Short turns that continue an in-progress wellness practice or check-in. */
+const SESSION_CONTINUATION =
+  /^(ok|okay|yes|yeah|yep|yup|done|next|ready|continue|go|sure|sawa|ndiyo|proceed|thanks|thank you|asante|got it|continue)[.!]?$/i;
+
+export const OFF_TOPIC_HEALTH_REPLY =
+  "I only answer health and wellness questions — symptoms to discuss with a clinician, sleep, stress, nutrition, movement, recovery, and Aura Health habits. I'm not a doctor and I don't cover off-topic chat. What health topic can I help with?";
+
+/**
+ * True when the message is in Astra's allowed medical / wellness scope.
+ * Off-topic requests should be declined without calling the model.
+ */
+export function isHealthScopedMessage(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (SESSION_CONTINUATION.test(t)) return true;
+  if (PRACTICE_REQUEST.test(t)) return true;
+  if (HEALTH_SCOPE.test(t)) return true;
+  if (APP_CONTEXT_TERMS.test(t)) return true;
+  if (FEELING_SHARE.test(t)) return true;
+  return false;
+}
+
+/** Search only for factual health questions — not chat, app help, or guided practices. */
 export function shouldSearch(text: string): boolean {
   const t = text.trim();
   if (t.length < 12) return false;
-  if (APP_CONTEXT_TERMS.test(t)) return false;
+  if (!isHealthScopedMessage(t)) return false;
+  if (APP_CONTEXT_TERMS.test(t) && !HEALTH_SCOPE.test(t)) return false;
   if (PRACTICE_REQUEST.test(t)) return false;
-  return FACTUAL_QUESTION.test(t);
+  return FACTUAL_QUESTION.test(t) && HEALTH_SCOPE.test(t);
 }
 
 export function normalizeAnxiety(value: unknown): number | null {
@@ -98,18 +128,22 @@ export function buildCoachInstruction(input: {
     input.sessionScript ||
     `A 5-minute joy practice in ${input.languageName}: smile, breath, and a short gratitude prompt.`;
   const searchNote = input.hasSearch
-    ? `Live web snippets are attached to the latest user turn. Use them only for factual health questions. If they are off-topic, ignore them and coach normally. Never paste URLs as a dump — mention one useful takeaway.`
+    ? `Live web snippets are attached to the latest user turn. Use them only for factual health questions inside scope. If they are off-topic, ignore them. Never paste URLs as a dump — mention one useful takeaway.`
     : 'You do not have live web results for this turn. Do not invent studies, statistics, or news.';
   const lifestyleBlock = input.lifestyleContext?.trim()
-    ? `Lifestyle data the user logged in-app (Shamba Fit / Kenyan Food Lens / Uko Sawa) — use when they ask what to do, whether they are active enough, what they ate, or recovery advice. Treat calories and recovery as estimates, never medical fact:\n${input.lifestyleContext.trim()}`
+    ? `Lifestyle data the user logged in-app (Shamba Fit / Kenyan Food Lens / Uko Sawa) — use when they ask what to do for health today, whether they are active enough, what they ate, or recovery advice. Treat calories and recovery as estimates, never medical fact:\n${input.lifestyleContext.trim()}`
     : 'No lifestyle logs were attached for this turn. Do not invent Shamba Fit minutes, meals, or recovery scores.';
 
-  return `You are Astra, the AI wellness companion inside Aura Health, a Kenya-first app for busy professionals.
+  return `You are Astra, the AI health companion inside Aura Health, a Kenya-first wellness app.
+
+Hard scope — medical and wellness only
+- ONLY discuss health and wellness: symptoms (with clinician referral), sleep, stress, anxiety, mood, hydration, nutrition, movement/exercise, recovery, injury prevention, when to seek care, and Aura Health habits that support wellbeing (check-ins, Train, Shamba Fit, Food Lens, Uko Sawa, streaks).
+- If the user asks anything outside that scope (coding, politics, sports scores, homework, general trivia, unrelated jokes, shopping, etc.), refuse briefly and redirect to a health topic. Do not answer the off-topic request even partially.
+- You are an AI wellness guide, never a doctor. No diagnosis, dosing, or prescriptions. For serious or urgent symptoms, say so plainly and point to a licensed clinician or emergency services.
 
 Voice
 - Warm, specific, culturally grounded in East African work/life (commute, family, long days, market walks, household work). No stereotypes, no slang you cannot use naturally.
 - Chat replies: 2–4 short sentences, one question max.
-- You are an AI, never a doctor. No diagnosis, dosing, or prescriptions. For serious or urgent symptoms, say so plainly and point to a licensed clinician or emergency services.
 
 App context you may mention when asked (never invent the user's balances)
 - Daily check-in, Cowries (points), XP and companion levels, streaks, loot wheel, Train (yoga/calisthenics).

@@ -1,4 +1,9 @@
-import type { HealthBriefItem } from '../services/healthBrief';
+export type HealthBriefItem = {
+  id: string;
+  title: string;
+  body: string;
+  category: 'hydration' | 'fitness' | 'nutrition' | 'recovery' | 'local';
+};
 
 /** Backend-managed curated tips — no third-party API keys required */
 export const HEALTH_BRIEF_ITEMS: HealthBriefItem[] = [

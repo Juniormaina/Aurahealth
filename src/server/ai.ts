@@ -3,6 +3,8 @@ import { moodAdaptiveSession, resolveSessionLanguage } from '../content/valuePro
 import {
   buildCoachInstruction,
   formatSearchContext,
+  isHealthScopedMessage,
+  OFF_TOPIC_HEALTH_REPLY,
   shouldSearch,
   toGeminiContents,
   type CoachHistoryItem,
@@ -12,7 +14,9 @@ import {
 export {
   buildCoachInstruction,
   formatSearchContext,
+  isHealthScopedMessage,
   normalizeAnxiety,
+  OFF_TOPIC_HEALTH_REPLY,
   shouldSearch,
   toGeminiContents,
 } from './coachTurn';
@@ -196,6 +200,10 @@ export async function generateCoachReply(input: {
   const userText = String(input.userMessage || '').trim().slice(0, 4000);
   if (!userText) {
     throw new CoachGenerateError('empty_message', 'Message required');
+  }
+
+  if (!isHealthScopedMessage(userText)) {
+    return { reply: OFF_TOPIC_HEALTH_REPLY, sources: [], searched: false };
   }
 
   const language = resolveSessionLanguage(input.language);

@@ -1,9 +1,6 @@
-export type HealthBriefItem = {
-  id: string;
-  title: string;
-  body: string;
-  category: 'hydration' | 'fitness' | 'nutrition' | 'recovery' | 'local';
-};
+import type { HealthBriefItem } from '../content/healthBriefContent';
+
+export type { HealthBriefItem };
 
 export async function fetchHealthBrief(): Promise<HealthBriefItem[]> {
   try {

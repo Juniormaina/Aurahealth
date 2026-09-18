@@ -4,7 +4,9 @@ import { coachGreeting, coachPromptChips } from '../src/content/coachCopy.ts';
 import {
   buildCoachInstruction,
   formatSearchContext,
+  isHealthScopedMessage,
   normalizeAnxiety,
+  OFF_TOPIC_HEALTH_REPLY,
   shouldSearch,
   toGeminiContents,
 } from '../src/server/coachTurn.ts';
@@ -21,6 +23,7 @@ check('shouldSearch skips practice prompts and app talk', () => {
   assert.equal(shouldSearch('How do I boost my streak?'), false);
   assert.equal(shouldSearch('I feel anxious today'), false);
   assert.equal(shouldSearch('ok'), false);
+  assert.equal(shouldSearch('Who won the football match yesterday?'), false);
 });
 
 check('shouldSearch allows factual health questions', () => {
@@ -28,6 +31,16 @@ check('shouldSearch allows factual health questions', () => {
   assert.equal(shouldSearch('What is the recommended hours of sleep for adults'), true);
   assert.equal(shouldSearch('Is it safe to take melatonin every night'), true);
   assert.equal(shouldSearch('What should I do tonight then?'), false);
+});
+
+check('isHealthScopedMessage allows health and blocks off-topic', () => {
+  assert.equal(isHealthScopedMessage('I have a headache'), true);
+  assert.equal(isHealthScopedMessage('How much water should I drink?'), true);
+  assert.equal(isHealthScopedMessage('Start a 5-minute stress reset'), true);
+  assert.equal(isHealthScopedMessage('ok'), true);
+  assert.equal(isHealthScopedMessage('Write me a Python script'), false);
+  assert.equal(isHealthScopedMessage('Who won the election?'), false);
+  assert.match(OFF_TOPIC_HEALTH_REPLY, /health and wellness/i);
 });
 
 check('toGeminiContents drops greeting and starts with user', () => {
@@ -82,7 +95,7 @@ check('normalizeAnxiety ignores the old defaulted unknown', () => {
   assert.equal(normalizeAnxiety(12), 10);
 });
 
-check('buildCoachInstruction does not invent an anxiety score', () => {
+check('buildCoachInstruction enforces medical scope', () => {
   const prompt = buildCoachInstruction({
     languageName: 'Kiswahili',
     languageId: 'sw',
@@ -93,6 +106,8 @@ check('buildCoachInstruction does not invent an anxiety score', () => {
   assert.doesNotMatch(prompt, /Latest anxiety check-in \(1-10\): unknown/);
   assert.match(prompt, /Kiswahili/);
   assert.match(prompt, /Give ONLY the next step/);
+  assert.match(prompt, /medical and wellness only/i);
+  assert.match(prompt, /refuse briefly/i);
 });
 
 check('formatSearchContext stays clean when there are no hits', () => {

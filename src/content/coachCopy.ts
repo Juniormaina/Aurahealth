@@ -2,25 +2,25 @@ import type { SessionLanguageId } from './valueProps.ts';
 import { resolveSessionLanguage } from './valueProps.ts';
 
 const PROMPT_CHIPS: Record<SessionLanguageId, string[]> = {
-  en: ['Start a 5-minute stress reset', 'Adapt a session to my mood', 'How do I boost my streak?'],
+  en: ['I have a headache after poor sleep', 'How much water should I drink today?', 'Start a 5-minute stress reset'],
   sw: [
+    'Ninaumwa na kichwa baada ya kulala vibaya',
+    'Ninafaa kunywa maji kiasi gani leo?',
     'Anza zoezi la dakika 5 la kupunguza msongo',
-    'Badilisha zoezi kulingana na hisia zangu',
-    'Ninawezaje kuongeza mfululizo wangu?',
   ],
-  luo: ['Start a 5-minute stress reset', 'Adapt a session to my mood', 'How do I boost my streak?'],
-  kik: ['Start a 5-minute stress reset', 'Adapt a session to my mood', 'How do I boost my streak?'],
-  yo: ['Start a 5-minute stress reset', 'Adapt a session to my mood', 'How do I boost my streak?'],
-  ha: ['Start a 5-minute stress reset', 'Adapt a session to my mood', 'How do I boost my streak?'],
+  luo: ['I have a headache after poor sleep', 'How much water should I drink today?', 'Start a 5-minute stress reset'],
+  kik: ['I have a headache after poor sleep', 'How much water should I drink today?', 'Start a 5-minute stress reset'],
+  yo: ['I have a headache after poor sleep', 'How much water should I drink today?', 'Start a 5-minute stress reset'],
+  ha: ['I have a headache after poor sleep', 'How much water should I drink today?', 'Start a 5-minute stress reset'],
 };
 
 const GREETING: Record<SessionLanguageId, string> = {
-  en: "Hi, I'm Astra — your AI wellness companion, not a doctor. Tell me how you feel, or tap a prompt for a 5-minute reset.",
-  sw: 'Habari, mimi ni Astra — mwandamani wako wa AI, si daktari. Niambie unavyohisi, au bonyeza prompt kuanza zoezi la dakika tano.',
-  luo: "Mosi, an Astra — ja-kony AI, ok a daktar. Nyisa kaka ineno, kata yier prompt mondo wachak yweyo mar dakika 5.",
-  kik: 'Wĩ mwega, niĩ Astra — mũthĩĩna waku wa AI, ti daktari. Njĩra ũrĩa ũiguaga, kana hũthĩra prompt kĩambĩrĩria gĩa ndagika 5.',
-  yo: 'Ẹ n lẹ, èmi ni Astra — ẹlẹgbẹ́ AI rẹ, kìí ṣe dókítà. Sọ bí o ṣe rí, tàbí tẹ prompt láti bẹ̀rẹ̀ ìdánwò ìṣẹ́jú márùn-ún.',
-  ha: "Sannu, ni Astra — abokiyar AI, ba likita ba. Faɗa mini yadda kake ji, ko danna prompt don farawa da minti 5.",
+  en: "Hi, I'm Astra — your AI health companion for medical and wellness questions only (not a doctor). Ask about sleep, stress, nutrition, movement, recovery, or symptoms to take to a clinician.",
+  sw: 'Habari, mimi ni Astra — mwandamani wako wa AI wa afya tu (si daktari). Uliza kuhusu usingizi, msongo, lishe, mwendo, au dalili za kumwona daktari.',
+  luo: "Mosi, an Astra — ja-kony AI mar ngima kende (ok a daktar). Penja kuom nindo, chuny lit, chiemo, kata ranyisi ma dwaro daktari.",
+  kik: 'Wĩ mwega, niĩ Astra — mũthĩĩna waku wa AI wa ũgima tu (ti daktari). Ũria ũhoro wa kũrara, thĩĩna, irio, kana ũrĩa ũkwenda daktari.',
+  yo: 'Ẹ n lẹ, èmi ni Astra — ẹlẹgbẹ́ AI ìlera nìkan (kìí ṣe dókítà). Béèrè nípa oorun, ìdààmú, oúnjẹ, tàbí ààmì àìsàn fún dókítà.',
+  ha: "Sannu, ni Astra — abokiyar AI ta lafiya kawai (ba likita ba). Tambayi game da barci, damuwa, abinci, ko alamun cuta ga likita.",
 };
 
 const ANXIETY_NOTE: Record<SessionLanguageId, (n: number) => string> = {
