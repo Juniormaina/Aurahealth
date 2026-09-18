@@ -17,6 +17,9 @@ pubsub-debug.log
 
 .vercel/
 
+# Generated Vercel API bundle
+api/index.js
+
 # Hardhat
 artifacts/
 cache/

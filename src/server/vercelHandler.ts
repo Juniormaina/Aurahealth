@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import path from 'node:path';
 import dotenv from 'dotenv';
-import { createApiApp } from '../src/server/createApp';
+import { createApiApp } from './createApp';
 
 try {
   dotenv.config({ path: path.join(process.cwd(), 'src', '.env') });
@@ -9,14 +9,6 @@ try {
 } catch (err) {
   console.warn('[api] dotenv load skipped:', err);
 }
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-export const maxDuration = 60;
 
 type ExpressApp = {
   (req: IncomingMessage, res: ServerResponse): void;

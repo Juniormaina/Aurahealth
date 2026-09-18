@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "build:api": "esbuild src/server/vercelHandler.ts --bundle --platform=node --format=cjs --packages=external --outfile=api/index.js && node -e \"const fs=require('fs'); const p='api/index.js'; fs.appendFileSync(p, '\\nmodule.exports = module.exports.default;\\n');\"",
+    "build": "vite build && npm run build:api && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "NODE_ENV=production node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
