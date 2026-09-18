@@ -19,6 +19,7 @@ pubsub-debug.log
 
 # Generated Vercel API bundle
 api/index.js
+api/index.cjs
 api/handler.cjs
 
 # Hardhat

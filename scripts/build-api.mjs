@@ -1,11 +1,11 @@
 import * as esbuild from 'esbuild';
-import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
+const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const handlerOut = path.join(root, 'api', 'handler.cjs');
-const indexOut = path.join(root, 'api', 'index.js');
+const outFile = path.join(root, 'api', 'index.cjs');
 
 esbuild.buildSync({
   entryPoints: [path.join(root, 'src', 'server', 'vercelHandler.ts')],
@@ -13,24 +13,18 @@ esbuild.buildSync({
   platform: 'node',
   format: 'cjs',
   packages: 'external',
-  outfile: handlerOut,
+  outfile: outFile,
+  footer: {
+    // esbuild CJS default export is module.exports.default; Vercel needs the function.
+    js: 'module.exports = module.exports.default;',
+  },
   logLevel: 'info',
 });
 
-fs.writeFileSync(
-  indexOut,
-  [
-    '"use strict";',
-    'const mod = require("./handler.cjs");',
-    'module.exports = typeof mod === "function" ? mod : mod.default;',
-    '',
-  ].join('\n')
-);
-
-const exported = require(indexOut);
+const exported = require(outFile);
 if (typeof exported !== 'function') {
-  console.error('api/index.js did not export a function handler');
+  console.error('api/index.cjs did not export a function handler, got', typeof exported);
   process.exit(1);
 }
 
-console.log('Wrote', path.relative(root, handlerOut), 'and', path.relative(root, indexOut));
+console.log('Wrote', path.relative(root, outFile), `(${typeof exported})`);
