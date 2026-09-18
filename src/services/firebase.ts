@@ -1,4 +1,9 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import {
+  initializeAppCheck,
+  ReCaptchaV3Provider,
+  type AppCheck,
+} from 'firebase/app-check';
 import {
   getAuth,
   GoogleAuthProvider,
@@ -44,7 +49,85 @@ const firebaseConfig = {
   appId: "1:462623100241:web:9c7d142b97488d1f4b5770",
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+type VitePublicEnv = Record<string, string | boolean | undefined>;
+
+const viteEnv: VitePublicEnv =
+  ((import.meta as ImportMeta & { env?: VitePublicEnv }).env as VitePublicEnv | undefined) ?? {};
+
+function readPublicEnv(name: string): string | undefined {
+  const value = viteEnv[name];
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed || undefined;
+}
+
+function isViteDev(): boolean {
+  return viteEnv.DEV === true || viteEnv.MODE === 'development';
+}
+
+/**
+ * App Check debug uses `self.FIREBASE_APPCHECK_DEBUG_TOKEN` (there is no
+ * `DebugProvider` export in firebase/app-check). Register generated tokens in
+ * Firebase Console → App Check → Manage debug tokens. Never ship debug mode
+ * to production builds.
+ */
+function enableAppCheckDebugToken() {
+  if (typeof window === 'undefined') return;
+
+  const debugFlag = readPublicEnv('VITE_FIREBASE_APPCHECK_DEBUG');
+  const host = window.location.hostname;
+  const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+  const useDebug =
+    debugFlag === 'true' ||
+    debugFlag === '1' ||
+    (Boolean(debugFlag) && debugFlag !== 'false' && debugFlag !== '0') ||
+    (isViteDev() && isLocalHost);
+
+  if (!useDebug) return;
+
+  // Explicit token string from env, otherwise let the SDK mint one (`true`).
+  window.FIREBASE_APPCHECK_DEBUG_TOKEN =
+    debugFlag && debugFlag !== 'true' && debugFlag !== '1' ? debugFlag : true;
+}
+
+function initAppCheck(firebaseApp: FirebaseApp): AppCheck | null {
+  if (typeof window === 'undefined') return null;
+
+  const siteKey = readPublicEnv('VITE_FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY');
+  if (!siteKey) {
+    if (isViteDev()) {
+      console.info(
+        '[firebase] App Check not started — set VITE_FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY (reCAPTCHA v3 site key) to enable.'
+      );
+    }
+    return null;
+  }
+
+  try {
+    enableAppCheckDebugToken();
+    return initializeAppCheck(firebaseApp, {
+      provider: new ReCaptchaV3Provider(siteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+  } catch (err) {
+    console.warn(
+      '[firebase] App Check init failed:',
+      err instanceof Error ? err.message : 'unknown'
+    );
+    return null;
+  }
+}
+
+declare global {
+  interface Window {
+    FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean | string;
+  }
+}
+
+export const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+/** Null until a reCAPTCHA v3 site key is configured via env. */
+export const appCheck: AppCheck | null = initAppCheck(app);
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);
