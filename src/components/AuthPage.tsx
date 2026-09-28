@@ -57,8 +57,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [emailTab, setEmailTab] = useState<'signin' | 'signup'>('signin');
   const [emailAddress, setEmailAddress] = useState('');
   const [emailPassword, setEmailPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [emailName, setEmailName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [resetNotice, setResetNotice] = useState<string | null>(null);
   const [resetBusy, setResetBusy] = useState(false);
@@ -89,6 +91,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         name: emailName,
         email: emailAddress,
         password: emailPassword,
+        confirmPassword,
       });
       if (invalid) {
         setEmailError(invalid);
@@ -296,6 +299,37 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 </p>
               )}
             </div>
+            {emailTab === 'signup' && (
+              <div>
+                <label className="text-xs font-bold text-ink block mb-1" htmlFor="auth-confirm-password">
+                  Re-enter password
+                </label>
+                <div className="relative">
+                  <Lock className="pointer-events-none w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    id="auth-confirm-password"
+                    name="confirm-password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    placeholder="Type the same password again"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={MIN_PASSWORD_LENGTH}
+                    maxLength={MAX_PASSWORD_LENGTH}
+                    className="aura-input aura-input-icon-left aura-input-icon-right"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted"
+                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
             <button type="submit" disabled={isLoggingIn} className="w-full btn-primary auth-submit justify-center mt-2">
               {isLoggingIn ? (
                 'Processing...'

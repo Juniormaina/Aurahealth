@@ -214,6 +214,7 @@ export async function signUpWithEmail(email: string, pass: string, name: string)
     name: displayName,
     email: normalizedEmail,
     password: pass,
+    confirmPassword: pass,
   });
   if (invalid) {
     throw Object.assign(new Error(invalid), { code: 'auth/invalid-signup' });
