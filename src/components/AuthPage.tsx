@@ -57,14 +57,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [emailTab, setEmailTab] = useState<'signin' | 'signup'>('signin');
   const [emailAddress, setEmailAddress] = useState('');
   const [emailPassword, setEmailPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [emailName, setEmailName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [resetNotice, setResetNotice] = useState<string | null>(null);
   const [resetBusy, setResetBusy] = useState(false);
-
-  const visibleError = emailError || authError;
 
   useEffect(() => {
     if (authError) {
@@ -74,40 +71,39 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
   const clearErrors = () => {
     setEmailError(null);
+    setResetNotice(null);
     onClearAuthError?.();
+  };
+
+  const switchTab = (tab: 'signin' | 'signup') => {
+    setEmailTab(tab);
+    clearErrors();
   };
 
   const handleEmailAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     clearErrors();
-    if (!emailAddress || !emailPassword) {
-      setEmailError('Please fill in both email and password.');
-      return;
-    }
-    if (emailPassword.length < 6) {
-      setEmailError('Password must be at least 6 characters.');
-      return;
-    }
+
     if (emailTab === 'signup') {
       const invalid = signupFieldError({
         name: emailName,
         email: emailAddress,
         password: emailPassword,
-        confirmPassword,
       });
       if (invalid) {
         setEmailError(invalid);
         return;
       }
       onEmailSignUp(emailAddress, emailPassword, emailName);
-    } else {
-      const invalid = signinFieldError(emailAddress, emailPassword);
-      if (invalid) {
-        setEmailError(invalid);
-        return;
-      }
-      onEmailSignIn(emailAddress, emailPassword);
+      return;
     }
+
+    const invalid = signinFieldError(emailAddress, emailPassword);
+    if (invalid) {
+      setEmailError(invalid);
+      return;
+    }
+    onEmailSignIn(emailAddress, emailPassword);
   };
 
   const displayError = emailError || authError;
@@ -189,10 +185,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           <div className="grid grid-cols-2 gap-1 bg-white/5 p-1 rounded-xl border border-white/10 font-bold mb-5">
             <button
               type="button"
-              onClick={() => {
-                setEmailTab('signin');
-                clearErrors();
-              }}
+              onClick={() => switchTab('signin')}
               className={`auth-tab flex items-center justify-center ${
                 emailTab === 'signin' ? 'bg-primary text-[var(--color-primary-foreground)]' : 'text-muted'
               }`}
@@ -202,10 +195,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => {
-                setEmailTab('signup');
-                clearErrors();
-              }}
+              onClick={() => switchTab('signup')}
               className={`auth-tab flex items-center justify-center ${
                 emailTab === 'signup' ? 'bg-primary text-[var(--color-primary-foreground)]' : 'text-muted'
               }`}

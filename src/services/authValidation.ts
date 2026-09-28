@@ -59,7 +59,6 @@ export function signupFieldError(input: {
   name: string;
   email: string;
   password: string;
-  confirmPassword: string;
 }): string | null {
   const name = sanitizeDisplayName(input.name);
   if (name.length < MIN_NAME_LENGTH) {
@@ -69,12 +68,7 @@ export function signupFieldError(input: {
   if (!isValidEmail(email)) {
     return 'Enter a valid email address.';
   }
-  const pw = passwordIssue(input.password);
-  if (pw) return pw;
-  if (input.password !== input.confirmPassword) {
-    return 'Passwords do not match.';
-  }
-  return null;
+  return passwordIssue(input.password);
 }
 
 export function signinFieldError(email: string, password: string): string | null {

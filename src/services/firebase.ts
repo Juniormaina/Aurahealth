@@ -214,11 +214,11 @@ export async function signUpWithEmail(email: string, pass: string, name: string)
     name: displayName,
     email: normalizedEmail,
     password: pass,
-    confirmPassword: pass,
   });
   if (invalid) {
     throw Object.assign(new Error(invalid), { code: 'auth/invalid-signup' });
   }
+  // passwordIssue already ran inside signupFieldError; keep a second guard for callers that skip it.
   const weak = passwordIssue(pass);
   if (weak) {
     throw Object.assign(new Error(weak), { code: 'auth/weak-password' });
