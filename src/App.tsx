@@ -82,6 +82,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { celebrateLevelUp } from './lib/celebrate';
 import { Compass, Home, Search, MessageSquare, Award, Dumbbell, Footprints } from 'lucide-react';
 import { formatLifestyleContextForAstra } from './lib/lifestyleStorage';
+import { buildAstraContext, formatAstraContextBlock, localAstraReply } from './lib/astraContext';
 
 function applyLedger(prev: EconomyStats, ledger: LedgerSnapshot): EconomyStats {
   return {
@@ -1181,7 +1182,8 @@ export default function App() {
             latestAnxiety={latestAnxiety}
             language={sessionLanguage}
             onShowToast={showToast}
-            lifestyleContext={formatLifestyleContextForAstra(commerceUserId)}
+            lifestyleContext={`${formatAstraContextBlock(buildAstraContext(commerceUserId, userAccount?.name))}\n\n${formatLifestyleContextForAstra(commerceUserId)}`}
+            onLocalFallback={(message) => localAstraReply(buildAstraContext(commerceUserId, userAccount?.name), message)}
           />
         )}
 

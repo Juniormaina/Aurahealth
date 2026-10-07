@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Footprints, Utensils, HeartPulse, Droplets } from 'lucide-react';
 import { buildDailySummary } from '../lib/lifestyleStorage';
 import { buildLocalAuraInsight } from '../lib/lifestyleInsight';
+import { buildAstraContext, buildDailyBrief } from '../lib/astraContext';
 import type { DailySummary } from '../types/lifestyle';
 import { fetchHealthBrief, type HealthBriefItem } from '../services/healthBrief';
 
@@ -50,6 +51,7 @@ export const LifestyleToday: React.FC<LifestyleTodayProps> = ({
   }, []);
 
   const insight = buildLocalAuraInsight(summary);
+  const briefCard = buildDailyBrief(buildAstraContext(userKey));
   const glasses = hydrationGlasses ?? summary.hydrationGlasses ?? 0;
 
   return (
@@ -107,8 +109,14 @@ export const LifestyleToday: React.FC<LifestyleTodayProps> = ({
       </section>
 
       <section className="glass-panel rounded-2xl p-5 border border-[var(--color-harmony)]/20">
-        <p className="view-kicker">Aura&apos;s Insight</p>
-        <h3 className="text-lg font-bold text-white mt-1 font-display">{insight.headline}</h3>
+        <p className="view-kicker">Astra today · {briefCard.focus}</p>
+        <p className="text-sm text-slate-300 mt-2 leading-relaxed">{briefCard.body}</p>
+        <ul className="mt-3 space-y-1 text-sm text-[var(--color-harmony)]">
+          {briefCard.tries.map((item) => (
+            <li key={item}>• {item}</li>
+          ))}
+        </ul>
+        <h3 className="text-lg font-bold text-white mt-4 font-display">{insight.headline}</h3>
         <p className="text-sm text-slate-300 mt-2 leading-relaxed">{insight.body}</p>
         <p className="text-sm text-[var(--color-harmony)] mt-3 leading-relaxed">{insight.recommendation}</p>
       </section>

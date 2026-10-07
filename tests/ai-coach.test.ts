@@ -112,6 +112,7 @@ check('buildCoachInstruction enforces medical scope', () => {
   assert.match(prompt, /Give ONLY the next step/);
   assert.match(prompt, /medical and wellness only/i);
   assert.match(prompt, /refuse briefly/i);
+  assert.match(prompt, /RECOVER/i);
 });
 
 check('formatSearchContext stays clean when there are no hits', () => {

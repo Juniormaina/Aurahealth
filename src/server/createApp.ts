@@ -372,7 +372,7 @@ export function createApiApp(): express.Express {
         companionState,
         language,
         latestAnxiety,
-        lifestyleContext: typeof lifestyleContext === 'string' ? lifestyleContext.slice(0, 2000) : undefined,
+        lifestyleContext: typeof lifestyleContext === 'string' ? lifestyleContext.slice(0, 4000) : undefined,
       });
 
       res.json({

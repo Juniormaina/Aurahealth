@@ -22,6 +22,8 @@ interface AIHealthCoachProps {
   onShowToast?: (message: string) => void;
   /** Compact MOVE/EAT/RECOVER context for Astra */
   lifestyleContext?: string;
+  /** Used when the AI request fails so chat still reflects logged lifestyle data. */
+  onLocalFallback?: (userMessage: string) => string;
 }
 
 interface ChatSource {
@@ -71,6 +73,7 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
   language,
   onShowToast,
   lifestyleContext,
+  onLocalFallback,
 }) => {
   const chips = useMemo(() => coachPromptChips(language), [language]);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
@@ -157,15 +160,23 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
 
       if (isCoachReplyFailure(result)) {
         console.error('Coach reply failed:', result.status, result.message);
-        onShowToast?.(result.message);
-        appendAstraReply(
-          result.status === 401
-            ? `${result.message} Tap Enter Dashboard on the home page to sign in, then come back to Coach.`
-            : result.message,
-          time,
-          undefined,
-          'error'
-        );
+        const offline =
+          (result.status === 503 || result.status === 0) && onLocalFallback
+            ? onLocalFallback(userText)
+            : null;
+        if (offline) {
+          appendAstraReply(offline, time);
+        } else {
+          onShowToast?.(result.message);
+          appendAstraReply(
+            result.status === 401
+              ? `${result.message} Tap Enter Dashboard on the home page to sign in, then come back to Coach.`
+              : result.message,
+            time,
+            undefined,
+            'error'
+          );
+        }
       } else {
         appendAstraReply(
           result.crisis ? CRISIS_REPLY : result.reply,
@@ -175,9 +186,14 @@ export const AIHealthCoach: React.FC<AIHealthCoachProps> = ({
       }
     } catch (err) {
       console.error('Failed to fetch AI response:', err);
-      const message = 'Something went wrong reaching Astra. Try sending again.';
-      onShowToast?.(message);
-      appendAstraReply(message, time, undefined, 'error');
+      const offline = onLocalFallback?.(userText);
+      if (offline) {
+        appendAstraReply(offline, time);
+      } else {
+        const message = 'Something went wrong reaching Astra. Try sending again.';
+        onShowToast?.(message);
+        appendAstraReply(message, time, undefined, 'error');
+      }
     } finally {
       setIsLoading(false);
     }

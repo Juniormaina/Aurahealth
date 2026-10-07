@@ -219,7 +219,7 @@ export async function generateCoachReply(input: {
     hasSearch: searchResults.length > 0,
     sessionTitle: session.title,
     sessionScript: session.script,
-    lifestyleContext: typeof input.lifestyleContext === 'string' ? input.lifestyleContext.slice(0, 2000) : undefined,
+    lifestyleContext: typeof input.lifestyleContext === 'string' ? input.lifestyleContext.slice(0, 4000) : undefined,
   });
   const contents = toGeminiContents(input.history, formatSearchContext(userText, searchResults));
 

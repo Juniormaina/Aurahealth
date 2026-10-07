@@ -12,6 +12,8 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "test:coach": "node --experimental-strip-types --no-warnings tests/ai-coach.test.ts",
+    "test:astra": "npx tsx tests/astra-context.test.ts",
+    "test": "npm run test:coach && npm run test:astra",
     "test:coach:live": "node --experimental-strip-types --no-warnings scripts/test-ai-coach.ts",
     "check:security": "bash scripts/security-check.sh",
     "authorize:domains": "node scripts/authorize-firebase-domains.mjs",
